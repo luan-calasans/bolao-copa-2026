@@ -63,6 +63,16 @@ function ScoringRuleCard({ title, points, description }: ScoringRuleItem) {
   )
 }
 
+function EfficiencyRuleCard() {
+  return (
+    <div>
+      <p className="text-sm font-semibold text-white">{EFFICIENCY_RULE.title}</p>
+      <p className="mt-2 text-sm leading-relaxed text-slate-400">{EFFICIENCY_RULE.description}</p>
+      <p className="mt-2 font-mono text-xs text-slate-500">{EFFICIENCY_RULE.formula}</p>
+    </div>
+  )
+}
+
 function ScoringRulesModal({ isOpen, rules, onClose }: ScoringRulesModalProps) {
   const titleId = useId()
   const descriptionId = useId()
@@ -131,6 +141,11 @@ function ScoringRulesModal({ isOpen, rules, onClose }: ScoringRulesModalProps) {
                       <ScoringRuleCard {...item} />
                     </div>
                   ))}
+                  {rule.title === 'Acerto parcial' && (
+                    <div className="rounded-lg border border-slate-700/30 bg-pitch-900/40 p-3">
+                      <EfficiencyRuleCard />
+                    </div>
+                  )}
                 </div>
               </li>
             ) : (
@@ -143,16 +158,6 @@ function ScoringRulesModal({ isOpen, rules, onClose }: ScoringRulesModalProps) {
             ),
           )}
         </ul>
-
-        <div className="border-t border-slate-700/40 px-5 py-4">
-          <div className="rounded-xl border border-violet-500/20 bg-violet-500/5 p-4">
-            <p className="text-sm font-semibold text-violet-200">{EFFICIENCY_RULE.title}</p>
-            <p className="mt-2 text-sm leading-relaxed text-slate-400">
-              {EFFICIENCY_RULE.description}
-            </p>
-            <p className="mt-2 font-mono text-xs text-slate-500">{EFFICIENCY_RULE.formula}</p>
-          </div>
-        </div>
 
         <div className="border-t border-slate-700/40 bg-pitch-950/40 px-5 py-4">
           <Button type="button" variant="gold" className="w-full" onClick={onClose}>

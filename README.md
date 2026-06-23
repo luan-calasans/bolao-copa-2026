@@ -7,8 +7,12 @@ SPA para palpites da Copa do Mundo 2026. Os jogos vêm da [football-data.org](ht
 - Listagem de jogos da Copa 2026 (ao vivo, próximos e encerrados)
 - Filtros por data, país, grupo e status
 - Classificação por grupos e páginas de seleções
-- Ranking de pontuação dos participantes em `/pontuacao` (pontos, exatos, parciais, palpites e aguardando)
-- Clique no nome do participante no ranking para ver todos os palpites dele
+- Ranking de pontuação dos participantes em `/ranking` (pontos, exatos, parciais, eficiência, palpites e aguardando); `/pontuacao` redireciona para `/ranking`
+- Clique no nome do participante no ranking para ver todos os palpites dele; clique em estatísticas (pontos, exatos, parciais, etc.) para abrir modal com detalhes
+- Ordenação por coluna no ranking (participante, pontos, exatos, parciais, eficiência, palpites, aguardando)
+- Palpite de **campeão** em `/campeao` (20 pts se acertar; prazo até um dia antes da final; um palpite por participante)
+- Chaveamento **mata-mata** em `/mata-a-mata`, montado com classificação dos grupos e jogos eliminatórios
+- Sugestão de placar por **IA** (Google Gemini) em `/palpite/:matchId` e `/jogo/:matchId/palpites` para jogos agendados
 - Palpite flexível: informe **quem vence** (mandante, empate ou visitante), **placar previsto**, ou **ambos** — cada opção é opcional, exceto que ao menos uma delas é obrigatória (além do nome)
 - Sem cruzamento entre opções: vitória de um time no seletor e placar favorável ao adversário são permitidos; cada parte pontua de forma independente
 - Complemento de palpite: quem já registrou só o placar pode voltar e informar quem vence (ou empate); o placar registrado não pode ser alterado
@@ -21,7 +25,8 @@ SPA para palpites da Copa do Mundo 2026. Os jogos vêm da [football-data.org](ht
 - Botão flutuante **voltar ao topo** ao rolar a página
 - Atalho flutuante para **Palpitar** em `/jogo/:matchId/palpites` (jogos agendados ou ao vivo)
 - Cache de requisições no browser (TTL 20s, deduplicação em voo) para jogos, palpites, ranking, classificação e seleções
-- Resultado do palpite (exato / parcial / errou / aguardando) com regras visíveis em `/pontuacao`
+- Resultado do palpite (exato / parcial / errou / aguardando) com regras visíveis em `/ranking`
+- Palpites de campeão aparecem em `/palpites` e na página do participante, com comprovante em `/comprovante/:receiptId`
 - Detalhes da partida em `/jogo/:matchId/palpites` e `/palpite/:matchId` (jogos ao vivo ou encerrados):
   - Painéis recolhíveis: **Informações**, **Estatísticas**, **Gols** e **Escalações** (expandidos por padrão); **Histórico** (recolhido por padrão)
   - Gols com minuto, jogador e escudo do time
@@ -34,7 +39,8 @@ SPA para palpites da Copa do Mundo 2026. Os jogos vêm da [football-data.org](ht
   - Botão **Atualizar dados** só enquanto o jogo não encerrou; botão **Palpitar** no cabeçalho e atalho flutuante (bola) quando o jogo aceita palpites
 - Área administrativa com login por senha para visualizar e excluir palpites
 - Exclusão de palpites com modal de confirmação (soft delete no banco)
-- Layout responsivo (mobile, tablet, desktop)
+- Layout responsivo (mobile, tablet, desktop); tabela de palpites com cards no mobile
+- Vercel Analytics e Speed Insights (carregados após idle, em produção)
 
 ## Stack
 
@@ -45,8 +51,9 @@ SPA para palpites da Copa do Mundo 2026. Os jogos vêm da [football-data.org](ht
 | Banco          | Neon Postgres (`@neondatabase/serverless`)                   |
 | Dados de jogos | [football-data.org](https://www.football-data.org/) v4       |
 | Detalhes ao vivo / pós-jogo | [TheSportsDB](https://www.thesportsdb.com/documentation) v1 |
-| Fallback opcional de gols | [API-Football](https://www.api-football.com/) (`API_FOOTBALL_KEY`) |
+| Sugestão de placar (IA) | [Google Gemini](https://ai.google.dev/) (`GEMINI_API_KEY`) |
 | Exportação     | html-to-image                                                |
+| Monitoramento  | @vercel/analytics, @vercel/speed-insights                    |
 | Deploy         | Vercel                                                       |
 
 ## Arquitetura
@@ -55,10 +62,10 @@ SPA para palpites da Copa do Mundo 2026. Os jogos vêm da [football-data.org](ht
 ┌─────────────┐     ┌──────────────────┐     ┌─────────────────────┐
 │   React     │────▶│  /api/bets       │────▶│  Neon Postgres      │
 │   (browser) │     │  /api/ranking    │     │  receipts + bets    │
-└─────────────┘     │  /api/admin/*    │     └─────────────────────┘
-       │            └──────────────────┘
-       ▼
-┌──────────────────┐     ┌─────────────────────┐
+└─────────────┘     │  /api/champion-* │     │  champion_bets      │
+       │            │  /api/admin/*    │     └─────────────────────┘
+       ▼            │  /api/ai-predict │
+┌──────────────────┐└──────────────────┘
 │ /api/football/*  │────▶│  football-data.org  │
 │ /api/crests/*    │     │  (token no servidor)│
 └──────────────────┘     └─────────────────────┘
@@ -71,8 +78,8 @@ SPA para palpites da Copa do Mundo 2026. Os jogos vêm da [football-data.org](ht
        │
        ▼
 ┌──────────────────┐     ┌─────────────────────┐
-│ /api/apifootball/*│───▶│  API-Football v3    │
-│ (opcional)       │     │  (fallback de gols) │
+│ /api/ai-predict  │────▶│  Google Gemini API  │
+│                  │     │  (chave no servidor)│
 └──────────────────┘     └─────────────────────┘
 ```
 
@@ -80,7 +87,7 @@ SPA para palpites da Copa do Mundo 2026. Os jogos vêm da [football-data.org](ht
 
 | Camada         | Responsabilidade                                                               |
 | -------------- | ------------------------------------------------------------------------------ |
-| **Models**     | Tipos de domínio (`Match`, `Team`, `Bet`, `Receipt`, `MatchBetEntry`)          |
+| **Models**     | Tipos de domínio (`Match`, `Team`, `Bet`, `Receipt`, `MatchBetEntry`, `ChampionBet`) |
 | **Services**   | HTTP para APIs (`matchService`, `betStorageService`, `rankingService`, `requestCache`, etc.) |
 | **ViewModels** | Estado, regras de apresentação e ações das telas                               |
 | **Views**      | Composição das telas                                                           |
@@ -100,9 +107,10 @@ O módulo `requestCache.ts` evita chamadas duplicadas à API enquanto o usuário
 | Palpites por jogo    | `bets:match:{id}`                       | 20s   |
 | Todos os palpites    | `bets:all`                              | 20s   |
 | Ranking              | `ranking:all`                           | 20s   |
+| Palpite de campeão   | `champion-bets:all`                     | 20s   |
 | Classificação / times| `football:competition:WC:…`             | 20s   |
 
-Requisições em andamento são compartilhadas (in-flight dedupe). Botões **Tentar novamente**, **Atualizar dados** e polling passam `{ force: true }` para ignorar o cache. Novo palpite invalida cache de palpites e ranking.
+Requisições em andamento são compartilhadas (in-flight dedupe). Botões **Tentar novamente**, **Atualizar dados** e polling passam `{ force: true }` para ignorar o cache. Novo palpite invalida cache de palpites, ranking e palpite de campeão.
 
 A home reconcilia status de jogos ao vivo e kickoff já passado ao recarregar ou voltar à aba.
 
@@ -113,9 +121,10 @@ bolao/
 ├── api/                    # Entradas das Serverless Functions (Vercel)
 │   ├── bets.js
 │   ├── ranking.js
+│   ├── champion-bets.js
+│   ├── ai-predict.js
 │   ├── football-proxy.js
 │   ├── sportsdb-proxy.js
-│   ├── apifootball-proxy.js
 │   ├── crests-proxy.js
 │   └── admin/
 │       ├── login.js
@@ -125,8 +134,13 @@ bolao/
 ├── server/lib/             # Handlers e lógica compartilhada das APIs
 │   ├── betDb.js
 │   ├── betsHttp.js
+│   ├── championBetDb.js
+│   ├── championBetsHttp.js
+│   ├── aiPredictHttp.js
+│   ├── aiToken.js
 │   ├── rankingDb.js
 │   ├── rankingHttp.js
+│   ├── rankingSync.js
 │   ├── adminHttp.js
 │   ├── adminAuth.js
 │   ├── adminLoginRateLimit.js
@@ -134,11 +148,18 @@ bolao/
 │   ├── ensureSchema.js
 │   ├── schemaBootstrap.js
 │   └── loadLocalEnv.js
+├── shared/                 # Regras de domínio compartilhadas (client + server)
+│   ├── betScoring.js
+│   ├── championBetScoring.js
+│   ├── championBetAcceptance.js
+│   └── …
 ├── db/
 │   └── schema.sql          # Schema de referência
 ├── scripts/
 │   ├── init-db.mjs         # Aplica schema no Neon
-│   └── sync-bet-scores.mjs # Recalcula pontuação dos palpites no banco
+│   ├── sync-bet-scores.mjs # Recalcula pontuação dos palpites no banco
+│   └── fetchWorldCupData.mjs # Exporta jogos da Copa para public/data/
+├── tests/                  # Testes (Node --test + Vitest)
 ├── public/
 │   └── ball-button.png     # Ícone do atalho flutuante Palpitar
 ├── src/
@@ -161,14 +182,17 @@ bolao/
 | ------------------------- | ------------------------------------------------------------------------ |
 | `/`                       | Jogos ao vivo, próximos e encerrados                                     |
 | `/classificacao`          | Tabelas de classificação por grupo                                       |
-| `/pontuacao`              | Ranking de pontuação: tabela ordenada por pontos, regras no botão **i** |
+| `/mata-a-mata`            | Chaveamento eliminatório da Copa                                         |
+| `/ranking`                | Ranking de pontuação: tabela ordenável, regras no botão **i**            |
+| `/pontuacao`              | Redireciona para `/ranking`                                              |
+| `/campeao`                | Palpite de campeão da Copa (seleção vencedora)                           |
 | `/participante/:personNameKey` | Palpites de um participante (acesso pelo ranking)                  |
 | `/times`                  | Lista de seleções                                                        |
 | `/times/:teamId`          | Detalhes da seleção e jogos                                              |
 | `/palpites`               | Todos os palpites registrados em tabela única (filtros + ordenação) |
 | `/jogo/:matchId/palpites` | Palpites de um jogo + detalhes da partida (gols, stats, escalações); atalho flutuante para palpitar |
 | `/palpite/:matchId`       | Formulário para registrar palpite (vencedor e/ou placar) + detalhes da partida |
-| `/comprovante/:receiptId` | Comprovante do palpite (UUID)                                            |
+| `/comprovante/:receiptId` | Comprovante do palpite (UUID) — jogos ou campeão                         |
 | `/admin/login`            | Login da área administrativa                                             |
 | `/admin/palpites`         | Gestão de palpites (visualizar e excluir)                                |
 | `/404`                    | Página não encontrada                                                    |
@@ -199,21 +223,24 @@ A tabela inicia ordenada pelo filtro **Ordem** (data do jogo), sem seta ativa no
 
 Colunas ordenáveis: **Jogo / Data**, **Partida**, **Participante** e **Resultado**. Rótulos longos na coluna **Palpite** são truncados com reticências (texto completo no tooltip).
 
-### Tela `/pontuacao`
+### Tela `/ranking`
 
-Exibe o ranking geral do bolão, ordenado por **Pontos** (maior para menor). Quando há palpites registrados, a tabela mostra:
+Exibe o ranking geral do bolão, ordenado por **Pontos** (maior para menor) por padrão. Quando há palpites registrados, a tabela mostra:
 
 | Coluna         | Descrição                                                                 |
 | -------------- | ------------------------------------------------------------------------- |
 | **#**          | Posição no ranking                                                        |
 | **Participante** | Nome no bolão (link para `/participante/:personNameKey`)                |
-| **Pontos**     | Soma total de pontos                                                      |
+| **Pontos**     | Soma total de pontos (inclui palpite de campeão quando resolvido)         |
 | **Exatos**     | Quantidade de palpites com placar exato                                   |
 | **Parciais**   | Quantidade de acertos parciais (placar previsto, diferença de até 3 gols) |
-| **Palpites**   | Total de palpites registrados                                             |
+| **Eficiência** | Taxa de acerto em jogos encerrados: (Exatos + Parciais) ÷ (Exatos + Parciais + Erros) |
+| **Palpites**   | Total de palpites registrados (jogos + campeão)                           |
 | **Aguardando** | Palpites em jogos ainda não encerrados                                    |
 
-Os três primeiros colocados recebem destaque visual na tabela. No cabeçalho da página, o botão **i** abre um modal com as **regras de pontuação** (Placar exato, Acerto parcial, Quem vence?, Errou). Quando disponível, aparece também a data **Atualizado em** com a última sincronização do ranking.
+Os três primeiros colocados recebem destaque visual quando a ordenação padrão por pontos está ativa. Cabeçalhos são clicáveis para ordenar por qualquer coluna. Valores de pontos, exatos, parciais, palpites e aguardando abrem um **modal de detalhes** com a lista de jogos correspondentes.
+
+No cabeçalho da página, o botão **i** abre um modal com as **regras de pontuação** e a explicação da eficiência. Quando disponível, aparece também a data **Atualizado em** com a última sincronização do ranking.
 
 Se ainda não houver palpites, a tela mostra o estado vazio. Em falha de rede ou limite da API, é possível **Tentar novamente**.
 
@@ -234,9 +261,36 @@ Cada bloco abaixo é um painel com cabeçalho clicável e seta para expandir/rec
 
 Eventos do histórico são traduzidos automaticamente (ex.: *Goal Disallowed* → *Gol anulado*). Substituições exibem setas ↑/↓, o jogador que entra em destaque e **Sai: jogador** na linha abaixo.
 
-> A chave **gratuita** (`123`) limita a timeline a 5 eventos por partida. Com chave **premium** (`THESPORTSDB_API_KEY`), a timeline completa fica disponível (até 100 eventos). Se a timeline ainda estiver incompleta, o app tenta fallback via `API_FOOTBALL_KEY` (opcional).
+> A chave **gratuita** (`123`) limita a timeline a 5 eventos por partida. Com chave **premium** (`THESPORTSDB_API_KEY`), a timeline completa fica disponível (até 100 eventos).
 
 Em jogos ao vivo, os detalhes são atualizados automaticamente a cada **60 segundos**. O botão **Atualizar dados** aparece apenas em jogos que ainda não encerraram.
+
+### Palpite de campeão (`/campeao`)
+
+| Campo              | Obrigatório | Descrição                                                                 |
+| ------------------ | ----------- | ------------------------------------------------------------------------- |
+| Nome no bolão      | Sim         | Identifica o participante (2–80 caracteres)                               |
+| Seleção campeã     | Sim         | Escolha entre as seleções da Copa                                         |
+
+Regras:
+
+- **Um palpite por participante** (mesmo `person_name_key`); ao registrar de novo com o mesmo nome, retorna o comprovante existente.
+- Prazo: até **24 horas antes** do kickoff da final.
+- Bloqueado após a final encerrada ou cancelada.
+- **20 pontos** se acertar o campeão (somados ao ranking após a final).
+- Comprovante visual e exportação PNG em `/comprovante/:receiptId`.
+
+### Mata-mata (`/mata-a-mata`)
+
+Chaveamento eliminatório montado a partir da classificação dos grupos e dos jogos da fase eliminatória (oitavas, quartas, semifinais, disputa de 3º lugar e final). Painel recolhível explica as regras de classificação e cruzamento dos grupos.
+
+### Sugestão de placar por IA
+
+Disponível em `/palpite/:matchId` e `/jogo/:matchId/palpites` para jogos **agendados**. O botão **Ver sugestão da IA** chama `GET /api/ai-predict?matchId={id}` (Google Gemini no servidor). A sugestão preenche apenas o placar; o vencedor continua opcional e independente.
+
+- Rate limit: 10 requisições por IP por hora.
+- Requer `GEMINI_API_KEY` (ou `GOOGLE_API_KEY`) no servidor.
+- Em localhost, apenas uma solicitação por página é permitida.
 
 ### Atalhos flutuantes (`/jogo/:matchId/palpites`)
 
@@ -261,20 +315,21 @@ Regras adicionais:
 
 - **Não há validação cruzada** entre vencedor e placar — você pode palpitar vitória do Brasil e placar 0×2, por exemplo.
 - Em jogos **ao vivo**, o placar informado não pode ser menor que o placar atual da partida (mínimo por time). Um aviso informa que o placar pode mudar durante o registro (legível no tema claro e escuro).
-- A sugestão por IA preenche apenas o placar; o vencedor continua opcional e independente.
+- A sugestão por IA preenche apenas o placar; o vencedor continua opcional e independente (ver seção **Sugestão de placar por IA**).
 - Se você já palpitou neste jogo com o mesmo nome, o formulário carrega o palpite anterior: placar já registrado fica bloqueado; dá para complementar só o que faltava.
 
 ### Regras de pontuação
 
-Regras aplicadas em `/pontuacao`, nas telas de palpites e no ranking (`bet_scores`). Os pontos **somam** quando o palpite inclui placar e vencedor:
+Regras aplicadas em `/ranking`, nas telas de palpites e no ranking (`bet_scores` + `champion_scores`). Os pontos **somam** quando o palpite inclui placar e vencedor:
 
 | Resultado       | Pontos | Critério                                                                 |
 | --------------- | ------ | ------------------------------------------------------------------------ |
 | Placar exato    | 10     | Acertou o placar completo (quando informado)                             |
 | Acerto parcial  | 3      | Acertou quem venceu ou o empate pelo placar previsto, com diferença de no máximo 3 gols no total |
 | Quem vence?     | 2      | Acertou mandante, visitante ou empate na opção escolhida no palpite      |
+| Campeão da Copa | 20     | Acertou a seleção vencedora da final (palpite em `/campeao`)             |
 | Errou           | 0      | Errou o resultado correspondente à opção informada                       |
-| Aguardando      | 0      | Jogo ainda não encerrado                                                 |
+| Aguardando      | 0      | Jogo ainda não encerrado (ou final pendente, no palpite de campeão)     |
 
 Exemplos:
 
@@ -282,6 +337,7 @@ Exemplos:
 - Final **6×0**, palpite **1×0** → **errou** (0 pts) — mandante venceu, mas a diferença total é de 5 gols (acima do limite de 3).
 - Final **2×1**, palpite só **vencedor: mandante** (sem placar) → **2 pts** se acertou quem venceu.
 - Final **2×1**, palpite **2×1** + **vencedor: mandante** → **12 pts** (10 + 2).
+- Palpite de **campeão** correto → **20 pts** (somados ao total do participante).
 - Palpite **vencedor: mandante** com placar **0×2** → pontua só pela opção “Quem vence?” (2 pts se acertou); o placar inconsistente não invalida o palpite.
 
 O ranking recalcula palpites ao consultar `/api/ranking`. Para forçar a sincronização manualmente:
@@ -308,6 +364,24 @@ A exclusão define `deleted_at` em `receipts`; os dados permanecem no banco, mas
 | ------ | -------------- | ---------------------------------------------------- |
 | `GET`  | `/api/ranking` | Ranking de pontuação calculado a partir dos palpites |
 
+## API de palpite de campeão (`/api/champion-bets`)
+
+| Método | Endpoint                          | Descrição                                      |
+| ------ | --------------------------------- | ---------------------------------------------- |
+| `GET`  | `/api/champion-bets`              | Lista palpites de campeão + metadados (prazo, final) |
+| `GET`  | `/api/champion-bets?receiptId={uuid}` | Busca comprovante de campeão               |
+| `POST` | `/api/champion-bets`              | Registra palpite de campeão + comprovante      |
+
+`POST` e listagem geral (`GET` sem `receiptId`) respeitam `BOLAO_ACCESS_TOKEN` quando configurado. Consulta por `receiptId` permanece pública.
+
+## API de sugestão por IA (`/api/ai-predict`)
+
+| Método | Endpoint                      | Descrição                                           |
+| ------ | ----------------------------- | --------------------------------------------------- |
+| `GET`  | `/api/ai-predict?matchId=123` | Sugestão de placar via Google Gemini (jogos agendados) |
+
+Requer `GEMINI_API_KEY` no servidor. Rate limit: 10 req/IP/hora.
+
 ## API administrativa (`/api/admin/*`)
 
 | Método   | Endpoint                           | Descrição                                     |
@@ -324,12 +398,15 @@ A sessão usa cookie `HttpOnly` assinado com HMAC. O login tem rate limit por IP
 
 ```sql
 receipts  (id, generated_at, deleted_at)
-bets      (receipt_id, match_id, home_score, away_score, winner_pick, person_name, match_snapshot, created_at)
+bets      (receipt_id, match_id, home_score, away_score, winner_pick, person_name, person_name_key, match_snapshot, created_at, updated_at)
+bet_scores (receipt_id, match_id, points, score_type, winner_points, …)
+champion_bets (receipt_id, team_id, team_snapshot, person_name, person_name_key, created_at, updated_at)
+champion_scores (receipt_id, final_match_id, points, score_type, computed_at)
 ```
 
 `home_score` e `away_score` são opcionais (`NULL` quando o participante palpitou só o vencedor). `winner_pick` é opcional quando o participante palpitou só o placar. `updated_at` registra quando o palpite foi complementado.
 
-O `match_snapshot` (JSONB) guarda o estado do jogo no momento do palpite para o comprovante não depender de nova consulta à API de futebol.
+O `match_snapshot` (JSONB) guarda o estado do jogo no momento do palpite para o comprovante não depender de nova consulta à API de futebol. Em palpites de campeão, `team_snapshot` guarda os dados da seleção escolhida.
 
 Na primeira conexão SQL da API, `getReadySql()` aplica automaticamente tabelas e índices (`ensureSchemaStructure`), com lock para evitar corrida entre requisições concorrentes. O script `npm run db:init` executa a migração completa, incluindo backfill e deduplicação de palpites legados.
 
@@ -338,6 +415,7 @@ Na primeira conexão SQL da API, `getReadySql()` aplica automaticamente tabelas 
 - Node.js 18+
 - Conta na [football-data.org](https://www.football-data.org/client/register) (plano Free inclui `WC`)
 - Chave na [TheSportsDB](https://www.thesportsdb.com/pricing) (premium recomendado para detalhes completos da partida)
+- Chave [Google Gemini](https://ai.google.dev/) (opcional; sugestão de placar por IA)
 - Projeto na [Vercel](https://vercel.com/) com **Neon Postgres** conectado (Storage → Marketplace → Neon)
 
 ## Instalação
@@ -374,8 +452,9 @@ UPSTASH_REDIS_REST_TOKEN=
 # Chave gratuita de teste: 123 (timeline limitada a 5 eventos)
 THESPORTSDB_API_KEY=sua_chave_premium_aqui
 
-# API-Football — fallback opcional quando a timeline da TheSportsDB estiver incompleta
-API_FOOTBALL_KEY=
+# Google Gemini — sugestão de placar por IA (opcional)
+GEMINI_API_KEY=sua_chave_gemini_aqui
+# GEMINI_MODEL=gemini-2.5-flash
 ```
 
 | Variável                   | Onde usar                                                  |
@@ -390,11 +469,13 @@ API_FOOTBALL_KEY=
 | `UPSTASH_REDIS_REST_URL`   | Redis Upstash para rate limit distribuído (opcional)       |
 | `UPSTASH_REDIS_REST_TOKEN` | Token REST do Upstash                                      |
 | `THESPORTSDB_API_KEY`      | Proxy `/api/sportsdb/*` (detalhes da partida)              |
-| `API_FOOTBALL_KEY`         | Proxy `/api/apifootball/*` (fallback opcional de gols)     |
+| `GEMINI_API_KEY`           | Proxy `/api/ai-predict` (sugestão de placar por IA)        |
+| `GOOGLE_API_KEY`           | Alternativa a `GEMINI_API_KEY`                             |
+| `GEMINI_MODEL`             | Modelo Gemini (padrão: `gemini-2.5-flash`)                 |
 
 > O token da football-data.org **nunca** vai para o bundle do React. Em produção, o proxy serverless injeta o header `X-Auth-Token`.
 
-> As chaves da TheSportsDB e API-Football ficam **apenas no servidor** (`.env` local / variáveis da Vercel).
+> As chaves da TheSportsDB e Gemini ficam **apenas no servidor** (`.env` local / variáveis da Vercel).
 
 > Sem `ADMIN_PASSWORD` e `ADMIN_SESSION_SECRET`, a área admin fica desabilitada (503 no login).
 
@@ -434,14 +515,15 @@ Acesse `http://localhost:5173` após `npm run dev`.
    - `ADMIN_SESSION_SECRET`
    - `BOLAO_ACCESS_TOKEN` e `VITE_BOLAO_ACCESS_TOKEN` (recomendado)
    - `THESPORTSDB_API_KEY` (detalhes da partida)
-   - `API_FOOTBALL_KEY` (opcional; fallback de gols)
+   - `GEMINI_API_KEY` (sugestão de placar por IA; opcional)
    - `UPSTASH_REDIS_REST_URL` e `UPSTASH_REDIS_REST_TOKEN` (recomendado)
 4. Faça deploy — as rotas em `api/` e o `vercel.json` são aplicados automaticamente
 5. Na primeira requisição à API de palpites ou ranking, as **tabelas e índices** são criados automaticamente (`ensureSchemaStructure`). Para migração completa de dados legados (backfill de `person_name_key`, deduplicação), rode `npm run db:init` localmente uma vez após o deploy
 
 O `vercel.json` configura:
 
-- `/api/bets`, `/api/ranking`, `/api/admin/*`, `/api/football/*`, `/api/sportsdb/*`, `/api/apifootball/*`, `/api/crests/*` → Serverless Functions
+- `/api/bets`, `/api/ranking`, `/api/champion-bets`, `/api/ai-predict`, `/api/admin/*`, `/api/football/*`, `/api/sportsdb/*`, `/api/crests/*` → Serverless Functions
+- Headers de segurança (CSP, HSTS, X-Frame-Options, etc.) e `Cache-Control: no-store` nas APIs
 - Demais rotas → SPA (`dist/index.html`)
 
 ## Proxy football-data.org
@@ -475,29 +557,22 @@ Endpoints permitidos no proxy:
 
 A chave vai na URL (`/api/v1/json/{key}/...`). Use `THESPORTSDB_API_KEY` no servidor; o valor padrão `123` funciona para testes, mas limita a timeline a 5 eventos.
 
-## Proxy API-Football (opcional)
-
-```
-Browser  →  GET /api/apifootball/fixtures/events?fixture=1489381
-Servidor →  GET https://v3.football.api-sports.io/fixtures/events?fixture=1489381
-            Header: x-apisports-key
-```
-
-Usado como **fallback** quando a timeline da TheSportsDB traz menos gols que o placar final. Requer `API_FOOTBALL_KEY` (ou `APISPORTS_KEY`). Conta gratuita em [api-football.com](https://www.api-football.com/) (100 req/dia).
-
-Somente `fixtures/events` com `fixture` numérico é permitido.
-
 ## Scripts npm
 
-| Script             | Descrição                                                                                     |
-| ------------------ | --------------------------------------------------------------------------------------------- |
-| `npm run dev`      | Dev server Vite com proxy de APIs                                                             |
-| `npm run dev:full` | `vercel dev` (ambiente completo)                                                              |
-| `npm run build`    | TypeScript + build para `dist/`                                                               |
-| `npm run preview`  | Preview do build estático (`dist/`); sem APIs serverless — use `dev:full` para teste completo |
+| Script                | Descrição                                                                                     |
+| --------------------- | --------------------------------------------------------------------------------------------- |
+| `npm run dev`         | Dev server Vite com proxy de APIs                                                             |
+| `npm run dev:full`    | `vercel dev` (ambiente completo)                                                              |
+| `npm run build`       | TypeScript + build para `dist/`                                                               |
+| `npm run preview`     | Preview do build estático (`dist/`); sem APIs serverless — use `dev:full` para teste completo |
 | `npm run db:init`     | Migração completa no Neon (estrutura + backfill e deduplicação de dados legados)              |
 | `npm run scores:sync` | Recalcula `bet_scores` no Neon após mudança nas regras de pontuação                           |
+| `npm run test`        | Testes do servidor (Node) + cliente (Vitest)                                                  |
+| `npm run test:server` | Testes das APIs e regras compartilhadas (`tests/*.test.js`)                                   |
+| `npm run test:client` | Testes do frontend (Vitest)                                                                   |
 | `npm run lint`        | ESLint                                                                                        |
+| `npm run format`      | Prettier (formata arquivos)                                                                   |
+| `npm run format:check`| Verifica formatação Prettier                                                                  |
 
 ## Segurança
 
@@ -506,8 +581,7 @@ Somente `fixtures/events` com `fixture` numérico é permitido.
 - Validação de entrada na API (IDs, placares opcionais, vencedor opcional, nome, tamanho do payload)
 - **POST /api/bets** valida status e horário do jogo diretamente na football-data.org (snapshot do client não é confiável)
 - Proxy `/api/football/*` e `/api/sportsdb/*` com **allowlist** de endpoints (só leitura GET)
-- Proxy `/api/apifootball/*` opcional, também com allowlist
-- Rate limit por IP no proxy football-data, na **listagem geral** de palpites (`GET /api/bets` sem filtros) e no login admin; **POST** de palpite não tem rate limit dedicado
+- Rate limit por IP no proxy football-data, na **listagem geral** de palpites (`GET /api/bets` sem filtros), listagem de palpite de campeão, ranking, sugestão por IA e no login admin; **POST** de palpite não tem rate limit dedicado
 - Com Upstash Redis configurado, os limites funcionam de forma distribuída na Vercel
 - Token opcional `BOLAO_ACCESS_TOKEN` protege registro e listagem completa de palpites
 - Comprovantes usam UUID v4
