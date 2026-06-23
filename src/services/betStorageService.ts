@@ -42,6 +42,7 @@ export async function saveBetAndReceipt(bet: Bet, receipt: Receipt): Promise<str
 
   const response = await noStoreFetch(BETS_API_URL, {
     method: 'POST',
+    credentials: 'include',
     headers: buildHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify({ bet: betPayload, receipt }),
   })

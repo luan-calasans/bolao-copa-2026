@@ -15,6 +15,7 @@ import { ErrorState } from '../components/ui/ErrorState'
 import { Skeleton } from '../components/ui/Skeleton'
 import { useBetViewModel } from '../viewmodels/useBetViewModel'
 import { getTeamDisplayName } from '../utils/teamDisplay'
+import { useParticipant } from '../hooks/useParticipant'
 
 interface BetViewProps {
   matchId: number
@@ -22,7 +23,9 @@ interface BetViewProps {
 
 export function BetView({ matchId }: BetViewProps) {
   const vm = useBetViewModel(matchId)
+  const { participant, isAdmin } = useParticipant()
   const [isAiModalOpen, setIsAiModalOpen] = useState(false)
+  const isPersonNameLocked = Boolean(participant) && !isAdmin
 
   const homeName = vm.match
     ? getTeamDisplayName(vm.match.homeTeam.shortName, vm.match.homeTeam.name)
@@ -79,7 +82,11 @@ export function BetView({ matchId }: BetViewProps) {
         backTo={`/jogo/${matchId}/palpites`}
         backLabel="Voltar ao jogo"
         title={vm.match ? `${homeName} x ${awayName}` : 'Palpitar'}
-        description="Informe seu nome e quem vence e/ou o placar previsto. As opções podem ser diferentes entre si."
+        description={
+          isPersonNameLocked
+            ? 'Escolha quem vence e/ou o placar previsto. As opções podem ser diferentes entre si.'
+            : 'Informe seu nome e quem vence e/ou o placar previsto. As opções podem ser diferentes entre si.'
+        }
       />
 
       <AiPredictionModal
@@ -161,6 +168,7 @@ export function BetView({ matchId }: BetViewProps) {
                 complementMode={vm.complementMode}
                 isScoreLocked={vm.isScoreLocked}
                 isWinnerLocked={vm.isWinnerLocked}
+                isPersonNameLocked={isPersonNameLocked}
                 onPersonNameChange={vm.setPersonName}
                 onWinnerPickChange={vm.setWinnerPick}
                 onHomeScoreChange={vm.setHomeScore}

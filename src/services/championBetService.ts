@@ -61,6 +61,7 @@ export async function saveChampionBetAndReceipt(
 ): Promise<string> {
   const response = await noStoreFetch(CHAMPION_BETS_API_URL, {
     method: 'POST',
+    credentials: 'include',
     headers: buildHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify({ bet, receipt }),
   })

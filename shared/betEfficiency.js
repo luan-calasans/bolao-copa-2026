@@ -1,8 +1,3 @@
-/**
- * Taxa de acerto entre jogos já encerrados:
- * (exatos + parciais) / (exatos + parciais + erros) × 100
- * Jogos em "aguardando" não entram no cálculo.
- */
 export function computeHitRateEfficiency(exactHits, partialHits, missedHits) {
   const decided = exactHits + partialHits + missedHits
   if (decided === 0) return null

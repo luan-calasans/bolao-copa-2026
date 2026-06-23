@@ -23,6 +23,7 @@ interface BetFormProps {
   complementMode?: 'none' | 'add-winner' | 'add-score' | 'complete'
   isScoreLocked?: boolean
   isWinnerLocked?: boolean
+  isPersonNameLocked?: boolean
   onPersonNameChange: (value: string) => void
   onWinnerPickChange: (value: WinnerPick | null) => void
   onHomeScoreChange: (value: number) => void
@@ -46,6 +47,7 @@ export function BetForm({
   complementMode = 'none',
   isScoreLocked = false,
   isWinnerLocked = false,
+  isPersonNameLocked = false,
   onPersonNameChange,
   onWinnerPickChange,
   onHomeScoreChange,
@@ -105,23 +107,32 @@ export function BetForm({
         <label htmlFor="person-name" className="mb-2 block text-sm font-medium text-slate-300">
           Seu nome no bolão <span className="text-red-400">*</span>
         </label>
-        <input
-          id="person-name"
-          type="text"
-          value={personName}
-          onChange={(event) => handlePersonNameChange(event.target.value)}
-          placeholder="Digite seu nome"
-          maxLength={80}
-          autoComplete="name"
-          required
-          aria-invalid={showNameDigitsWarning}
-          aria-describedby={showNameDigitsWarning ? 'person-name-digits-error' : undefined}
-          className={`w-full rounded-xl border bg-pitch-900/80 px-4 py-3 text-base text-white placeholder:text-slate-500 outline-none transition focus:ring-1 ${
-            showNameDigitsWarning
-              ? 'border-red-500/60 focus:border-red-500/60 focus:ring-red-500/30'
-              : 'border-slate-600/50 focus:border-gold-500/60 focus:ring-gold-500/30'
-          }`}
-        />
+        {isPersonNameLocked ? (
+          <p
+            id="person-name"
+            className="w-full rounded-xl border border-slate-600/50 bg-pitch-900/80 px-4 py-3 text-base text-white"
+          >
+            {personName}
+          </p>
+        ) : (
+          <input
+            id="person-name"
+            type="text"
+            value={personName}
+            onChange={(event) => handlePersonNameChange(event.target.value)}
+            placeholder="Digite seu nome"
+            maxLength={80}
+            autoComplete="name"
+            required
+            aria-invalid={showNameDigitsWarning}
+            aria-describedby={showNameDigitsWarning ? 'person-name-digits-error' : undefined}
+            className={`w-full rounded-xl border bg-pitch-900/80 px-4 py-3 text-base text-white placeholder:text-slate-500 outline-none transition focus:ring-1 ${
+              showNameDigitsWarning
+                ? 'border-red-500/60 focus:border-red-500/60 focus:ring-red-500/30'
+                : 'border-slate-600/50 focus:border-gold-500/60 focus:ring-gold-500/30'
+            }`}
+          />
+        )}
         {showNameDigitsWarning && (
           <p id="person-name-digits-error" className="mt-2 text-sm text-red-400">
             {PERSON_NAME_NO_DIGITS_MESSAGE}

@@ -10,6 +10,7 @@ interface PageHeaderProps {
   titleAction?: ReactNode
   children?: ReactNode
   showBack?: boolean
+  centered?: boolean
 }
 
 export function PageHeader({
@@ -21,13 +22,26 @@ export function PageHeader({
   titleAction,
   children,
   showBack = true,
+  centered = false,
 }: PageHeaderProps) {
   return (
-    <div className="mb-8">
-      {showBack && <BackLink to={backTo}>{backLabel}</BackLink>}
-      <div className={`flex items-start justify-between gap-4 ${showBack ? 'mt-4' : ''}`}>
-        <div className="min-w-0">
-          <div className="flex min-w-0 flex-wrap items-center gap-2.5">
+    <div className={`mb-8 ${centered ? 'text-center' : ''}`}>
+      {showBack && (
+        <div className={centered ? 'flex justify-center' : undefined}>
+          <BackLink to={backTo}>{backLabel}</BackLink>
+        </div>
+      )}
+      <div
+        className={`flex items-start gap-4 ${showBack ? 'mt-4' : ''} ${
+          centered ? 'justify-center' : 'justify-between'
+        }`}
+      >
+        <div className={`min-w-0 ${centered ? 'flex flex-col items-center' : ''}`}>
+          <div
+            className={`flex min-w-0 flex-wrap items-center gap-2.5 ${
+              centered ? 'justify-center' : ''
+            }`}
+          >
             <h1 className="text-2xl font-bold text-white sm:text-3xl">{title}</h1>
             {titleBadge}
           </div>

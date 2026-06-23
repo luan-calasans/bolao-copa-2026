@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { ApiTeamDetail } from '../models/api.types'
 import type { ChampionBetEntry, ChampionBetMeta } from '../models/championBet'
@@ -12,6 +12,7 @@ import { normalizePersonNameKey } from '../utils/participantKey'
 import { getTeamDisplayName } from '../utils/teamDisplay'
 import { receiptPath } from '../routes/routePaths'
 import { formatPersonNameForStorage } from '../../shared/personNameFormat.js'
+import { useParticipant } from '../hooks/useParticipant'
 
 interface ChampionBetData {
   teams: ApiTeamDetail[]
@@ -62,6 +63,7 @@ export interface ChampionBetViewModelActions {
 
 export function useChampionBetViewModel(): ChampionBetViewModelState & ChampionBetViewModelActions {
   const navigate = useNavigate()
+  const { participant } = useParticipant()
   const [personName, setPersonNameState] = useState('')
   const [selectedTeamId, setSelectedTeamId] = useState<number | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -92,6 +94,11 @@ export function useChampionBetViewModel(): ChampionBetViewModelState & ChampionB
       hasValidPersonName(personName) ? findExistingChampionBetForName(bets, personName) : null,
     [personName, bets],
   )
+
+  useEffect(() => {
+    if (!participant?.personName) return
+    setPersonNameState(participant.personName)
+  }, [participant?.personName])
 
   const canPlaceBet = meta?.acceptingBets === true && existingBet == null
   const betBlockedMessage = existingBet

@@ -31,6 +31,8 @@ import {
   parseBetPayload,
 } from './validateInput.js'
 import { isPostgresConfigError, PUBLIC_MESSAGES } from './userFacingErrors.js'
+import { requireBettingAuth } from './bettingAuth.js'
+import { normalizePersonNameKey } from './participantKey.js'
 
 const MAX_BODY_BYTES = 65_536
 
@@ -159,9 +161,30 @@ export async function handleBetsRequest(req, res) {
     }
 
     if (req.method === 'POST') {
+      const auth = await requireBettingAuth(req, res)
+
+      if (!auth) {
+        return
+      }
+
       const body = await readJsonBody(req, MAX_BODY_BYTES)
 
       const { receipt, bet } = parseBetPayload(body)
+
+      if (auth.role === 'participant') {
+        const clientKey = normalizePersonNameKey(bet.personName)
+
+        if (clientKey && clientKey !== auth.personNameKey) {
+          sendJson(res, 403, {
+            message: 'O nome do palpite deve corresponder ao seu login.',
+            code: 'PARTICIPANT_NAME_MISMATCH',
+          })
+
+          return
+        }
+
+        bet.personName = auth.personName
+      }
 
       const existingReceiptId = await tryResolveExistingBet(receipt.id, bet)
 

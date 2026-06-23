@@ -44,6 +44,13 @@ export function resolveApiErrorMessage(
   switch (status) {
     case 401:
     case 403:
+      if (
+        serverMessage &&
+        !isTechnicalErrorMessage(serverMessage) &&
+        (context === 'bets' || context === 'generic')
+      ) {
+        return serverMessage
+      }
       if (context === 'bets') {
         return 'Não foi possível carregar os palpites no momento.'
       }

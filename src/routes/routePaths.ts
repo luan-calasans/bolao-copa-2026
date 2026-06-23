@@ -11,6 +11,8 @@ export const APP_ROUTES = {
   bet: '/palpite/:matchId',
   championBet: '/campeao',
   receipt: '/comprovante/:receiptId',
+  participantLogin: '/entrar',
+  myBets: '/meus-palpites',
   adminLogin: '/admin/login',
   adminBets: '/admin/palpites',
   notFound: '/404',

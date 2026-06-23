@@ -1,6 +1,7 @@
 import { lazy, Suspense, type ReactNode } from 'react'
 import { Navigate, Route, Routes, useParams } from 'react-router-dom'
 import { AdminRoute } from '../components/auth/AdminRoute'
+import { ParticipantRoute as ParticipantAuthRoute } from '../components/auth/ParticipantRoute'
 import { LoadingState } from '../components/ui/LoadingState'
 import { HomeView } from '../views/HomeView'
 import { APP_ROUTES } from './routePaths'
@@ -39,6 +40,14 @@ const ParticipantBetsView = lazy(() =>
   import('../views/ParticipantBetsView').then((module) => ({
     default: module.ParticipantBetsView,
   })),
+)
+const ParticipantLoginView = lazy(() =>
+  import('../views/ParticipantLoginView').then((module) => ({
+    default: module.ParticipantLoginView,
+  })),
+)
+const MyBetsView = lazy(() =>
+  import('../views/MyBetsView').then((module) => ({ default: module.MyBetsView })),
 )
 const AdminLoginView = lazy(() =>
   import('../views/AdminLoginView').then((module) => ({ default: module.AdminLoginView })),
@@ -79,7 +88,9 @@ function BetRoute() {
 
   return (
     <Suspense fallback={<RouteFallback />}>
-      <BetView matchId={id} />
+      <ParticipantAuthRoute>
+        <BetView matchId={id} />
+      </ParticipantAuthRoute>
     </Suspense>
   )
 }
@@ -113,7 +124,7 @@ function TeamRoute() {
   )
 }
 
-function ParticipantRoute() {
+function ParticipantProfileRoute() {
   const { personNameKey } = useParams<{ personNameKey: string }>()
 
   if (!personNameKey) {
@@ -160,7 +171,7 @@ export function AppRoutes() {
         }
       />
       <Route path="/pontuacao" element={<Navigate to={APP_ROUTES.ranking} replace />} />
-      <Route path={APP_ROUTES.participant} element={<ParticipantRoute />} />
+      <Route path={APP_ROUTES.participant} element={<ParticipantProfileRoute />} />
       <Route
         path={APP_ROUTES.teams}
         element={
@@ -181,14 +192,32 @@ export function AppRoutes() {
       <Route
         path={APP_ROUTES.championBet}
         element={
-          <LazyRoute>
-            <ChampionBetView />
-          </LazyRoute>
+          <ParticipantAuthRoute>
+            <LazyRoute>
+              <ChampionBetView />
+            </LazyRoute>
+          </ParticipantAuthRoute>
         }
       />
       <Route path={APP_ROUTES.matchBets} element={<MatchBetsRoute />} />
       <Route path={APP_ROUTES.bet} element={<BetRoute />} />
       <Route path={APP_ROUTES.receipt} element={<ReceiptRoute />} />
+      <Route
+        path={APP_ROUTES.participantLogin}
+        element={
+          <LazyRoute>
+            <ParticipantLoginView />
+          </LazyRoute>
+        }
+      />
+      <Route
+        path={APP_ROUTES.myBets}
+        element={
+          <LazyRoute>
+            <MyBetsView />
+          </LazyRoute>
+        }
+      />
       <Route
         path={APP_ROUTES.adminLogin}
         element={

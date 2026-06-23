@@ -209,6 +209,28 @@ async function createSchemaStructure(sql) {
       computed_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )
   `
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS participants (
+      id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+      person_name      TEXT NOT NULL,
+      person_name_key  TEXT NOT NULL,
+      created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `
+
+  await sql`
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_participants_person_name_key
+    ON participants (person_name_key)
+  `
+
+  await sql`ALTER TABLE participants ADD COLUMN IF NOT EXISTS email TEXT`
+  await sql`ALTER TABLE participants ADD COLUMN IF NOT EXISTS password_hash TEXT`
+  await sql`
+    CREATE UNIQUE INDEX IF NOT EXISTS idx_participants_email
+    ON participants (email)
+    WHERE email IS NOT NULL
+  `
 }
 
 /** Cria tabelas e índices idempotentes — seguro para rodar na primeira requisição da API. */

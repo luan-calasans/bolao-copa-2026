@@ -6,9 +6,12 @@ import { EmptyState } from '../components/ui/EmptyState'
 import { ErrorState } from '../components/ui/ErrorState'
 import { useChampionBetViewModel } from '../viewmodels/useChampionBetViewModel'
 import { CHAMPION_BET_POINTS, formatChampionDeadline } from '../utils/championBet'
+import { useParticipant } from '../hooks/useParticipant'
 
 export function ChampionBetView() {
   const vm = useChampionBetViewModel()
+  const { participant, isAdmin } = useParticipant()
+  const isPersonNameLocked = Boolean(participant) && !isAdmin
   const deadlineLabel = formatChampionDeadline(vm.meta?.deadline ?? null)
 
   return (
@@ -48,6 +51,7 @@ export function ChampionBetView() {
           onPersonNameChange={vm.setPersonName}
           onTeamSelect={vm.setSelectedTeamId}
           onConfirm={vm.confirmBet}
+          isPersonNameLocked={isPersonNameLocked}
         />
       )}
     </AppLayout>

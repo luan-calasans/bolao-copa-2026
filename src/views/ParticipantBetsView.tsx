@@ -15,9 +15,19 @@ import type { BetResultFilter } from '../utils/betListFilters'
 
 interface ParticipantBetsViewProps {
   personNameKey: string
+  pageTitle?: string
+  backTo?: string
+  backLabel?: string
+  description?: string
 }
 
-export function ParticipantBetsView({ personNameKey }: ParticipantBetsViewProps) {
+export function ParticipantBetsView({
+  personNameKey,
+  pageTitle,
+  backTo = APP_ROUTES.ranking,
+  backLabel = 'Voltar ao ranking',
+  description = 'Palpites registrados por este participante, incluindo o palpite de campeão.',
+}: ParticipantBetsViewProps) {
   const vm = useParticipantBetsViewModel(personNameKey)
   const [resultFilter, setResultFilter] = useState<BetResultFilter>('all')
 
@@ -28,15 +38,15 @@ export function ParticipantBetsView({ personNameKey }: ParticipantBetsViewProps)
   return (
     <AppLayout>
       <PageHeader
-        backTo={APP_ROUTES.ranking}
-        backLabel="Voltar ao ranking"
-        title={vm.displayName}
+        backTo={backTo}
+        backLabel={backLabel}
+        title={pageTitle ?? vm.displayName}
         titleBadge={
           vm.rankingPosition != null ? (
             <RankingPlacementBadge position={vm.rankingPosition} />
           ) : undefined
         }
-        description="Palpites registrados por este participante, incluindo o palpite de campeão."
+        description={description}
       >
         {vm.isLoading && <AllBetsStatsSkeleton />}
         {!vm.isLoading && !vm.error && !vm.isEmpty && (

@@ -38,6 +38,13 @@ SPA para palpites da Copa do Mundo 2026. Os jogos vêm da [football-data.org](ht
   - Atualização automática a cada 60s em `/jogo/:matchId/palpites` e `/palpite/:matchId` (dados do jogo e palpites); detalhes TheSportsDB seguem a mesma cadência em jogos ao vivo ou encerrados
   - Botão **Atualizar dados** só enquanto o jogo não encerrou; botão **Palpitar** no cabeçalho e atalho flutuante (bola) quando o jogo aceita palpites
 - Área administrativa com login por senha para visualizar e excluir palpites
+- **Autenticação de participantes** com e-mail e senha: cadastro, login e vínculo de palpites legados
+- Palpitar em `/palpite/:matchId` e `/campeao` exige login de participante (admin mantém acesso total)
+- Tela de entrada em `/entrar` com três modos: **Já tenho cadastro**, **Criar cadastro** e **Já palpitei** (vincular nome com palpites anteriores)
+- Página **Meus palpites** em `/meus-palpites` para o participante logado
+- Ícone de login/saída no cabeçalho (verde suave para entrar; vermelho suave para sair)
+- Nome no bolão travado no formulário quando o participante está logado; o servidor força o nome da sessão no `POST`
+- Rate limit no login de participante: bloqueio de **5 minutos** após **3** tentativas incorretas por IP
 - Exclusão de palpites com modal de confirmação (soft delete no banco)
 - Layout responsivo (mobile, tablet, desktop); tabela de palpites com cards no mobile
 - Vercel Analytics e Speed Insights (carregados após idle, em produção)
@@ -63,13 +70,13 @@ SPA para palpites da Copa do Mundo 2026. Os jogos vêm da [football-data.org](ht
 │   React     │────▶│  /api/bets       │────▶│  Neon Postgres      │
 │   (browser) │     │  /api/ranking    │     │  receipts + bets    │
 └─────────────┘     │  /api/champion-* │     │  champion_bets      │
-       │            │  /api/admin/*    │     └─────────────────────┘
-       ▼            │  /api/ai-predict │
-┌──────────────────┐└──────────────────┘
-│ /api/football/*  │────▶│  football-data.org  │
-│ /api/crests/*    │     │  (token no servidor)│
-└──────────────────┘     └─────────────────────┘
-       │
+       │            │  /api/participant│     │  participants       │
+       ▼            │  /api/admin/*    │     └─────────────────────┘
+┌──────────────────┐│  /api/ai-predict │
+│ /api/football/*  │└──────────────────┘
+│ /api/crests/*    │────▶│  football-data.org  │
+└──────────────────┘     │  (token no servidor)│
+       │                 └─────────────────────┘
        ▼
 ┌──────────────────┐     ┌─────────────────────┐
 │ /api/sportsdb/*  │────▶│  TheSportsDB v1     │
@@ -88,7 +95,7 @@ SPA para palpites da Copa do Mundo 2026. Os jogos vêm da [football-data.org](ht
 | Camada         | Responsabilidade                                                               |
 | -------------- | ------------------------------------------------------------------------------ |
 | **Models**     | Tipos de domínio (`Match`, `Team`, `Bet`, `Receipt`, `MatchBetEntry`, `ChampionBet`) |
-| **Services**   | HTTP para APIs (`matchService`, `betStorageService`, `rankingService`, `requestCache`, etc.) |
+| **Services**   | HTTP para APIs (`matchService`, `betStorageService`, `rankingService`, `participantAuthService`, `requestCache`, etc.) |
 | **ViewModels** | Estado, regras de apresentação e ações das telas                               |
 | **Views**      | Composição das telas                                                           |
 | **Components** | UI reutilizável                                                                |
@@ -126,6 +133,14 @@ bolao/
 │   ├── football-proxy.js
 │   ├── sportsdb-proxy.js
 │   ├── crests-proxy.js
+│   ├── participant/
+│   │   ├── login.js
+│   │   ├── register.js
+│   │   ├── claim.js
+│   │   ├── logout.js
+│   │   ├── session.js
+│   │   ├── unclaimed.js
+│   │   └── check-name.js
 │   └── admin/
 │       ├── login.js
 │       ├── logout.js
@@ -144,6 +159,12 @@ bolao/
 │   ├── adminHttp.js
 │   ├── adminAuth.js
 │   ├── adminLoginRateLimit.js
+│   ├── participantAuth.js
+│   ├── participantDb.js
+│   ├── participantHttp.js
+│   ├── participantLoginRateLimit.js
+│   ├── participantPassword.js
+│   ├── bettingAuth.js
 │   ├── validateInput.js
 │   ├── ensureSchema.js
 │   ├── schemaBootstrap.js
@@ -152,6 +173,7 @@ bolao/
 │   ├── betScoring.js
 │   ├── championBetScoring.js
 │   ├── championBetAcceptance.js
+│   ├── participantCredentials.js
 │   └── …
 ├── db/
 │   └── schema.sql          # Schema de referência
@@ -185,13 +207,15 @@ bolao/
 | `/mata-a-mata`            | Chaveamento eliminatório da Copa                                         |
 | `/ranking`                | Ranking de pontuação: tabela ordenável, regras no botão **i**            |
 | `/pontuacao`              | Redireciona para `/ranking`                                              |
-| `/campeao`                | Palpite de campeão da Copa (seleção vencedora)                           |
+| `/campeao`                | Palpite de campeão da Copa (requer login de participante)                |
+| `/entrar`                 | Login, cadastro ou vínculo de palpites legados                           |
+| `/meus-palpites`          | Palpites do participante logado                                          |
 | `/participante/:personNameKey` | Palpites de um participante (acesso pelo ranking)                  |
 | `/times`                  | Lista de seleções                                                        |
 | `/times/:teamId`          | Detalhes da seleção e jogos                                              |
 | `/palpites`               | Todos os palpites registrados em tabela única (filtros + ordenação) |
 | `/jogo/:matchId/palpites` | Palpites de um jogo + detalhes da partida (gols, stats, escalações); atalho flutuante para palpitar |
-| `/palpite/:matchId`       | Formulário para registrar palpite (vencedor e/ou placar) + detalhes da partida |
+| `/palpite/:matchId`       | Formulário para registrar palpite + detalhes da partida (requer login)   |
 | `/comprovante/:receiptId` | Comprovante do palpite (UUID) — jogos ou campeão                         |
 | `/admin/login`            | Login da área administrativa                                             |
 | `/admin/palpites`         | Gestão de palpites (visualizar e excluir)                                |
@@ -269,8 +293,10 @@ Em jogos ao vivo, os detalhes são atualizados automaticamente a cada **60 segun
 
 | Campo              | Obrigatório | Descrição                                                                 |
 | ------------------ | ----------- | ------------------------------------------------------------------------- |
-| Nome no bolão      | Sim         | Identifica o participante (2–80 caracteres)                               |
+| Nome no bolão      | Sim*        | Preenchido automaticamente quando logado; admin pode informar qualquer nome |
 | Seleção campeã     | Sim         | Escolha entre as seleções da Copa                                         |
+
+\* Participante autenticado não pode alterar o nome; o servidor usa o nome da sessão.
 
 Regras:
 
@@ -303,13 +329,17 @@ O atalho da bola **não** aparece na home nem nas demais rotas.
 
 ### Formulário de palpite (`/palpite/:matchId`)
 
+Requer **login de participante** (ou sessão admin). Visitantes são redirecionados para `/entrar`.
+
 | Campo              | Obrigatório | Descrição                                                                 |
 | ------------------ | ----------- | ------------------------------------------------------------------------- |
-| Nome no bolão      | Sim         | Identifica o participante (2–80 caracteres)                               |
-| Quem vence?        | Não*        | Mandante, empate ou visitante; clique de novo para desmarcar              |
-| Placar previsto    | Não*        | Informe com **+** em qualquer time; use **Limpar placar** para remover    |
+| Nome no bolão      | Sim*        | Preenchido automaticamente quando logado; admin pode informar qualquer nome |
+| Quem vence?        | Não**       | Mandante, empate ou visitante; clique de novo para desmarcar              |
+| Placar previsto    | Não**       | Informe com **+** em qualquer time; use **Limpar placar** para remover    |
 
-\* É obrigatório preencher **pelo menos um** entre “Quem vence?” e placar (ou os dois).
+\* Participante autenticado não pode alterar o nome; o servidor força o nome da sessão no `POST`.
+
+\** É obrigatório preencher **pelo menos um** entre “Quem vence?” e placar (ou os dois).
 
 Regras adicionais:
 
@@ -346,6 +376,40 @@ O ranking recalcula palpites ao consultar `/api/ranking`. Para forçar a sincron
 npm run scores:sync
 ```
 
+### Autenticação de participantes
+
+Participantes se identificam com **e-mail** e **senha** (mínimo de 8 caracteres, hash scrypt no servidor). A sessão usa cookie `participant_session` (`HttpOnly`, `SameSite=Strict`, assinado com HMAC).
+
+#### Tela `/entrar`
+
+| Modo                 | Uso                                                                 |
+| -------------------- | ------------------------------------------------------------------- |
+| **Já tenho cadastro** | Login com e-mail e senha                                           |
+| **Criar cadastro**   | Nome no bolão + e-mail + senha (sem palpites legados no nome)       |
+| **Já palpitei**      | Vincula palpites anteriores: escolhe o nome na lista + e-mail + senha |
+
+No modo **Já palpitei**, o dropdown lista apenas participantes com palpites legados ainda sem conta (e-mail/senha). Após o vínculo, os palpites antigos permanecem associados ao mesmo `person_name_key`.
+
+#### Cabeçalho
+
+- **Não logado:** ícone de entrar (fundo verde suave) → `/entrar`
+- **Logado:** ícone de perfil (meus palpites) + ícone de sair (fundo vermelho suave)
+
+#### Proteção de rotas
+
+| Rota / ação              | Exige login de participante |
+| ------------------------ | --------------------------- |
+| `POST /api/bets`         | Sim (ou sessão admin)       |
+| `POST /api/champion-bets`| Sim (ou sessão admin)       |
+| `/palpite/:matchId`      | Sim (ou sessão admin)       |
+| `/campeao`               | Sim (ou sessão admin)       |
+| `/meus-palpites`         | Sim                         |
+| Leitura pública (ranking, palpites, comprovantes) | Não |
+
+#### Rate limit no login
+
+Após **3** tentativas incorretas de e-mail/senha no modo **Já tenho cadastro**, o IP fica bloqueado por **5 minutos** (mesmo padrão do login admin). A API informa quantas tentativas restam antes do bloqueio.
+
 ## API de palpites (`/api/bets`)
 
 | Método   | Endpoint                     | Descrição                             |
@@ -353,7 +417,7 @@ npm run scores:sync
 | `GET`    | `/api/bets`                  | Lista todos os palpites ativos        |
 | `GET`    | `/api/bets?matchId=123`      | Palpites de um jogo                   |
 | `GET`    | `/api/bets?receiptId={uuid}` | Busca comprovante                     |
-| `POST`   | `/api/bets`                  | Registra palpite + comprovante        |
+| `POST`   | `/api/bets`                  | Registra palpite + comprovante (requer sessão de participante ou admin) |
 | `DELETE` | `/api/bets?receiptId={uuid}` | **Bloqueado** (403) — use a API admin |
 
 A exclusão define `deleted_at` em `receipts`; os dados permanecem no banco, mas não aparecem no frontend.
@@ -370,7 +434,7 @@ A exclusão define `deleted_at` em `receipts`; os dados permanecem no banco, mas
 | ------ | --------------------------------- | ---------------------------------------------- |
 | `GET`  | `/api/champion-bets`              | Lista palpites de campeão + metadados (prazo, final) |
 | `GET`  | `/api/champion-bets?receiptId={uuid}` | Busca comprovante de campeão               |
-| `POST` | `/api/champion-bets`              | Registra palpite de campeão + comprovante      |
+| `POST` | `/api/champion-bets`              | Registra palpite de campeão + comprovante (requer sessão de participante ou admin) |
 
 `POST` e listagem geral (`GET` sem `receiptId`) respeitam `BOLAO_ACCESS_TOKEN` quando configurado. Consulta por `receiptId` permanece pública.
 
@@ -394,6 +458,22 @@ Requer `GEMINI_API_KEY` no servidor. Rate limit: 10 req/IP/hora.
 
 A sessão usa cookie `HttpOnly` assinado com HMAC. O login tem rate limit por IP (bloqueio temporário após tentativas falhas).
 
+## API de participantes (`/api/participant/*`)
+
+| Método | Endpoint                         | Descrição                                              |
+| ------ | -------------------------------- | ------------------------------------------------------ |
+| `POST` | `/api/participant/login`         | Autentica com e-mail e senha; define cookie de sessão  |
+| `POST` | `/api/participant/register`      | Cria conta nova (nome + e-mail + senha)                 |
+| `POST` | `/api/participant/claim`         | Vincula palpites legados a uma nova conta               |
+| `POST` | `/api/participant/logout`        | Encerra a sessão do participante                        |
+| `GET`  | `/api/participant/session`       | Verifica sessão; retorna `loginBlockedUntil` se o IP estiver bloqueado |
+| `GET`  | `/api/participant/unclaimed`     | Lista nomes com palpites legados sem cadastro           |
+| `GET`  | `/api/participant/check-name`    | Pré-visualização do status de um nome (legado/cadastrado) |
+
+Cadastro, claim e logout têm rate limit por IP. O login de participante bloqueia o IP após 3 senhas incorretas (5 minutos).
+
+Requer `PARTICIPANT_SESSION_SECRET` (ou `ADMIN_SESSION_SECRET` como fallback) no servidor.
+
 ### Banco de dados
 
 ```sql
@@ -402,9 +482,12 @@ bets      (receipt_id, match_id, home_score, away_score, winner_pick, person_nam
 bet_scores (receipt_id, match_id, points, score_type, winner_points, …)
 champion_bets (receipt_id, team_id, team_snapshot, person_name, person_name_key, created_at, updated_at)
 champion_scores (receipt_id, final_match_id, points, score_type, computed_at)
+participants (id, person_name, person_name_key, email, password_hash, created_at)
 ```
 
 `home_score` e `away_score` são opcionais (`NULL` quando o participante palpitou só o vencedor). `winner_pick` é opcional quando o participante palpitou só o placar. `updated_at` registra quando o palpite foi complementado.
+
+A tabela `participants` armazena contas com e-mail único e `person_name_key` único. Palpites legados existem em `bets`/`champion_bets` antes do cadastro; o fluxo **Já palpitei** cria o registro em `participants` sem duplicar palpites.
 
 O `match_snapshot` (JSONB) guarda o estado do jogo no momento do palpite para o comprovante não depender de nova consulta à API de futebol. Em palpites de campeão, `team_snapshot` guarda os dados da seleção escolhida.
 
@@ -440,6 +523,10 @@ POSTGRES_URL=postgresql://...
 ADMIN_PASSWORD=sua_senha_forte
 ADMIN_SESSION_SECRET=string_aleatoria_longa
 
+# Autenticação de participantes (obrigatório para palpitar)
+PARTICIPANT_SESSION_SECRET=string_aleatoria_longa
+# Se omitido, usa ADMIN_SESSION_SECRET como fallback
+
 # Proteção opcional do bolão (recomendado se a URL for pública)
 BOLAO_ACCESS_TOKEN=token_compartilhado_entre_participantes
 VITE_BOLAO_ACCESS_TOKEN=token_compartilhado_entre_participantes
@@ -464,6 +551,7 @@ GEMINI_API_KEY=sua_chave_gemini_aqui
 | `POSTGRES_URL`             | API de palpites e ranking (local e Vercel)                 |
 | `ADMIN_PASSWORD`           | Login da área administrativa                               |
 | `ADMIN_SESSION_SECRET`     | Assinatura do cookie de sessão admin                       |
+| `PARTICIPANT_SESSION_SECRET` | Assinatura do cookie `participant_session` (fallback: `ADMIN_SESSION_SECRET`) |
 | `BOLAO_ACCESS_TOKEN`       | Token compartilhado para POST e listagem geral de palpites |
 | `VITE_BOLAO_ACCESS_TOKEN`  | Mesmo valor do token acima, enviado pelo frontend          |
 | `UPSTASH_REDIS_REST_URL`   | Redis Upstash para rate limit distribuído (opcional)       |
@@ -478,6 +566,8 @@ GEMINI_API_KEY=sua_chave_gemini_aqui
 > As chaves da TheSportsDB e Gemini ficam **apenas no servidor** (`.env` local / variáveis da Vercel).
 
 > Sem `ADMIN_PASSWORD` e `ADMIN_SESSION_SECRET`, a área admin fica desabilitada (503 no login).
+
+> Sem `PARTICIPANT_SESSION_SECRET` (nem `ADMIN_SESSION_SECRET`), o registro de palpites exige autenticação mas retorna 503 — configure antes de abrir o bolão ao público.
 
 ## Execução local
 
@@ -500,7 +590,7 @@ npm run db:init
 
 Acesse `http://localhost:5173` após `npm run dev`.
 
-> **`npm run preview`** serve apenas o build em `dist/` e o proxy de escudos (`/api/crests`). As APIs de palpites, ranking, admin e futebol **não** estão disponíveis nesse modo. Para testar o app completo localmente (como na Vercel), use **`npm run dev:full`** (`vercel dev`).
+> **`npm run preview`** serve apenas o build em `dist/` e o proxy de escudos (`/api/crests`). As APIs de palpites, ranking, participantes, admin e futebol **não** estão disponíveis nesse modo. Para testar o app completo localmente (como na Vercel), use **`npm run dev`** ou **`npm run dev:full`** (`vercel dev`).
 
 > Reinicie o servidor após alterar o `.env`.
 
@@ -513,6 +603,7 @@ Acesse `http://localhost:5173` após `npm run dev`.
    - `POSTGRES_URL` (injetado automaticamente pelo Neon, se conectado)
    - `ADMIN_PASSWORD`
    - `ADMIN_SESSION_SECRET`
+   - `PARTICIPANT_SESSION_SECRET` (ou reutilize `ADMIN_SESSION_SECRET`)
    - `BOLAO_ACCESS_TOKEN` e `VITE_BOLAO_ACCESS_TOKEN` (recomendado)
    - `THESPORTSDB_API_KEY` (detalhes da partida)
    - `GEMINI_API_KEY` (sugestão de placar por IA; opcional)
@@ -522,7 +613,7 @@ Acesse `http://localhost:5173` após `npm run dev`.
 
 O `vercel.json` configura:
 
-- `/api/bets`, `/api/ranking`, `/api/champion-bets`, `/api/ai-predict`, `/api/admin/*`, `/api/football/*`, `/api/sportsdb/*`, `/api/crests/*` → Serverless Functions
+- `/api/bets`, `/api/ranking`, `/api/champion-bets`, `/api/participant/*`, `/api/ai-predict`, `/api/admin/*`, `/api/football/*`, `/api/sportsdb/*`, `/api/crests/*` → Serverless Functions
 - Headers de segurança (CSP, HSTS, X-Frame-Options, etc.) e `Cache-Control: no-store` nas APIs
 - Demais rotas → SPA (`dist/index.html`)
 
@@ -581,7 +672,10 @@ A chave vai na URL (`/api/v1/json/{key}/...`). Use `THESPORTSDB_API_KEY` no serv
 - Validação de entrada na API (IDs, placares opcionais, vencedor opcional, nome, tamanho do payload)
 - **POST /api/bets** valida status e horário do jogo diretamente na football-data.org (snapshot do client não é confiável)
 - Proxy `/api/football/*` e `/api/sportsdb/*` com **allowlist** de endpoints (só leitura GET)
-- Rate limit por IP no proxy football-data, na **listagem geral** de palpites (`GET /api/bets` sem filtros), listagem de palpite de campeão, ranking, sugestão por IA e no login admin; **POST** de palpite não tem rate limit dedicado
+- Rate limit por IP no proxy football-data, na **listagem geral** de palpites (`GET /api/bets` sem filtros), listagem de palpite de campeão, ranking, sugestão por IA, login admin e login de participante (bloqueio após 3 falhas); cadastro/claim de participante também têm limite por IP
+- **POST /api/bets** e **POST /api/champion-bets** exigem sessão de participante ou admin; o nome do participante logado é forçado no servidor
+- Senhas de participantes com scrypt (salt aleatório por conta)
+- Sessão de participante com cookie `HttpOnly`, `SameSite=Strict`, `Secure` em produção e assinatura HMAC
 - Com Upstash Redis configurado, os limites funcionam de forma distribuída na Vercel
 - Token opcional `BOLAO_ACCESS_TOKEN` protege registro e listagem completa de palpites
 - Comprovantes usam UUID v4

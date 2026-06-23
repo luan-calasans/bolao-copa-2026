@@ -84,6 +84,38 @@
       "dest": "/api/admin/bets"
     },
     {
+      "src": "/api/participant/login",
+      "dest": "/api/participant/login"
+    },
+    {
+      "src": "/api/participant/register",
+      "dest": "/api/participant/register"
+    },
+    {
+      "src": "/api/participant/claim",
+      "dest": "/api/participant/claim"
+    },
+    {
+      "src": "/api/participant/logout",
+      "dest": "/api/participant/logout"
+    },
+    {
+      "src": "/api/participant/session",
+      "dest": "/api/participant/session"
+    },
+    {
+      "src": "/api/participant/unclaimed",
+      "dest": "/api/participant/unclaimed"
+    },
+    {
+      "src": "/api/participant/check-name",
+      "dest": "/api/participant/check-name"
+    },
+    {
+      "src": "/api/champion-bets",
+      "dest": "/api/champion-bets"
+    },
+    {
       "src": "/api/football/(.*)",
       "dest": "/api/football-proxy?path=$1"
     },

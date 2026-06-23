@@ -33,6 +33,7 @@ import { getBetBlockedMessage } from '../utils/matchStatus'
 import { normalizePersonNameKey } from '../utils/participantKey'
 import { formatPersonNameForStorage } from '../../shared/personNameFormat.js'
 import { isValidWinnerPick } from '../utils/winnerPickValidation'
+import { useParticipant } from '../hooks/useParticipant'
 
 const MATCH_REFRESH_MS = 60_000
 
@@ -100,6 +101,7 @@ export interface BetViewModelActions {
 
 export function useBetViewModel(matchId: number): BetViewModelState & BetViewModelActions {
   const navigate = useNavigate()
+  const { participant } = useParticipant()
   const [match, setMatch] = useState<Match | null>(null)
   const [betCount, setBetCount] = useState(0)
   const [matchBets, setMatchBets] = useState<MatchBetEntry[]>([])
@@ -234,6 +236,14 @@ export function useBetViewModel(matchId: number): BetViewModelState & BetViewMod
       setIsReloading(false)
     }
   }, [loadMatchData])
+
+  useEffect(() => {
+    if (!participant?.personName) return
+
+    personNameRef.current = participant.personName
+    setPersonName(participant.personName)
+    syncExistingBetForm(matchBets, participant.personName)
+  }, [participant?.personName, matchBets, syncExistingBetForm])
 
   const reload = useCallback(
     (options?: { silent?: boolean }) => {

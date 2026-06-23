@@ -69,3 +69,19 @@ CREATE TABLE IF NOT EXISTS champion_scores (
   score_type       TEXT NOT NULL DEFAULT 'pending',
   computed_at      TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+CREATE TABLE IF NOT EXISTS participants (
+  id               UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  person_name      TEXT NOT NULL,
+  person_name_key  TEXT NOT NULL,
+  email            TEXT,
+  password_hash    TEXT,
+  created_at       TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_participants_person_name_key
+  ON participants (person_name_key);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_participants_email
+  ON participants (email)
+  WHERE email IS NOT NULL;

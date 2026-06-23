@@ -1,6 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { Link, NavLink, useLocation, useNavigate } from 'react-router-dom'
 import { ThemeToggle } from '../ui/ThemeToggle'
+import { ParticipantAuthButton } from './ParticipantAuthButton'
 import { APP_ROUTES, MAIN_NAV_ROUTES } from '../../routes/routePaths'
 
 function scrollToTop() {
@@ -135,11 +136,15 @@ export function Header() {
                 {item.label}
               </NavLink>
             ))}
-            <ThemeToggle className="ml-1" />
+            <div className="ml-1 flex items-center gap-1.5">
+              <ThemeToggle />
+              <ParticipantAuthButton />
+            </div>
           </nav>
 
           <div className="flex items-center gap-2 lg:hidden">
             <ThemeToggle />
+            <ParticipantAuthButton />
             <button
               type="button"
               onClick={() => setMenuOpenPath(isMenuOpen ? null : pathname)}
