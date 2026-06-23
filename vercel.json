@@ -68,48 +68,12 @@
       "dest": "/api/bets"
     },
     {
-      "src": "/api/admin/login",
-      "dest": "/api/admin/login"
+      "src": "/api/admin/(.*)",
+      "dest": "/api/admin?path=$1"
     },
     {
-      "src": "/api/admin/logout",
-      "dest": "/api/admin/logout"
-    },
-    {
-      "src": "/api/admin/session",
-      "dest": "/api/admin/session"
-    },
-    {
-      "src": "/api/admin/bets",
-      "dest": "/api/admin/bets"
-    },
-    {
-      "src": "/api/participant/login",
-      "dest": "/api/participant/login"
-    },
-    {
-      "src": "/api/participant/register",
-      "dest": "/api/participant/register"
-    },
-    {
-      "src": "/api/participant/claim",
-      "dest": "/api/participant/claim"
-    },
-    {
-      "src": "/api/participant/logout",
-      "dest": "/api/participant/logout"
-    },
-    {
-      "src": "/api/participant/session",
-      "dest": "/api/participant/session"
-    },
-    {
-      "src": "/api/participant/unclaimed",
-      "dest": "/api/participant/unclaimed"
-    },
-    {
-      "src": "/api/participant/check-name",
-      "dest": "/api/participant/check-name"
+      "src": "/api/participant/(.*)",
+      "dest": "/api/participant?path=$1"
     },
     {
       "src": "/api/champion-bets",

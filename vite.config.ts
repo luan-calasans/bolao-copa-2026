@@ -63,95 +63,19 @@ export default defineConfig(({ mode }) => {
               return
             }
 
-            if (url.startsWith('/api/admin/login')) {
+            if (url.startsWith('/api/admin/')) {
               // @ts-expect-error módulo JS sem declaração de tipos
-              import('./server/lib/adminHttp.js')
-                .then(({ handleAdminLoginRequest }) => handleAdminLoginRequest(req, res))
+              import('./server/lib/adminRouter.js')
+                .then(({ handleAdminRouterRequest }) => handleAdminRouterRequest(req, res))
                 .catch(next)
               return
             }
 
-            if (url.startsWith('/api/admin/logout')) {
+            if (url.startsWith('/api/participant/')) {
               // @ts-expect-error módulo JS sem declaração de tipos
-              import('./server/lib/adminHttp.js')
-                .then(({ handleAdminLogoutRequest }) => handleAdminLogoutRequest(req, res))
-                .catch(next)
-              return
-            }
-
-            if (url.startsWith('/api/admin/session')) {
-              // @ts-expect-error módulo JS sem declaração de tipos
-              import('./server/lib/adminHttp.js')
-                .then(({ handleAdminSessionRequest }) => handleAdminSessionRequest(req, res))
-                .catch(next)
-              return
-            }
-
-            if (url.startsWith('/api/admin/bets')) {
-              // @ts-expect-error módulo JS sem declaração de tipos
-              import('./server/lib/adminHttp.js')
-                .then(({ handleAdminBetsRequest }) => handleAdminBetsRequest(req, res))
-                .catch(next)
-              return
-            }
-
-            if (url.startsWith('/api/participant/register')) {
-              // @ts-expect-error módulo JS sem declaração de tipos
-              import('./server/lib/participantHttp.js')
-                .then(({ handleParticipantRegisterRequest }) =>
-                  handleParticipantRegisterRequest(req, res),
-                )
-                .catch(next)
-              return
-            }
-
-            if (url.startsWith('/api/participant/claim')) {
-              // @ts-expect-error módulo JS sem declaração de tipos
-              import('./server/lib/participantHttp.js')
-                .then(({ handleParticipantClaimRequest }) => handleParticipantClaimRequest(req, res))
-                .catch(next)
-              return
-            }
-
-            if (url.startsWith('/api/participant/login')) {
-              // @ts-expect-error módulo JS sem declaração de tipos
-              import('./server/lib/participantHttp.js')
-                .then(({ handleParticipantLoginRequest }) => handleParticipantLoginRequest(req, res))
-                .catch(next)
-              return
-            }
-
-            if (url.startsWith('/api/participant/logout')) {
-              // @ts-expect-error módulo JS sem declaração de tipos
-              import('./server/lib/participantHttp.js')
-                .then(({ handleParticipantLogoutRequest }) => handleParticipantLogoutRequest(req, res))
-                .catch(next)
-              return
-            }
-
-            if (url.startsWith('/api/participant/session')) {
-              // @ts-expect-error módulo JS sem declaração de tipos
-              import('./server/lib/participantHttp.js')
-                .then(({ handleParticipantSessionRequest }) => handleParticipantSessionRequest(req, res))
-                .catch(next)
-              return
-            }
-
-            if (url.startsWith('/api/participant/unclaimed')) {
-              // @ts-expect-error módulo JS sem declaração de tipos
-              import('./server/lib/participantHttp.js')
-                .then(({ handleParticipantUnclaimedRequest }) =>
-                  handleParticipantUnclaimedRequest(req, res),
-                )
-                .catch(next)
-              return
-            }
-
-            if (url.startsWith('/api/participant/check-name')) {
-              // @ts-expect-error módulo JS sem declaração de tipos
-              import('./server/lib/participantHttp.js')
-                .then(({ handleParticipantCheckNameRequest }) =>
-                  handleParticipantCheckNameRequest(req, res),
+              import('./server/lib/participantRouter.js')
+                .then(({ handleParticipantRouterRequest }) =>
+                  handleParticipantRouterRequest(req, res),
                 )
                 .catch(next)
               return

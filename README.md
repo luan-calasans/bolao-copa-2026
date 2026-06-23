@@ -133,19 +133,8 @@ bolao/
 │   ├── football-proxy.js
 │   ├── sportsdb-proxy.js
 │   ├── crests-proxy.js
-│   ├── participant/
-│   │   ├── login.js
-│   │   ├── register.js
-│   │   ├── claim.js
-│   │   ├── logout.js
-│   │   ├── session.js
-│   │   ├── unclaimed.js
-│   │   └── check-name.js
-│   └── admin/
-│       ├── login.js
-│       ├── logout.js
-│       ├── session.js
-│       └── bets.js
+│   ├── participant.js      # Roteador: login, register, claim, logout, session, unclaimed, check-name
+│   └── admin.js              # Roteador: login, logout, session, bets
 ├── server/lib/             # Handlers e lógica compartilhada das APIs
 │   ├── betDb.js
 │   ├── betsHttp.js
@@ -158,10 +147,12 @@ bolao/
 │   ├── rankingSync.js
 │   ├── adminHttp.js
 │   ├── adminAuth.js
+│   ├── adminRouter.js
 │   ├── adminLoginRateLimit.js
 │   ├── participantAuth.js
 │   ├── participantDb.js
 │   ├── participantHttp.js
+│   ├── participantRouter.js
 │   ├── participantLoginRateLimit.js
 │   ├── participantPassword.js
 │   ├── bettingAuth.js
@@ -613,7 +604,7 @@ Acesse `http://localhost:5173` após `npm run dev`.
 
 O `vercel.json` configura:
 
-- `/api/bets`, `/api/ranking`, `/api/champion-bets`, `/api/participant/*`, `/api/ai-predict`, `/api/admin/*`, `/api/football/*`, `/api/sportsdb/*`, `/api/crests/*` → Serverless Functions
+- `/api/bets`, `/api/ranking`, `/api/champion-bets`, `/api/participant/*`, `/api/admin/*`, `/api/ai-predict`, `/api/football/*`, `/api/sportsdb/*`, `/api/crests/*` → **9** Serverless Functions (limite Hobby: 12)
 - Headers de segurança (CSP, HSTS, X-Frame-Options, etc.) e `Cache-Control: no-store` nas APIs
 - Demais rotas → SPA (`dist/index.html`)
 
