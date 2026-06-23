@@ -117,12 +117,17 @@ export function ParticipantLoginView() {
   const navigate = useNavigate()
   const { isAuthenticated, isLoading } = useParticipant()
   const vm = useParticipantLoginViewModel()
+  const { initialize, isConfigured, redirectTarget } = vm
+
+  useEffect(() => {
+    void initialize()
+  }, [initialize, isConfigured])
 
   useEffect(() => {
     if (!isLoading && isAuthenticated) {
-      navigate(vm.redirectTarget, { replace: true })
+      navigate(redirectTarget, { replace: true })
     }
-  }, [isAuthenticated, isLoading, navigate, vm.redirectTarget])
+  }, [isAuthenticated, isLoading, navigate, redirectTarget])
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault()
@@ -141,7 +146,7 @@ export function ParticipantLoginView() {
     void vm.submitClaim()
   }
 
-  const backTo = vm.redirectTarget !== APP_ROUTES.home ? vm.redirectTarget : APP_ROUTES.home
+  const backTo = redirectTarget !== APP_ROUTES.home ? redirectTarget : APP_ROUTES.home
   const activeMode = MODE_OPTIONS.find((option) => option.id === vm.mode) ?? MODE_OPTIONS[0]
 
   const showRegisterNameField = vm.mode === 'register'

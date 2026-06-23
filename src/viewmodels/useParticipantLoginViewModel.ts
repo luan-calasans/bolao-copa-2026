@@ -22,6 +22,8 @@ import {
   validatePasswordConfirmation,
 } from '../utils/participantCredentials'
 
+const LOGIN_BLOCK_DURATION_MS = 5 * 60 * 1000
+
 function getLoginBlockedMessage(blockedUntil: number): string {
   const remainingSeconds = Math.max(0, Math.ceil((blockedUntil - Date.now()) / 1000))
   const minutes = Math.max(1, Math.ceil(remainingSeconds / 60))
@@ -105,24 +107,25 @@ export function useParticipantLoginViewModel() {
     }
   }, [])
 
-  useEffect(() => {
-    if (mode !== 'claim' || !isConfigured) {
+  const initialize = useCallback(async () => {
+    if (!isConfigured) {
       return
     }
 
-    void loadUnclaimedParticipants()
-  }, [mode, isConfigured, loadUnclaimedParticipants])
-
-  useEffect(() => {
-    if (mode !== 'login' || !isConfigured) {
+    if (mode === 'login') {
+      await checkLoginBlockStatus()
       return
     }
 
-    void checkLoginBlockStatus()
-  }, [mode, isConfigured, checkLoginBlockStatus])
+    if (mode === 'claim') {
+      await loadUnclaimedParticipants()
+    }
+  }, [isConfigured, mode, checkLoginBlockStatus, loadUnclaimedParticipants])
 
   useEffect(() => {
-    if (!loginBlockedUntil || loginBlockedUntil <= Date.now()) return
+    if (!loginBlockedUntil || loginBlockedUntil <= Date.now()) {
+      return
+    }
 
     const timeoutId = window.setTimeout(
       () => {
@@ -137,31 +140,39 @@ export function useParticipantLoginViewModel() {
     return () => window.clearTimeout(timeoutId)
   }, [loginBlockedUntil])
 
-  useEffect(() => {
-    if (!selectedUnclaimedParticipant) {
+  const switchMode = useCallback(
+    (nextMode: ParticipantAuthMode) => {
+      setMode(nextMode)
+      setError(null)
+      setPassword('')
+      setPasswordConfirmation('')
+      setSelectedPersonNameKey('')
       setPersonName('')
-      return
-    }
+      setUnclaimedParticipants([])
 
-    setPersonName(selectedUnclaimedParticipant.displayName)
-  }, [selectedUnclaimedParticipant])
+      if (nextMode !== 'login') {
+        setLoginBlockedUntil(null)
+      }
 
-  const switchMode = useCallback((nextMode: ParticipantAuthMode) => {
-    setMode(nextMode)
-    setError(null)
-    setPassword('')
-    setPasswordConfirmation('')
-    setSelectedPersonNameKey('')
-    setPersonName('')
-    setUnclaimedParticipants([])
+      if (!isConfigured) {
+        return
+      }
 
-    if (nextMode !== 'login') {
-      setLoginBlockedUntil(null)
-    }
-  }, [])
+      if (nextMode === 'claim') {
+        void loadUnclaimedParticipants()
+      }
+
+      if (nextMode === 'login') {
+        void checkLoginBlockStatus()
+      }
+    },
+    [isConfigured, loadUnclaimedParticipants, checkLoginBlockStatus],
+  )
 
   const submitLogin = useCallback(async () => {
-    if (isLoginBlocked) return
+    if (isLoginBlocked) {
+      return
+    }
 
     const emailError = validateEmail(email)
     if (emailError) {
@@ -187,7 +198,7 @@ export function useParticipantLoginViewModel() {
       if (err instanceof ParticipantAuthError && err.statusCode === 429) {
         const until = err.retryAfterSeconds
           ? Date.now() + err.retryAfterSeconds * 1000
-          : Date.now() + 5 * 60 * 1000
+          : Date.now() + LOGIN_BLOCK_DURATION_MS
 
         applyLoginBlockStatus(until)
         setError(err.message)
@@ -328,6 +339,7 @@ export function useParticipantLoginViewModel() {
     submitLogin,
     submitRegister,
     submitClaim,
+    initialize,
     reloadUnclaimedParticipants: loadUnclaimedParticipants,
   }
 }
