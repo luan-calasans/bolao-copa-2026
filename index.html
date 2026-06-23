@@ -1,0 +1,224 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="preload"
+      as="style"
+      href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+      onload="this.onload=null;this.rel='stylesheet'"
+    />
+    <noscript>
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+      />
+    </noscript>
+    <link rel="preload" as="image" href="/logo.png" fetchpriority="high" />
+    <link
+      rel="prefetch"
+      href="/api/football/competitions/WC/matches?season=2026"
+      as="fetch"
+      crossorigin="anonymous"
+    />
+    <link rel="icon" type="image/png" href="favicon.png" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, interactive-widget=overlays-content"
+    />
+    <meta
+      name="description"
+      content="Bolão Copa do Mundo FIFA 2026 — palpites, comprovantes e acompanhamento dos jogos."
+    />
+    <title>Bolão Copa 2026</title>
+    <style>
+      :root {
+        --app-header-height: 4.0625rem;
+        --boot-bg: #070b14;
+        --boot-text: #f8fafc;
+        --boot-header-bg: rgba(7, 11, 20, 0.95);
+        --boot-header-border: rgba(30, 41, 59, 0.8);
+        --boot-accent: #ffdf00;
+        --boot-skeleton: rgba(30, 42, 61, 0.7);
+      }
+
+      @media (min-width: 640px) {
+        :root {
+          --app-header-height: 4.5625rem;
+        }
+      }
+
+      html.light {
+        --boot-bg: #eef2f6;
+        --boot-text: #0a0a0a;
+        --boot-header-bg: rgba(238, 242, 246, 0.95);
+        --boot-header-border: rgba(203, 213, 225, 0.9);
+        --boot-accent: #3d5389;
+        --boot-skeleton: rgba(203, 213, 225, 0.85);
+      }
+
+      body {
+        margin: 0;
+        background: var(--boot-bg);
+        color: var(--boot-text);
+        font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+      }
+
+      .app-boot {
+        min-height: 100vh;
+        background:
+          radial-gradient(circle at top, #151d2e 0%, #070b14 45%),
+          var(--boot-bg);
+      }
+
+      html.light .app-boot {
+        background:
+          radial-gradient(circle at top, #e2e8f0 0%, #eef2f6 45%),
+          var(--boot-bg);
+      }
+
+      .app-boot-header {
+        position: fixed;
+        inset: 0 0 auto;
+        z-index: 50;
+        border-bottom: 1px solid var(--boot-header-border);
+        background: var(--boot-header-bg);
+        backdrop-filter: blur(12px);
+      }
+
+      .app-boot-header-inner {
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        max-width: 80rem;
+        margin: 0 auto;
+        padding: 0.75rem 1rem;
+      }
+
+      @media (min-width: 640px) {
+        .app-boot-header-inner {
+          padding: 0.875rem 1.5rem;
+        }
+      }
+
+      .app-boot-logo {
+        width: 2.5rem;
+        height: 2.5rem;
+        border-radius: 0.75rem;
+        object-fit: contain;
+        flex-shrink: 0;
+      }
+
+      @media (min-width: 640px) {
+        .app-boot-logo {
+          width: 2.75rem;
+          height: 2.75rem;
+        }
+      }
+
+      .app-boot-title {
+        margin: 0;
+        font-size: 1.125rem;
+        font-weight: 900;
+        letter-spacing: -0.025em;
+        line-height: 1.2;
+        color: var(--boot-text);
+      }
+
+      @media (min-width: 640px) {
+        .app-boot-title {
+          font-size: 1.5rem;
+        }
+      }
+
+      .app-boot-title-accent {
+        color: var(--boot-accent);
+      }
+
+      .app-boot-offset {
+        height: var(--app-header-height);
+      }
+
+      .app-boot-main {
+        max-width: 80rem;
+        margin: 0 auto;
+        padding: 1.5rem 1rem 2rem;
+      }
+
+      @media (min-width: 640px) {
+        .app-boot-main {
+          padding: 2rem 1.5rem;
+        }
+      }
+
+      .app-boot-skeleton {
+        border-radius: 1rem;
+        background: var(--boot-skeleton);
+      }
+
+      .app-boot-skeleton-line {
+        height: 1rem;
+        margin: 0 auto 1rem;
+        max-width: 12rem;
+      }
+
+      .app-boot-skeleton-grid {
+        display: grid;
+        gap: 1rem;
+      }
+
+      .app-boot-skeleton-card {
+        height: 12.5rem;
+      }
+
+      @media (min-width: 768px) {
+        .app-boot-skeleton-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+
+      @media (min-width: 1280px) {
+        .app-boot-skeleton-grid {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+      }
+    </style>
+    <script>
+      ;(function () {
+        document.documentElement.classList.add('dark')
+      })()
+    </script>
+  </head>
+  <body>
+    <div id="root">
+      <div class="app-boot" aria-hidden="true">
+        <header class="app-boot-header">
+          <div class="app-boot-header-inner">
+            <img
+              class="app-boot-logo"
+              src="/logo.png"
+              alt=""
+              width="44"
+              height="44"
+              fetchpriority="high"
+              decoding="async"
+            />
+            <h1 class="app-boot-title">BOLÃO <span class="app-boot-title-accent">2026</span></h1>
+          </div>
+        </header>
+        <div class="app-boot-offset"></div>
+        <main class="app-boot-main">
+          <div class="app-boot-skeleton app-boot-skeleton-line"></div>
+          <div class="app-boot-skeleton-grid">
+            <div class="app-boot-skeleton app-boot-skeleton-card"></div>
+            <div class="app-boot-skeleton app-boot-skeleton-card"></div>
+            <div class="app-boot-skeleton app-boot-skeleton-card"></div>
+          </div>
+        </main>
+      </div>
+    </div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

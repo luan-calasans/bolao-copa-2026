@@ -1,0 +1,370 @@
+@import 'tailwindcss';
+
+@font-face {
+  font-family: 'Plus Jakarta Sans Fallback';
+  src: local('Segoe UI'), local('Arial');
+  ascent-override: 95.34%;
+  descent-override: 25.04%;
+  line-gap-override: 0%;
+  size-adjust: 104.76%;
+}
+
+@theme {
+  --color-pitch-950: #070b14;
+  --color-pitch-900: #0d1321;
+  --color-pitch-800: #151d2e;
+  --color-pitch-700: #1e2a3d;
+  --color-pitch-600: #243247;
+  --color-brazil-green: #009c3b;
+  --color-brazil-yellow: #ffdf00;
+  --color-brazil-yellow-dark: #e6c800;
+  --color-gold-400: #ffdf00;
+  --color-gold-500: #e6c800;
+  --color-live: #ef4444;
+  --font-sans: 'Plus Jakarta Sans', 'Plus Jakarta Sans Fallback', ui-sans-serif, system-ui, sans-serif;
+  --font-display: 'Plus Jakarta Sans', 'Plus Jakarta Sans Fallback', ui-sans-serif, system-ui, sans-serif;
+  --gradient-body-top: #151d2e;
+  --gradient-body-bottom: #070b14;
+  --gradient-hero-from: #151d2e;
+  --gradient-hero-to: #0d1321;
+  --gradient-card-header-from: #1a2740;
+  --gradient-card-header-to: #1e2a3d;
+  --ticket-pattern-color: #152a45;
+  --skeleton-from: rgb(30 42 61 / 0.55);
+  --skeleton-mid: rgb(36 50 71 / 0.85);
+  --skeleton-to: rgb(30 42 61 / 0.55);
+}
+
+html.dark {
+  color-scheme: dark;
+}
+
+html.light {
+  color-scheme: light;
+
+  --color-pitch-950: #eef2f6;
+  --color-pitch-900: #f8fafc;
+  --color-pitch-800: #ffffff;
+  --color-pitch-700: #e2e8f0;
+  --color-pitch-600: #1e293b;
+  --color-slate-50: #000000;
+  --color-slate-100: #0a0a0a;
+  --color-slate-200: #171717;
+  --color-slate-300: #262626;
+  --color-slate-400: #525252;
+  --color-slate-500: #737373;
+  --color-slate-600: #a3a3a3;
+  --color-slate-700: #d4d4d4;
+  --color-slate-800: #e5e5e5;
+  --color-slate-900: #f5f5f5;
+  --color-gold-100: #334770;
+  --color-gold-300: #4a6399;
+  --color-gold-400: #3d5389;
+  --color-gold-500: #334770;
+  --color-brazil-yellow: #3d5389;
+  --color-brazil-yellow-dark: #334770;
+  --color-amber-100: #78350f;
+  --color-amber-200: #92400e;
+  --color-amber-300: #b45309;
+  --color-amber-400: #ca8a04;
+  --color-emerald-300: #00a872;
+  --color-emerald-400: #00b078;
+  --color-violet-100: #6d28d9;
+  --color-violet-200: #5b21b6;
+  --color-violet-300: #6d28d9;
+  --gradient-body-top: #e2e8f0;
+  --gradient-body-bottom: #eef2f6;
+  --gradient-hero-from: #ffffff;
+  --gradient-hero-to: #f1f5f9;
+  --gradient-card-header-from: #f1f5f9;
+  --gradient-card-header-to: #e2e8f0;
+  --ticket-pattern-color: #e2e8f0;
+  --skeleton-from: rgb(226 232 240 / 0.55);
+  --skeleton-mid: rgb(203 213 225 / 0.85);
+  --skeleton-to: rgb(226 232 240 / 0.55);
+  --color-fg-primary: #000000;
+}
+
+@layer base {
+  :root {
+    --app-header-height: 4.0625rem;
+  }
+
+  @media (min-width: 640px) {
+    :root {
+      --app-header-height: 4.5625rem;
+    }
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    @apply min-h-screen bg-pitch-950 font-sans text-[15px] leading-relaxed text-slate-100 antialiased;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    text-rendering: optimizeLegibility;
+    background-image: radial-gradient(
+      circle at top,
+      var(--gradient-body-top) 0%,
+      var(--gradient-body-bottom) 45%
+    );
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    @apply font-display font-bold tracking-tight text-slate-50;
+    text-wrap: balance;
+  }
+
+  h1 {
+    @apply text-2xl sm:text-3xl;
+  }
+
+  h2 {
+    @apply text-lg sm:text-xl;
+  }
+
+  p {
+    @apply leading-relaxed;
+  }
+
+  button,
+  input,
+  select,
+  textarea {
+    font: inherit;
+    font-size: max(1rem, 16px);
+  }
+
+  html.dark select {
+    color-scheme: dark;
+  }
+
+  html.light select {
+    color-scheme: light;
+  }
+
+  select option {
+    background-color: var(--color-pitch-800);
+    color: var(--color-slate-200);
+  }
+}
+
+@layer utilities {
+  .gradient-hero {
+    background: linear-gradient(
+      135deg,
+      var(--gradient-hero-from) 0%,
+      var(--gradient-hero-to) 100%
+    );
+  }
+
+  .gradient-gold {
+    background: linear-gradient(135deg, #ffdf00 0%, #e6c800 100%);
+  }
+
+  .gradient-brazil {
+    background: linear-gradient(135deg, #009c3b 0%, #007a2f 100%);
+  }
+
+  .live-pulse {
+    animation: live-pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes live-pulse {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.6;
+    }
+  }
+
+  .ticket-pattern {
+    background-image:
+      radial-gradient(circle at 0 50%, transparent 8px, var(--ticket-pattern-color) 8px),
+      radial-gradient(circle at 100% 50%, transparent 8px, var(--ticket-pattern-color) 8px);
+    background-size: 16px 100%;
+    background-repeat: repeat-y;
+  }
+
+  .card-header-bar {
+    background: linear-gradient(
+      90deg,
+      var(--gradient-card-header-from) 0%,
+      var(--gradient-card-header-to) 100%
+    );
+  }
+
+  .text-label {
+    @apply text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400;
+  }
+
+  .score-input {
+    appearance: textfield;
+    -moz-appearance: textfield;
+  }
+
+  .score-input::-webkit-outer-spin-button,
+  .score-input::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  .skeleton-shimmer {
+    background: linear-gradient(
+      90deg,
+      var(--skeleton-from) 0%,
+      var(--skeleton-mid) 50%,
+      var(--skeleton-to) 100%
+    );
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.4s ease-in-out infinite;
+  }
+
+  @keyframes skeleton-shimmer {
+    0% {
+      background-position: 200% 0;
+    }
+    100% {
+      background-position: -200% 0;
+    }
+  }
+}
+
+/*
+ * Light mode text overrides — fora de @layer para vencer utilitários do Tailwind
+ * (text-white, hover:text-white, etc.).
+ */
+html.light :is(.text-white, .hover\:text-white:hover) {
+  color: var(--color-fg-primary);
+}
+
+html.light .gradient-gold {
+  color: var(--color-fg-primary);
+}
+
+html.light .youtube-highlights-btn,
+html.light .youtube-highlights-btn:hover {
+  color: var(--color-fg-primary);
+}
+
+html.light .clear-filters-btn,
+html.light .clear-filters-btn:hover {
+  color: var(--color-fg-primary);
+}
+
+html.light .bet-result-exact {
+  color: #007a2f;
+}
+
+html.light .bet-result-exact-combo {
+  color: #059669;
+}
+
+html.light .bet-result-partial {
+  color: #0369a1;
+}
+
+html.light .bet-result-winner {
+  color: #a16207;
+}
+
+html.light .bet-result-combo {
+  color: #0f766e;
+}
+
+html.light .bet-result-none {
+  color: #b91c1c;
+}
+
+html.light .bet-result-pending {
+  color: #475569;
+}
+
+.ranking-row-first {
+  background-color: rgb(0 156 59 / 0.16);
+  box-shadow: inset 3px 0 0 rgb(0 156 59 / 0.7);
+}
+
+.ranking-row-second {
+  background-color: rgb(148 163 184 / 0.12);
+  box-shadow: inset 3px 0 0 rgb(148 163 184 / 0.55);
+}
+
+.ranking-row-third {
+  background-color: rgb(180 83 9 / 0.12);
+  box-shadow: inset 3px 0 0 rgb(180 83 9 / 0.55);
+}
+
+html.light .ranking-row-first {
+  background-color: rgb(0 156 59 / 0.12);
+  box-shadow: inset 3px 0 0 rgb(0 122 47 / 0.75);
+}
+
+html.light .ranking-row-second {
+  background-color: rgb(100 116 139 / 0.14);
+  box-shadow: inset 3px 0 0 rgb(100 116 139 / 0.5);
+}
+
+html.light .ranking-row-third {
+  background-color: rgb(180 83 9 / 0.1);
+  box-shadow: inset 3px 0 0 rgb(146 64 14 / 0.55);
+}
+
+html.light .live-bet-notice {
+  color: #007a2f;
+}
+
+html.light .bet-ball-fab:is(.text-white, .hover\:text-white:hover) {
+  background-color: rgb(13 19 33 / 0.95);
+  border-color: rgb(0 122 85 / 0.4);
+  color: #ffffff;
+}
+
+html.light .bet-ball-fab:hover {
+  background-color: #151d2e;
+  border-color: rgb(0 122 85 / 0.7);
+  color: #ffffff;
+}
+
+html.light .youtube-highlights-icon {
+  color: #ff0000;
+}
+
+html.light .youtube-highlights-btn:hover .youtube-highlights-icon {
+  color: #dc2626;
+}
+
+html.light
+  :is(
+    .bg-red-700,
+    .bg-red-800,
+    .bg-blue-700,
+    .bg-amber-600,
+    .bg-emerald-700,
+    .bg-slate-700,
+    .bg-pitch-600
+  ):is(.text-white, .hover\:text-white:hover),
+html.light
+  :is(
+    .bg-red-700,
+    .bg-red-800,
+    .bg-blue-700,
+    .bg-amber-600,
+    .bg-emerald-700,
+    .bg-slate-700,
+    .bg-pitch-600
+  )
+  :is(.text-white, .hover\:text-white:hover) {
+  color: #ffffff;
+}
+
+.header-offset {
+  height: var(--app-header-height);
+}

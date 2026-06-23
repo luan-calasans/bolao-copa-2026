@@ -1,0 +1,3 @@
+export const CHAMPION_BET_POINTS = 20
+
+export const CHAMPION_BET_DEADLINE_OFFSET_MS = 24 * 60 * 60 * 1000
