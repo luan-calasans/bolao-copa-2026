@@ -32,7 +32,7 @@
     <meta name="apple-mobile-web-app-title" content="Bolão 2026" />
     <meta
       name="viewport"
-      content="width=device-width, initial-scale=1.0, interactive-widget=overlays-content"
+      content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=overlays-content"
     />
     <meta
       name="description"
@@ -44,7 +44,7 @@
         --app-header-height: 4.0625rem;
         --boot-bg: #070b14;
         --boot-text: #f8fafc;
-        --boot-header-bg: rgba(7, 11, 20, 0.95);
+        --boot-header-bg: #070b14;
         --boot-header-border: rgba(30, 41, 59, 0.8);
         --boot-accent: #ffdf00;
         --boot-skeleton: rgba(30, 42, 61, 0.7);
@@ -59,7 +59,7 @@
       html.light {
         --boot-bg: #eef2f6;
         --boot-text: #0a0a0a;
-        --boot-header-bg: rgba(238, 242, 246, 0.95);
+        --boot-header-bg: #eef2f6;
         --boot-header-border: rgba(203, 213, 225, 0.9);
         --boot-accent: #3d5389;
         --boot-skeleton: rgba(203, 213, 225, 0.85);
@@ -89,9 +89,9 @@
         position: fixed;
         inset: 0 0 auto;
         z-index: 50;
+        padding-top: env(safe-area-inset-top, 0px);
         border-bottom: 1px solid var(--boot-header-border);
         background: var(--boot-header-bg);
-        backdrop-filter: blur(12px);
       }
 
       .app-boot-header-inner {

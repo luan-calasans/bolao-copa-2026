@@ -100,7 +100,7 @@ export function Header() {
     <>
       <header
         ref={headerRef}
-        className="fixed inset-x-0 top-0 z-50 border-b border-slate-800/80 bg-pitch-950/95 backdrop-blur-md"
+        className="fixed inset-x-0 top-0 z-50 border-b border-slate-800/80 bg-pitch-950 pt-[env(safe-area-inset-top,0px)]"
       >
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 sm:px-6 sm:py-3.5">
           <Link
@@ -162,7 +162,7 @@ export function Header() {
           id="main-nav-menu"
           aria-label="Navegação principal"
           aria-hidden={!isMenuOpen}
-          className={`grid border-t border-slate-800/60 bg-pitch-950/95 transition-[grid-template-rows,opacity] duration-300 ease-out lg:hidden ${
+          className={`grid border-t border-slate-800/60 bg-pitch-950 transition-[grid-template-rows,opacity] duration-300 ease-out lg:hidden ${
             isMenuOpen
               ? 'pointer-events-auto grid-rows-[1fr] opacity-100'
               : 'pointer-events-none grid-rows-[0fr] opacity-0'
