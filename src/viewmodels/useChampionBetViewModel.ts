@@ -7,6 +7,7 @@ import { fetchChampionBets, saveChampionBetAndReceipt } from '../services/champi
 import { fetchWorldCupTeams } from '../services/competitionService'
 import { hasValidPersonName, validatePersonName } from '../utils/betValidation'
 import { getFriendlyErrorMessage, type LoadError } from '../utils/errorMessages'
+import { showToast } from '../lib/toast'
 import { generateReceiptId } from '../utils/idGenerator'
 import { normalizePersonNameKey } from '../utils/participantKey'
 import { getTeamDisplayName } from '../utils/teamDisplay'
@@ -157,7 +158,9 @@ export function useChampionBetViewModel(): ChampionBetViewModelState & ChampionB
 
       navigate(receiptPath(savedReceiptId))
     } catch (submitError) {
-      setValidationError(getFriendlyErrorMessage(submitError))
+      const message = getFriendlyErrorMessage(submitError)
+      setValidationError(message)
+      showToast(message, 'error')
     } finally {
       setIsSubmitting(false)
     }

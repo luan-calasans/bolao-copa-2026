@@ -8,6 +8,7 @@ import type { Receipt } from '../models/receipt'
 import { useAiPrediction } from '../hooks/useAiPrediction'
 import type { AiPrediction } from '../models/aiPrediction'
 import { getBetsByMatchId, saveBetAndReceipt } from '../services/betStorageService'
+import { showToast } from '../lib/toast'
 import {
   fetchMatchById,
   fetchWorldCupMatchesBundle,
@@ -459,7 +460,9 @@ export function useBetViewModel(matchId: number): BetViewModelState & BetViewMod
         const receiptId = await saveBetAndReceipt(bet, receipt)
         navigate(`/comprovante/${receiptId}`)
       } catch (err) {
-        setValidationError(getFriendlyErrorMessage(err))
+        const message = getFriendlyErrorMessage(err)
+        setValidationError(message)
+        showToast(message, 'error')
         setIsSubmitting(false)
       }
     })()
@@ -471,6 +474,7 @@ export function useBetViewModel(matchId: number): BetViewModelState & BetViewMod
     setHomeScore(clampBetScore(aiPrediction.homeScore, minHomeScore))
     setAwayScore(clampBetScore(aiPrediction.awayScore, minAwayScore))
     setValidationError(null)
+    showToast('Placar da IA aplicado ao palpite.', 'info')
   }, [aiPrediction, minHomeScore, minAwayScore, isScoreLocked])
 
   const resetForm = useCallback(() => {

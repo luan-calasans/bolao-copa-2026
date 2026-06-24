@@ -1,6 +1,7 @@
 import { useCallback, useState } from 'react'
 import { deleteAdminBetByReceiptId, getAdminBets } from '../services/adminBetService'
-import { toLoadError, type LoadError } from '../utils/errorMessages'
+import { showToast } from '../lib/toast'
+import { getFriendlyErrorMessage, type LoadError } from '../utils/errorMessages'
 import { useBetsListViewModel, type BetsMatchGroup } from './useBetsListViewModel'
 
 export type { BetsMatchGroup as AdminBetsMatchGroup }
@@ -33,18 +34,17 @@ export function useAdminBetsViewModel(): AdminBetsViewModelState {
     removeBetLocally,
   } = useBetsListViewModel({ fetchBets: getAdminBets })
   const [deletingReceiptId, setDeletingReceiptId] = useState<string | null>(null)
-  const [deleteError, setDeleteError] = useState<LoadError | null>(null)
 
   const removeBet = useCallback(
     async (receiptId: string) => {
       setDeletingReceiptId(receiptId)
-      setDeleteError(null)
 
       try {
         await deleteAdminBetByReceiptId(receiptId)
         removeBetLocally(receiptId)
+        showToast('Palpite excluído.')
       } catch (err) {
-        setDeleteError(toLoadError(err))
+        showToast(getFriendlyErrorMessage(err), 'error')
         throw err
       } finally {
         setDeletingReceiptId(null)
@@ -60,7 +60,7 @@ export function useAdminBetsViewModel(): AdminBetsViewModelState {
     totalPartial,
     totalMissed,
     isLoading,
-    error: deleteError ?? loadError,
+    error: loadError,
     isEmpty,
     deletingReceiptId,
     removeBet,

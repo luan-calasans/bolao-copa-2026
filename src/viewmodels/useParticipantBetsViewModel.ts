@@ -13,7 +13,8 @@ import {
 } from '../utils/championBetRanking'
 import { computeHitRateEfficiency } from '../utils/betEfficiency'
 import { computeBetsListStats } from '../utils/betsListStats'
-import { toLoadError, type LoadError } from '../utils/errorMessages'
+import { getFriendlyErrorMessage, type LoadError } from '../utils/errorMessages'
+import { showToast } from '../lib/toast'
 import { buildBetsMatchGroups, type BetsMatchGroup } from '../utils/matchBetRows'
 import { filterBetsByPersonNameKey } from '../utils/participantBets'
 import { formatPersonNameKeyDisplay } from '../utils/participantDisplay'
@@ -110,7 +111,6 @@ export function useParticipantBetsViewModel(
 
   const { data, isLoading, error, reload, setData } = useAsyncResource(loadData, [personNameKey])
   const [deletingReceiptId, setDeletingReceiptId] = useState<string | null>(null)
-  const [deleteError, setDeleteError] = useState<LoadError | null>(null)
 
   const removeBetLocally = useCallback(
     (receiptId: string) => {
@@ -148,13 +148,13 @@ export function useParticipantBetsViewModel(
   const removeBet = useCallback(
     async (receiptId: string) => {
       setDeletingReceiptId(receiptId)
-      setDeleteError(null)
 
       try {
         await deleteParticipantBetByReceiptId(receiptId)
         removeBetLocally(receiptId)
+        showToast('Palpite excluído.')
       } catch (err) {
-        setDeleteError(toLoadError(err))
+        showToast(getFriendlyErrorMessage(err), 'error')
         throw err
       } finally {
         setDeletingReceiptId(null)
@@ -187,7 +187,7 @@ export function useParticipantBetsViewModel(
     totalMissed,
     hitRateEfficiency,
     isLoading,
-    error: deleteError ?? error,
+    error,
     isEmpty,
     reload,
     ...(options?.allowDelete ? { deletingReceiptId, removeBet } : {}),

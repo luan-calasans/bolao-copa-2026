@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react'
 import { inlineImagesForExport, waitForImages } from '../utils/crestUrl'
+import { showToast } from '../lib/toast'
 
 export interface UseReceiptExportResult {
   isExporting: boolean
@@ -98,8 +99,11 @@ export function useReceiptExport(): UseReceiptExportResult {
     try {
       const dataUrl = await captureElement(element)
       downloadBlob(dataUrlToBlob(dataUrl), `${filename}.png`)
+      showToast('Imagem salva no dispositivo.')
     } catch {
-      setExportError('Não foi possível exportar a imagem. Tente novamente.')
+      const message = 'Não foi possível exportar a imagem. Tente novamente.'
+      setExportError(message)
+      showToast(message, 'error')
     } finally {
       setIsExporting(false)
     }

@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import { AdminLoginError, getAdminSession, loginAdmin } from '../services/adminAuthService'
+import { showToast } from '../lib/toast'
 
 function getBlockedMessage(blockedUntil: number): string {
   const remainingSeconds = Math.max(0, Math.ceil((blockedUntil - Date.now()) / 1000))
@@ -92,6 +93,7 @@ export function useAdminLoginViewModel() {
 
       setBlockedUntil(null)
 
+      showToast('Acesso administrativo liberado.')
       navigate('/admin/palpites', { replace: true })
     } catch (err) {
       if (err instanceof AdminLoginError && err.statusCode === 429) {
@@ -102,11 +104,14 @@ export function useAdminLoginViewModel() {
         applyBlockStatus(until)
 
         setError(err.message)
+        showToast(err.message, 'error')
 
         return
       }
 
-      setError(err instanceof Error ? err.message : 'Não foi possível realizar o login.')
+      const message = err instanceof Error ? err.message : 'Não foi possível realizar o login.'
+      setError(message)
+      showToast(message, 'error')
     } finally {
       setIsSubmitting(false)
     }

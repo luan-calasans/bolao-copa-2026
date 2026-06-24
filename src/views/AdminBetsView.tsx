@@ -10,8 +10,8 @@ import { ErrorState } from '../components/ui/ErrorState'
 import { BackButton } from '../components/ui/BackLink'
 import { useDeleteBetConfirmation } from '../hooks/useDeleteBetConfirmation'
 import { logoutAdmin } from '../services/adminAuthService'
+import { showToast } from '../lib/toast'
 import { useAdminBetsViewModel } from '../viewmodels/useAdminBetsViewModel'
-import { getFriendlyErrorMessage } from '../utils/errorMessages'
 
 export function AdminBetsView() {
   const navigate = useNavigate()
@@ -30,18 +30,20 @@ export function AdminBetsView() {
   } = useAdminBetsViewModel()
 
   const deleteConfirmation = useDeleteBetConfirmation(removeBet)
-  const [logoutError, setLogoutError] = useState<string | null>(null)
   const [isLoggingOut, setIsLoggingOut] = useState(false)
 
   async function handleLogout() {
     setIsLoggingOut(true)
-    setLogoutError(null)
 
     try {
       await logoutAdmin()
+      showToast('Sessão administrativa encerrada.', 'logout')
       navigate('/admin/login', { replace: true })
     } catch (err) {
-      setLogoutError(getFriendlyErrorMessage(err))
+      showToast(
+        err instanceof Error ? err.message : 'Não foi possível encerrar a sessão.',
+        'error',
+      )
     } finally {
       setIsLoggingOut(false)
     }
@@ -85,8 +87,6 @@ export function AdminBetsView() {
           </span>
         </div>
       )}
-
-      {logoutError && <p className="mb-4 text-sm text-red-400">{logoutError}</p>}
 
       {isLoading && <BetsListSectionSkeleton showActions />}
       {error && (

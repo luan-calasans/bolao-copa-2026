@@ -21,6 +21,7 @@ import {
   validatePassword,
   validatePasswordConfirmation,
 } from '../utils/participantCredentials'
+import { showToast } from '../lib/toast'
 
 const LOGIN_BLOCK_DURATION_MS = 5 * 60 * 1000
 
@@ -193,6 +194,7 @@ export function useParticipantLoginViewModel() {
       await loginParticipantWithEmail(email, password)
       setLoginBlockedUntil(null)
       await refreshSession()
+      showToast('Login realizado com sucesso!')
       navigate(redirectTarget, { replace: true })
     } catch (err) {
       if (err instanceof ParticipantAuthError && err.statusCode === 429) {
@@ -202,10 +204,13 @@ export function useParticipantLoginViewModel() {
 
         applyLoginBlockStatus(until)
         setError(err.message)
+        showToast(err.message, 'error')
         return
       }
 
-      setError(err instanceof Error ? err.message : 'Não foi possível realizar o login.')
+      const message = err instanceof Error ? err.message : 'Não foi possível realizar o login.'
+      setError(message)
+      showToast(message, 'error')
     } finally {
       setIsSubmitting(false)
     }
@@ -254,9 +259,12 @@ export function useParticipantLoginViewModel() {
         passwordConfirmation,
       })
       await refreshSession()
+      showToast('Cadastro criado com sucesso!')
       navigate(redirectTarget, { replace: true })
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Não foi possível criar o cadastro.')
+      const message = err instanceof Error ? err.message : 'Não foi possível criar o cadastro.'
+      setError(message)
+      showToast(message, 'error')
     } finally {
       setIsSubmitting(false)
     }
@@ -299,9 +307,12 @@ export function useParticipantLoginViewModel() {
         passwordConfirmation,
       })
       await refreshSession()
+      showToast('Palpites vinculados com sucesso!')
       navigate(redirectTarget, { replace: true })
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Não foi possível vincular seus palpites.')
+      const message = err instanceof Error ? err.message : 'Não foi possível vincular seus palpites.'
+      setError(message)
+      showToast(message, 'error')
     } finally {
       setIsSubmitting(false)
     }

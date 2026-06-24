@@ -4,6 +4,7 @@ import { ScrollToTop } from './components/layout/ScrollToTop'
 import { AppRoutes } from './routes/AppRoutes'
 import { ThemeProvider } from './theme/ThemeProvider'
 import { ParticipantProvider } from './contexts/ParticipantProvider'
+import { ToastProvider } from './components/ui/ToastProvider'
 
 const SpeedInsights = lazy(() =>
   import('@vercel/speed-insights/react').then((module) => ({ default: module.SpeedInsights })),
@@ -42,9 +43,11 @@ export function App() {
     <ThemeProvider>
       <BrowserRouter basename={import.meta.env.BASE_URL}>
         <ParticipantProvider>
-          <DeferredVercelMonitoring />
-          <ScrollToTop />
-          <AppRoutes />
+          <ToastProvider>
+            <DeferredVercelMonitoring />
+            <ScrollToTop />
+            <AppRoutes />
+          </ToastProvider>
         </ParticipantProvider>
       </BrowserRouter>
     </ThemeProvider>

@@ -3,6 +3,7 @@ import { LuLogIn, LuLogOut, LuUser } from 'react-icons/lu'
 import { useParticipant } from '../../hooks/useParticipant'
 import { useTheme } from '../../hooks/useTheme'
 import { APP_ROUTES } from '../../routes/routePaths'
+import { showToast } from '../../lib/toast'
 
 interface ParticipantAuthButtonProps {
   className?: string
@@ -37,8 +38,13 @@ export function ParticipantAuthButton({ className = '' }: ParticipantAuthButtonP
   const { isAuthenticated, participant, logout } = useParticipant()
 
   async function handleLogout() {
-    await logout()
-    navigate(APP_ROUTES.home)
+    try {
+      await logout()
+      showToast('Você saiu da conta.', 'logout')
+      navigate(APP_ROUTES.home)
+    } catch {
+      showToast('Não foi possível sair da conta.', 'error')
+    }
   }
 
   if (isAuthenticated) {

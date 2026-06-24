@@ -4,6 +4,7 @@ import { APP_ROUTES } from '../../routes/routePaths'
 import { BackButton } from '../ui/BackLink'
 import { ThemeToggle } from '../ui/ThemeToggle'
 import { logoutAdmin } from '../../services/adminAuthService'
+import { showToast } from '../../lib/toast'
 
 interface AdminLayoutProps {
   children: ReactNode
@@ -15,6 +16,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   async function handleBackToBolao() {
     try {
       await logoutAdmin()
+      showToast('Sessão administrativa encerrada.', 'logout')
     } catch {
       // Segue para o bolão mesmo se o logout falhar.
     }

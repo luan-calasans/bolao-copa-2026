@@ -4,6 +4,7 @@ import type { MatchHighlightImages } from '../../models/matchHighlight'
 import { hasMatchHighlightImages } from '../../models/matchHighlight'
 import { useMatchHighlights } from '../../hooks/useMatchHighlights'
 import { buildHighlightImageFilename, downloadImageFromUrl } from '../../utils/downloadImage'
+import { showToast } from '../../lib/toast'
 import { Skeleton } from '../ui/Skeleton'
 
 interface MatchHighlightsGalleryProps {
@@ -83,6 +84,9 @@ function HighlightsCarousel({ items }: { items: HighlightImageItem[] }) {
         activeItem.url,
         buildHighlightImageFilename(activeItem.label, activeItem.url),
       )
+      showToast('Imagem baixada.')
+    } catch {
+      showToast('Não foi possível baixar a imagem.', 'error')
     } finally {
       setIsDownloading(false)
     }
