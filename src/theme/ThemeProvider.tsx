@@ -1,13 +1,6 @@
-import { createContext, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { applyThemeClass, getStoredTheme, persistTheme, type Theme } from './theme'
-
-interface ThemeContextValue {
-  theme: Theme
-  setTheme: (theme: Theme) => void
-  toggleTheme: () => void
-}
-
-export const ThemeContext = createContext<ThemeContextValue | null>(null)
+import { useCallback, useLayoutEffect, useMemo, useState, type ReactNode } from 'react'
+import { ThemeContext } from './themeContext'
+import { applyTheme, getStoredTheme, persistTheme, type Theme } from './theme'
 
 interface ThemeProviderProps {
   children: ReactNode
@@ -16,8 +9,8 @@ interface ThemeProviderProps {
 export function ThemeProvider({ children }: ThemeProviderProps) {
   const [theme, setThemeState] = useState<Theme>(getStoredTheme)
 
-  useEffect(() => {
-    applyThemeClass(theme)
+  useLayoutEffect(() => {
+    applyTheme(theme)
     persistTheme(theme)
   }, [theme])
 

@@ -354,6 +354,20 @@ html.light .youtube-highlights-btn:hover .youtube-highlights-icon {
   color: #dc2626;
 }
 
+html.light .offline-banner {
+  border-color: rgb(180 83 9 / 0.35);
+  background-color: rgb(251 191 36 / 0.2);
+  color: #92400e;
+}
+
+html.light .pwa-update-prompt {
+  color: #007a2f;
+}
+
+html.light .pwa-update-prompt button {
+  color: #005c24;
+}
+
 html.light
   :is(
     .bg-red-700,

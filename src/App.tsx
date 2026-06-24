@@ -5,6 +5,8 @@ import { AppRoutes } from './routes/AppRoutes'
 import { ThemeProvider } from './theme/ThemeProvider'
 import { ParticipantProvider } from './contexts/ParticipantProvider'
 import { ToastProvider } from './components/ui/ToastProvider'
+import { OfflineBanner } from './components/ui/OfflineBanner'
+import { PwaUpdatePrompt } from './components/ui/PwaUpdatePrompt'
 
 const SpeedInsights = lazy(() =>
   import('@vercel/speed-insights/react').then((module) => ({ default: module.SpeedInsights })),
@@ -44,6 +46,8 @@ export function App() {
       <BrowserRouter basename={import.meta.env.BASE_URL}>
         <ParticipantProvider>
           <ToastProvider>
+            <OfflineBanner />
+            <PwaUpdatePrompt />
             <DeferredVercelMonitoring />
             <ScrollToTop />
             <AppRoutes />
