@@ -321,6 +321,19 @@ html.light .live-bet-notice {
   color: #007a2f;
 }
 
+html.light .toast-card--success {
+  color: #007a2f;
+}
+
+html.light .toast-card--info {
+  color: #334155;
+}
+
+html.light .toast-card--error,
+html.light .toast-card--logout {
+  color: #b91c1c;
+}
+
 html.light .bet-ball-fab:is(.text-white, .hover\:text-white:hover) {
   background-color: rgb(13 19 33 / 0.95);
   border-color: rgb(0 122 85 / 0.4);

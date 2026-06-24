@@ -28,7 +28,7 @@ function ToastCard({ toast }: { toast: ToastItem }) {
   return (
     <div
       role="status"
-      className={`flex max-w-sm items-center gap-3 rounded-xl border px-4 py-3 shadow-lg shadow-black/30 backdrop-blur-md ${variantStyles[toast.variant]}`}
+      className={`toast-card toast-card--${toast.variant} flex max-w-sm items-center gap-3 rounded-xl border px-4 py-3 shadow-lg shadow-black/30 backdrop-blur-md ${variantStyles[toast.variant]}`}
     >
       <Icon className="h-5 w-5 shrink-0" aria-hidden="true" />
       <p className="text-sm font-medium leading-snug">{toast.message}</p>
