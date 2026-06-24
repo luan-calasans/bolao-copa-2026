@@ -49,6 +49,9 @@ export const actionsHeaderBase = `py-3 align-middle border-b border-slate-700/40
 export const deleteButtonClass =
   'inline-flex cursor-pointer rounded-full border border-red-500/50 bg-red-500/10 px-2.5 py-1 text-xs font-semibold text-red-300 transition hover:border-red-400/50 hover:bg-red-500/15 hover:text-red-200 disabled:cursor-not-allowed disabled:opacity-50'
 
+export const deleteButtonDisabledClass =
+  'inline-flex cursor-not-allowed rounded-full border border-slate-600/50 bg-slate-700/20 px-2.5 py-1 text-xs font-semibold text-slate-500'
+
 export const matchMetaColumnClass = 'min-w-[10rem] text-left'
 export const matchTeamsColumnClass = 'w-[10rem] min-w-[10rem] text-center'
 export const participantColumnClass = 'w-[14rem] min-w-[14rem] max-w-[14rem] text-left'

@@ -5,6 +5,7 @@ import { ClearFiltersButton } from '../ui/ClearFiltersButton'
 import { useBetsTableFilters } from '../../hooks/useBetsTableFilters'
 import type { BetResultFilter } from '../../utils/betListFilters'
 import type { BetsMatchGroup } from '../../utils/matchBetRows'
+import type { BetsTableItem } from '../../models/betsTable'
 
 interface BetsListSectionProps {
   groups: BetsMatchGroup[]
@@ -18,6 +19,7 @@ interface BetsListSectionProps {
   searchPlaceholder?: string
   deletingReceiptId?: string | null
   onDelete?: (receiptId: string, participantName?: string) => void
+  canDeleteBet?: (item: BetsTableItem) => boolean
   resultFilter?: BetResultFilter
   onResultFilterChange?: (filter: BetResultFilter) => void
   showClearFilters?: boolean
@@ -35,6 +37,7 @@ export function BetsListSection({
   searchPlaceholder = 'Buscar por nome, time ou confronto...',
   deletingReceiptId = null,
   onDelete,
+  canDeleteBet,
   resultFilter: controlledResultFilter,
   onResultFilterChange: onControlledResultFilterChange,
   showClearFilters = false,
@@ -123,6 +126,7 @@ export function BetsListSection({
           items={filteredItems}
           deletingReceiptId={deletingReceiptId}
           onDelete={onDelete}
+          canDeleteBet={canDeleteBet}
           showMatchMeta
           showMatchTeams
           showGeneratedAt={showGeneratedAt}

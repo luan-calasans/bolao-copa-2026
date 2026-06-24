@@ -10,7 +10,7 @@ import {
   CompactMatchTeams,
   MatchMetaInfo,
 } from './BetsTableShared'
-import { deleteButtonClass } from './betsTableStyles'
+import { deleteButtonClass, deleteButtonDisabledClass } from './betsTableStyles'
 
 export interface BetsTableRowProps {
   item: BetsTableItem
@@ -24,6 +24,7 @@ export interface BetsTableRowProps {
   showParticipantColumn: boolean
   deletingReceiptId: string | null
   onDelete?: (receiptId: string, participantName?: string) => void
+  canDeleteBet?: (item: BetsTableItem) => boolean
   onResultClick?: (item: BetsTableItem) => void
 }
 
@@ -39,11 +40,14 @@ export function BetsTableMobileCard({
   showParticipantColumn,
   deletingReceiptId,
   onDelete,
+  canDeleteBet,
   onResultClick,
 }: BetsTableRowProps) {
   const { match, matchId, row, championTeam } = item
   const { entry, displayName, resultStatus, points } = row
   const isDeleting = deletingReceiptId === entry.receiptId
+  const canDelete = canDeleteBet?.(item) ?? true
+  const showActionsColumn = showActions && onDelete
   const score = championTeam ? (
     <ChampionBetPickDisplay team={championTeam} />
   ) : (
@@ -106,16 +110,21 @@ export function BetsTableMobileCard({
           className="mt-0.5 shrink-0 text-xs font-semibold"
           onClick={onResultClick ? () => onResultClick(item) : undefined}
         />
-        {showActions && onDelete && (
-          <button
-            type="button"
-            className={deleteButtonClass}
-            disabled={deletingReceiptId !== null}
-            onClick={() => onDelete(entry.receiptId, displayName)}
-          >
-            {isDeleting ? 'Excluindo...' : 'Excluir'}
-          </button>
-        )}
+        {showActionsColumn &&
+          (canDelete ? (
+            <button
+              type="button"
+              className={deleteButtonClass}
+              disabled={deletingReceiptId !== null}
+              onClick={() => onDelete(entry.receiptId, displayName)}
+            >
+              {isDeleting ? 'Excluindo...' : 'Excluir'}
+            </button>
+          ) : (
+            <button type="button" className={deleteButtonDisabledClass} disabled aria-disabled="true">
+              Excluir
+            </button>
+          ))}
       </div>
     </li>
   )

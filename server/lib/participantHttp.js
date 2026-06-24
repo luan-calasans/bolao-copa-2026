@@ -555,6 +555,13 @@ export async function handleParticipantBetsRequest(req, res) {
       return
     }
 
+    if (result.reason === 'closed') {
+      sendJson(res, 403, {
+        message: result.message ?? 'Não é possível excluir este palpite.',
+      })
+      return
+    }
+
     if (!result.deleted) {
       sendJson(res, 404, { message: 'Palpite não encontrado.' })
       return

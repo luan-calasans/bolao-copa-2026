@@ -17,6 +17,7 @@ import {
 } from './BetsTableShared'
 import {
   deleteButtonClass,
+  deleteButtonDisabledClass,
   getBetsTableActionsBodyCellClass,
   getBetsTableActionsHeaderCellClass,
   getBetsTableBodyCellClass,
@@ -108,6 +109,7 @@ function BetsTableDesktopRow({
   showParticipantColumn,
   deletingReceiptId,
   onDelete,
+  canDeleteBet,
   onResultClick,
 }: BetsTableRowProps) {
   const columnVisibility: BetsTableColumnVisibility = {
@@ -122,6 +124,8 @@ function BetsTableDesktopRow({
   const { match, matchId, row, championTeam } = item
   const { entry, displayName, resultStatus, points } = row
   const isDeleting = deletingReceiptId === entry.receiptId
+  const canDelete = canDeleteBet?.(item) ?? true
+  const showActionsColumn = showActions && onDelete
   const score = championTeam ? (
     <ChampionBetPickDisplay team={championTeam} comfortable />
   ) : (
@@ -217,16 +221,22 @@ function BetsTableDesktopRow({
         </td>
       )}
 
-      {showActions && onDelete && (
+      {showActionsColumn && (
         <td className={getBetsTableActionsBodyCellClass(actionsEdge.isFirst, actionsEdge.isLast)}>
-          <button
-            type="button"
-            className={deleteButtonClass}
-            disabled={deletingReceiptId !== null}
-            onClick={() => onDelete(entry.receiptId, displayName)}
-          >
-            {isDeleting ? 'Excluindo...' : 'Excluir'}
-          </button>
+          {canDelete ? (
+            <button
+              type="button"
+              className={deleteButtonClass}
+              disabled={deletingReceiptId !== null}
+              onClick={() => onDelete(entry.receiptId, displayName)}
+            >
+              {isDeleting ? 'Excluindo...' : 'Excluir'}
+            </button>
+          ) : (
+            <button type="button" className={deleteButtonDisabledClass} disabled aria-disabled="true">
+              Excluir
+            </button>
+          )}
         </td>
       )}
     </tr>
@@ -248,6 +258,7 @@ interface BetsTableDesktopProps {
   onSort: (column: BetTableSortColumn) => void
   deletingReceiptId: string | null
   onDelete?: (receiptId: string, participantName?: string) => void
+  canDeleteBet?: (item: BetsTableItem) => boolean
   onResultClick?: (item: BetsTableItem) => void
 }
 
@@ -266,6 +277,7 @@ export function BetsTableDesktop({
   onSort,
   deletingReceiptId,
   onDelete,
+  canDeleteBet,
   onResultClick,
 }: BetsTableDesktopProps) {
   const columnVisibility: BetsTableColumnVisibility = {
@@ -400,6 +412,7 @@ export function BetsTableDesktop({
               showParticipantColumn={showParticipantColumn}
               deletingReceiptId={deletingReceiptId}
               onDelete={onDelete}
+              canDeleteBet={canDeleteBet}
               onResultClick={onResultClick}
             />
           ))}

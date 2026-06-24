@@ -18,6 +18,10 @@ import { showToast } from '../lib/toast'
 import { buildBetsMatchGroups, type BetsMatchGroup } from '../utils/matchBetRows'
 import { filterBetsByPersonNameKey } from '../utils/participantBets'
 import { formatPersonNameKeyDisplay } from '../utils/participantDisplay'
+import {
+  canParticipantDeleteBetItem,
+  getParticipantDeleteBlockedMessage,
+} from '../utils/participantBetDeletion'
 
 interface ParticipantBetsData {
   groups: BetsMatchGroup[]
@@ -147,6 +151,22 @@ export function useParticipantBetsViewModel(
 
   const removeBet = useCallback(
     async (receiptId: string) => {
+      const betItem = data?.groups
+        .flatMap((group) =>
+          group.rows.map((row) => ({
+            matchId: group.matchId,
+            match: group.match,
+            row,
+            championTeam: group.championTeam,
+          })),
+        )
+        .find((item) => item.row.entry.receiptId === receiptId)
+
+      if (betItem && !canParticipantDeleteBetItem(betItem)) {
+        showToast(getParticipantDeleteBlockedMessage(betItem), 'error')
+        return
+      }
+
       setDeletingReceiptId(receiptId)
 
       try {
@@ -160,7 +180,7 @@ export function useParticipantBetsViewModel(
         setDeletingReceiptId(null)
       }
     },
-    [removeBetLocally],
+    [data?.groups, removeBetLocally],
   )
 
   const groups = useMemo(() => data?.groups ?? [], [data?.groups])

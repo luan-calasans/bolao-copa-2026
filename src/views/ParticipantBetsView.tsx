@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { AppLayout } from '../components/layout/AppLayout'
 import { PageHeader } from '../components/layout/PageHeader'
 import { BetsListSection } from '../components/bet/BetsListSection'
-import { AllBetsStatsSkeleton } from '../components/bet/AllBetsStatsSkeleton'
+import { ParticipantBetsStatsSkeleton } from '../components/bet/AllBetsStatsSkeleton'
 import { BetsListSectionSkeleton } from '../components/bet/BetsListSectionSkeleton'
 import { DeleteBetConfirmModal } from '../components/bet/DeleteBetConfirmModal'
 import { EmptyState } from '../components/ui/EmptyState'
@@ -10,6 +10,7 @@ import { ErrorState } from '../components/ui/ErrorState'
 import { RankingPlacementBadge } from '../components/ranking/RankingPlacementBadge'
 import { StatCard } from '../components/ui/StatCard'
 import { useDeleteBetConfirmation } from '../hooks/useDeleteBetConfirmation'
+import { canParticipantDeleteBetItem } from '../utils/participantBetDeletion'
 import { useParticipantBetsViewModel } from '../viewmodels/useParticipantBetsViewModel'
 import { formatEfficiencyPercent } from '../utils/betEfficiency'
 import { APP_ROUTES } from '../routes/routePaths'
@@ -40,6 +41,12 @@ export function ParticipantBetsView({
     setResultFilter('all')
   }
 
+  const statCount = 5 + (vm.rankingRow ? 1 : 0)
+  const statsGridClass =
+    statCount === 6
+      ? 'mt-6 grid w-full grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6'
+      : 'mt-6 grid w-full grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5'
+
   return (
     <AppLayout>
       <PageHeader
@@ -53,9 +60,9 @@ export function ParticipantBetsView({
         }
         description={description}
       >
-        {vm.isLoading && <AllBetsStatsSkeleton />}
+        {vm.isLoading && <ParticipantBetsStatsSkeleton statCount={statCount} />}
         {!vm.isLoading && !vm.error && !vm.isEmpty && (
-          <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+          <div className={statsGridClass}>
             {vm.rankingRow && (
               <StatCard
                 label="Pontos"
@@ -142,6 +149,7 @@ export function ParticipantBetsView({
               ? (receiptId) => deleteConfirmation.requestDelete(receiptId)
               : undefined
           }
+          canDeleteBet={allowDelete ? canParticipantDeleteBetItem : undefined}
         />
       )}
 

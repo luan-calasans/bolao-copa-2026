@@ -16,6 +16,7 @@ interface BetsTableProps {
   items: BetsTableItem[]
   deletingReceiptId?: string | null
   onDelete?: (receiptId: string, participantName?: string) => void
+  canDeleteBet?: (item: BetsTableItem) => boolean
   showMatchMeta?: boolean
   showMatchTeams?: boolean
   showBetOutcome?: boolean
@@ -30,6 +31,7 @@ export function BetsTable({
   items,
   deletingReceiptId = null,
   onDelete,
+  canDeleteBet,
   showMatchMeta = false,
   showMatchTeams = false,
   showBetOutcome = false,
@@ -39,7 +41,8 @@ export function BetsTable({
   showReceiptLink = false,
   showParticipantColumn = true,
 }: BetsTableProps) {
-  const showActions = Boolean(onDelete)
+  const showActions =
+    Boolean(onDelete)
   const [sort, setSort] = useState<BetTableSortState | null>(null)
   const [breakdownItem, setBreakdownItem] = useState<BetsTableItem | null>(null)
 
@@ -60,6 +63,7 @@ export function BetsTable({
     showActions,
     deletingReceiptId,
     onDelete,
+    canDeleteBet,
     linkParticipantProfile,
     showReceiptLink,
     showParticipantColumn,

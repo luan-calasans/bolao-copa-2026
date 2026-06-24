@@ -10,6 +10,9 @@ import type { AiPrediction } from '../models/aiPrediction'
 import { getBetsByMatchId, saveBetAndReceipt } from '../services/betStorageService'
 import { showToast } from '../lib/toast'
 import {
+  getBetSubmitSuccessMessage,
+} from '../utils/betPickToast'
+import {
   fetchMatchById,
   fetchWorldCupMatchesBundle,
   findWorldCupMatchById,
@@ -458,6 +461,9 @@ export function useBetViewModel(matchId: number): BetViewModelState & BetViewMod
     void (async () => {
       try {
         const receiptId = await saveBetAndReceipt(bet, receipt)
+        showToast(
+          getBetSubmitSuccessMessage(complementMode, winnerPick, homeScore, awayScore),
+        )
         navigate(`/comprovante/${receiptId}`)
       } catch (err) {
         const message = getFriendlyErrorMessage(err)
@@ -474,7 +480,6 @@ export function useBetViewModel(matchId: number): BetViewModelState & BetViewMod
     setHomeScore(clampBetScore(aiPrediction.homeScore, minHomeScore))
     setAwayScore(clampBetScore(aiPrediction.awayScore, minAwayScore))
     setValidationError(null)
-    showToast('Placar da IA aplicado ao palpite.', 'info')
   }, [aiPrediction, minHomeScore, minAwayScore, isScoreLocked])
 
   const resetForm = useCallback(() => {
@@ -487,6 +492,7 @@ export function useBetViewModel(matchId: number): BetViewModelState & BetViewMod
     setHomeScore(formBaseline.homeScore)
     setAwayScore(formBaseline.awayScore)
     setValidationError(null)
+    showToast('Alterações descartadas.', 'info')
   }, [formBaseline, participant])
 
   const isFormDirty =

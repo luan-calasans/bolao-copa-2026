@@ -9,6 +9,7 @@ import { normalizePersonNameKey } from './participantKey.js'
 import { resetSchemaBootstrap, ensureSchemaReady } from './schemaBootstrap.js'
 
 import { assertSafeReceiptId, assertSafeMatchId, ValidationError } from './validateInput.js'
+import { getParticipantOwnedBetDeletionBlockReason } from './participantBetDeletion.js'
 
 let betDbSqlProvider = null
 
@@ -620,6 +621,37 @@ export async function deleteBetByReceiptId(receiptId) {
   return rows.length > 0
 }
 
+export async function findOwnedBetRecordByReceiptId(receiptId) {
+  const safeReceiptId = assertSafeReceiptId(receiptId)
+  const sql = await getReadySql()
+
+  const rows = await sql`
+    SELECT
+      b.match_id,
+      b.match_snapshot,
+      cb.receipt_id AS champion_receipt_id
+    FROM receipts r
+    LEFT JOIN bets b ON b.receipt_id = r.id
+    LEFT JOIN champion_bets cb ON cb.receipt_id = r.id
+    WHERE r.id = ${safeReceiptId}
+      AND r.deleted_at IS NULL
+      AND (b.receipt_id IS NOT NULL OR cb.receipt_id IS NOT NULL)
+    LIMIT 1
+  `
+
+  if (!rows.length) {
+    return null
+  }
+
+  const row = rows[0]
+
+  return {
+    matchId: row.match_id ?? null,
+    matchSnapshot: row.match_snapshot ?? null,
+    isChampion: Boolean(row.champion_receipt_id),
+  }
+}
+
 export async function deleteOwnedBetByReceiptId(receiptId, personNameKey) {
   const ownerKey = await findBetOwnerKeyByReceiptId(receiptId)
 
@@ -629,6 +661,13 @@ export async function deleteOwnedBetByReceiptId(receiptId, personNameKey) {
 
   if (ownerKey !== personNameKey) {
     return { deleted: false, reason: 'forbidden' }
+  }
+
+  const record = await findOwnedBetRecordByReceiptId(receiptId)
+  const blockMessage = await getParticipantOwnedBetDeletionBlockReason(record)
+
+  if (blockMessage) {
+    return { deleted: false, reason: 'closed', message: blockMessage }
   }
 
   const deleted = await deleteBetByReceiptId(receiptId)

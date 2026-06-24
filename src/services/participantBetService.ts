@@ -30,7 +30,7 @@ export async function deleteParticipantBetByReceiptId(receiptId: string): Promis
   }
 
   if (response.status === 403) {
-    throw new Error('Você só pode excluir seus próprios palpites.')
+    throw new Error(await parseErrorMessage(response))
   }
 
   if (response.status === 404) {

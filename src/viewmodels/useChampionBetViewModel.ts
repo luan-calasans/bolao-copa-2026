@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import type { ApiTeamDetail } from '../models/api.types'
 import type { ChampionBetEntry, ChampionBetMeta } from '../models/championBet'
@@ -65,8 +65,9 @@ export interface ChampionBetViewModelActions {
 export function useChampionBetViewModel(): ChampionBetViewModelState & ChampionBetViewModelActions {
   const navigate = useNavigate()
   const { participant } = useParticipant()
-  const [personName, setPersonNameState] = useState('')
-  const [selectedTeamId, setSelectedTeamId] = useState<number | null>(null)
+  const [personNameDraft, setPersonNameDraft] = useState('')
+  const personName = participant?.personName ?? personNameDraft
+  const [selectedTeamIdDraft, setSelectedTeamIdDraft] = useState<number | null>(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [validationError, setValidationError] = useState<string | null>(null)
 
@@ -96,10 +97,7 @@ export function useChampionBetViewModel(): ChampionBetViewModelState & ChampionB
     [personName, bets],
   )
 
-  useEffect(() => {
-    if (!participant?.personName) return
-    setPersonNameState(participant.personName)
-  }, [participant?.personName])
+  const selectedTeamId = existingBet?.teamId ?? selectedTeamIdDraft
 
   const canPlaceBet = meta?.acceptingBets === true && existingBet == null
   const betBlockedMessage = existingBet
@@ -108,18 +106,25 @@ export function useChampionBetViewModel(): ChampionBetViewModelState & ChampionB
 
   const setPersonName = useCallback(
     (value: string) => {
-      setPersonNameState(value)
+      setPersonNameDraft(value)
       setValidationError(null)
 
-      const found = hasValidPersonName(value) ? findExistingChampionBetForName(bets, value) : null
-      if (found) {
-        setSelectedTeamId(found.teamId)
+      if (!hasValidPersonName(value) || findExistingChampionBetForName(bets, value)) {
+        return
       }
+
+      setSelectedTeamIdDraft(null)
     },
     [bets],
   )
 
-  const confirmBet = useCallback(async () => {
+  const setSelectedTeamIdSafe = useCallback((teamId: number) => {
+    if (existingBet) return
+    setSelectedTeamIdDraft(teamId)
+    setValidationError(null)
+  }, [existingBet])
+
+  const confirmBet = useCallback(() => {
     const nameError = validatePersonName(personName)
     if (nameError) {
       setValidationError(nameError)
@@ -139,31 +144,33 @@ export function useChampionBetViewModel(): ChampionBetViewModelState & ChampionB
     setValidationError(null)
     setIsSubmitting(true)
 
-    try {
-      const formattedName = formatPersonNameForStorage(personName)
-      const createdAt = new Date().toISOString()
-      const receiptId = generateReceiptId()
+    const formattedName = formatPersonNameForStorage(personName)
+    const createdAt = new Date().toISOString()
+    const receiptId = generateReceiptId()
 
-      const savedReceiptId = await saveChampionBetAndReceipt(
-        {
-          teamId: selectedTeamId,
-          personName: formattedName,
-          createdAt,
-        },
-        {
-          id: receiptId,
-          generatedAt: createdAt,
-        },
-      )
+    void (async () => {
+      try {
+        const savedReceiptId = await saveChampionBetAndReceipt(
+          {
+            teamId: selectedTeamId,
+            personName: formattedName,
+            createdAt,
+          },
+          {
+            id: receiptId,
+            generatedAt: createdAt,
+          },
+        )
 
-      navigate(receiptPath(savedReceiptId))
-    } catch (submitError) {
-      const message = getFriendlyErrorMessage(submitError)
-      setValidationError(message)
-      showToast(message, 'error')
-    } finally {
-      setIsSubmitting(false)
-    }
+        showToast('Palpite de campeão registrado!')
+        navigate(receiptPath(savedReceiptId))
+      } catch (submitError) {
+        const message = getFriendlyErrorMessage(submitError)
+        setValidationError(message)
+        showToast(message, 'error')
+        setIsSubmitting(false)
+      }
+    })()
   }, [
     betBlockedMessage,
     canPlaceBet,
@@ -181,7 +188,7 @@ export function useChampionBetViewModel(): ChampionBetViewModelState & ChampionB
     personName,
     setPersonName,
     selectedTeamId,
-    setSelectedTeamId,
+    setSelectedTeamId: setSelectedTeamIdSafe,
     existingBet,
     isLoading: showLoading,
     error,

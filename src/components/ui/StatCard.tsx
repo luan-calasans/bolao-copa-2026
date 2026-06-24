@@ -18,7 +18,7 @@ export function StatCard({
   const isInteractive = clickable && onClick != null
 
   const className = [
-    'rounded-2xl border px-4 py-3 text-center transition',
+    'w-full rounded-2xl border px-4 py-3 text-center transition',
     active
       ? 'border-brazil-yellow/50 bg-brazil-yellow/10'
       : 'border-slate-700/50 bg-pitch-800/40',
