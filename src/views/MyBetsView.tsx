@@ -22,6 +22,7 @@ export function MyBetsView() {
       backTo={APP_ROUTES.home}
       backLabel="Voltar aos jogos"
       description="Seus palpites registrados no bolão, incluindo o palpite de campeão."
+      allowDelete
     />
   )
 }

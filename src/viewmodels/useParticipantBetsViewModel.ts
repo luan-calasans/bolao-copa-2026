@@ -1,8 +1,9 @@
-import { useCallback, useMemo } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import type { MatchBetEntry } from '../models/matchBet'
 import { useAsyncResource } from '../hooks/useAsyncResource'
 import { getAllBets } from '../services/betStorageService'
 import { fetchChampionBets } from '../services/championBetService'
+import { deleteParticipantBetByReceiptId } from '../services/participantBetService'
 import { fetchRanking, type RankingRow } from '../services/rankingService'
 import { fetchWorldCupMatches } from '../services/matchService'
 import {
@@ -12,7 +13,7 @@ import {
 } from '../utils/championBetRanking'
 import { computeHitRateEfficiency } from '../utils/betEfficiency'
 import { computeBetsListStats } from '../utils/betsListStats'
-import type { LoadError } from '../utils/errorMessages'
+import { toLoadError, type LoadError } from '../utils/errorMessages'
 import { buildBetsMatchGroups, type BetsMatchGroup } from '../utils/matchBetRows'
 import { filterBetsByPersonNameKey } from '../utils/participantBets'
 import { formatPersonNameKeyDisplay } from '../utils/participantDisplay'
@@ -44,10 +45,17 @@ export interface ParticipantBetsViewModelState {
   error: LoadError | null
   isEmpty: boolean
   reload: (force?: boolean) => void
+  deletingReceiptId?: string | null
+  removeBet?: (receiptId: string) => Promise<void>
+}
+
+export interface UseParticipantBetsViewModelOptions {
+  allowDelete?: boolean
 }
 
 export function useParticipantBetsViewModel(
   personNameKey: string,
+  options?: UseParticipantBetsViewModelOptions,
 ): ParticipantBetsViewModelState {
   const loadData = useCallback(
     async (): Promise<ParticipantBetsData> => {
@@ -100,7 +108,60 @@ export function useParticipantBetsViewModel(
     [personNameKey],
   )
 
-  const { data, isLoading, error, reload } = useAsyncResource(loadData, [personNameKey])
+  const { data, isLoading, error, reload, setData } = useAsyncResource(loadData, [personNameKey])
+  const [deletingReceiptId, setDeletingReceiptId] = useState<string | null>(null)
+  const [deleteError, setDeleteError] = useState<LoadError | null>(null)
+
+  const removeBetLocally = useCallback(
+    (receiptId: string) => {
+      setData((current) => {
+        if (!current) return current
+
+        const bets = current.bets.filter((entry) => entry.receiptId !== receiptId)
+        const groups = current.groups
+          .map((group) => ({
+            ...group,
+            rows: group.rows.filter((row) => row.entry.receiptId !== receiptId),
+          }))
+          .filter((group) => group.rows.length > 0)
+        const { totalBets, totalExact, totalPartial, totalMissed } = computeBetsListStats(
+          groups,
+          bets,
+        )
+        const hitRateEfficiency = computeHitRateEfficiency(totalExact, totalPartial, totalMissed)
+
+        return {
+          ...current,
+          bets,
+          groups,
+          totalBets,
+          totalExact,
+          totalPartial,
+          totalMissed,
+          hitRateEfficiency,
+        }
+      })
+    },
+    [setData],
+  )
+
+  const removeBet = useCallback(
+    async (receiptId: string) => {
+      setDeletingReceiptId(receiptId)
+      setDeleteError(null)
+
+      try {
+        await deleteParticipantBetByReceiptId(receiptId)
+        removeBetLocally(receiptId)
+      } catch (err) {
+        setDeleteError(toLoadError(err))
+        throw err
+      } finally {
+        setDeletingReceiptId(null)
+      }
+    },
+    [removeBetLocally],
+  )
 
   const groups = useMemo(() => data?.groups ?? [], [data?.groups])
   const displayName = data?.displayName ?? formatPersonNameKeyDisplay(personNameKey)
@@ -126,8 +187,9 @@ export function useParticipantBetsViewModel(
     totalMissed,
     hitRateEfficiency,
     isLoading,
-    error,
+    error: deleteError ?? error,
     isEmpty,
     reload,
+    ...(options?.allowDelete ? { deletingReceiptId, removeBet } : {}),
   }
 }

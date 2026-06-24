@@ -28,7 +28,8 @@ import {
 } from './participantLoginRateLimit.js'
 import { readJsonBody, sendJson, sendTooManyRequests } from './httpUtils.js'
 import { checkRateLimit, clearRateLimit, getClientIp } from './rateLimit.js'
-import { ValidationError } from './validateInput.js'
+import { ValidationError, assertSafeReceiptId } from './validateInput.js'
+import { deleteOwnedBetByReceiptId } from './betDb.js'
 
 const MAX_BODY_BYTES = 8_192
 const AUTH_RATE_LIMIT = 10
@@ -502,4 +503,71 @@ export async function handleParticipantLogoutRequest(req, res) {
 
   clearParticipantSessionCookie(res)
   sendJson(res, 200, { authenticated: false })
+}
+
+export async function handleParticipantBetsRequest(req, res) {
+  if (req.method === 'OPTIONS') {
+    res.statusCode = 204
+    res.setHeader('Access-Control-Allow-Methods', 'DELETE, OPTIONS')
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type')
+    res.end()
+    return
+  }
+
+  if (!isParticipantAuthConfigured()) {
+    sendNotConfigured(res)
+    return
+  }
+
+  const session = getParticipantSession(req)
+
+  if (!session) {
+    sendJson(res, 401, { message: 'Faça login para gerenciar seus palpites.' })
+    return
+  }
+
+  if (req.method !== 'DELETE') {
+    sendJson(res, 405, { message: 'Método não permitido.' })
+    return
+  }
+
+  const parsed = new URL(req.url ?? '', 'http://localhost')
+
+  if (!parsed.searchParams.has('receiptId')) {
+    sendJson(res, 400, { message: 'Parâmetro receiptId é obrigatório.' })
+    return
+  }
+
+  let receiptId
+
+  try {
+    receiptId = assertSafeReceiptId(parsed.searchParams.get('receiptId'))
+  } catch {
+    sendJson(res, 400, { message: 'Parâmetro receiptId inválido.' })
+    return
+  }
+
+  try {
+    const result = await deleteOwnedBetByReceiptId(receiptId, session.personNameKey)
+
+    if (result.reason === 'forbidden') {
+      sendJson(res, 403, { message: 'Você só pode excluir seus próprios palpites.' })
+      return
+    }
+
+    if (!result.deleted) {
+      sendJson(res, 404, { message: 'Palpite não encontrado.' })
+      return
+    }
+
+    sendJson(res, 200, { deleted: true, receiptId })
+  } catch (error) {
+    if (error instanceof ValidationError) {
+      sendJson(res, 400, { message: error.message })
+      return
+    }
+
+    console.error('[api/participant/bets]', error)
+    sendJson(res, 500, { message: 'Não foi possível excluir o palpite.' })
+  }
 }

@@ -105,7 +105,8 @@ export function useBetViewModel(matchId: number): BetViewModelState & BetViewMod
   const [match, setMatch] = useState<Match | null>(null)
   const [betCount, setBetCount] = useState(0)
   const [matchBets, setMatchBets] = useState<MatchBetEntry[]>([])
-  const [personName, setPersonName] = useState('')
+  const [personNameDraft, setPersonNameDraft] = useState('')
+  const personName = participant?.personName ?? personNameDraft
   const [winnerPick, setWinnerPick] = useState<WinnerPick | null>(null)
   const [homeScore, setHomeScore] = useState<number | null>(null)
   const [awayScore, setAwayScore] = useState<number | null>(null)
@@ -116,21 +117,26 @@ export function useBetViewModel(matchId: number): BetViewModelState & BetViewMod
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [validationError, setValidationError] = useState<string | null>(null)
   const [formBaseline, setFormBaseline] = useState<FormSnapshot | null>(null)
-  const personNameRef = useRef('')
-  const { aiPrediction, isAiLoading, aiError, canRequestAi, requestAiPrediction } =
-    useAiPrediction(match?.id ?? null)
+  const personNameRef = useRef(personName)
+
+  useEffect(() => {
+    personNameRef.current = personName
+  }, [personName])
+
+  const { aiPrediction, isAiLoading, aiError, canRequestAi, requestAiPrediction } = useAiPrediction(
+    match?.id ?? null,
+  )
 
   const minHomeScore = match ? getMinBetScores(match).home : 0
   const minAwayScore = match ? getMinBetScores(match).away : 0
 
   const existingBet = useMemo(
-    () =>
-      hasValidPersonName(personName)
-        ? findExistingBetForName(matchBets, personName)
-        : null,
+    () => (hasValidPersonName(personName) ? findExistingBetForName(matchBets, personName) : null),
     [personName, matchBets],
   )
-  const existingHasScore = existingBet ? hasBetScorePick(existingBet.homeScore, existingBet.awayScore) : false
+  const existingHasScore = existingBet
+    ? hasBetScorePick(existingBet.homeScore, existingBet.awayScore)
+    : false
   const existingHasWinner = existingBet ? isValidWinnerPick(existingBet.winnerPick) : false
   const isScoreLocked = existingHasScore
   const isWinnerLocked = existingHasWinner
@@ -163,8 +169,7 @@ export function useBetViewModel(matchId: number): BetViewModelState & BetViewMod
     setBetBlockedMessage(getBetBlockedMessage(loadedMatch))
 
     if (resetScores) {
-      personNameRef.current = ''
-      setPersonName('')
+      setPersonNameDraft('')
       setWinnerPick(null)
       setHomeScore(null)
       setAwayScore(null)
@@ -177,12 +182,8 @@ export function useBetViewModel(matchId: number): BetViewModelState & BetViewMod
       return
     }
 
-    setHomeScore((current) =>
-      current === null ? null : clampBetScore(current, min.home),
-    )
-    setAwayScore((current) =>
-      current === null ? null : clampBetScore(current, min.away),
-    )
+    setHomeScore((current) => (current === null ? null : clampBetScore(current, min.home)))
+    setAwayScore((current) => (current === null ? null : clampBetScore(current, min.away)))
   }, [])
 
   const syncExistingBetForm = useCallback(
@@ -193,6 +194,29 @@ export function useBetViewModel(matchId: number): BetViewModelState & BetViewMod
       if (found) {
         applyExistingBetToForm(found)
       }
+    },
+    [applyExistingBetToForm],
+  )
+
+  const initializeFormForName = useCallback(
+    (bets: MatchBetEntry[], name: string) => {
+      if (!hasValidPersonName(name)) return
+
+      const found = findExistingBetForName(bets, name)
+      if (found) {
+        applyExistingBetToForm(found)
+        return
+      }
+
+      setWinnerPick(null)
+      setHomeScore(null)
+      setAwayScore(null)
+      setFormBaseline({
+        personName: name,
+        winnerPick: null,
+        homeScore: null,
+        awayScore: null,
+      })
     },
     [applyExistingBetToForm],
   )
@@ -216,13 +240,17 @@ export function useBetViewModel(matchId: number): BetViewModelState & BetViewMod
       setMatchBets(loadedBets)
       applyLoadedMatch(loadedMatch, resetScores)
 
-      if (!resetScores) {
+      if (resetScores) {
+        if (participant?.personName) {
+          initializeFormForName(loadedBets, participant.personName)
+        }
+      } else {
         syncExistingBetForm(loadedBets, personNameRef.current)
       }
 
       return loadedMatch
     },
-    [applyLoadedMatch, matchId, syncExistingBetForm],
+    [applyLoadedMatch, initializeFormForName, matchId, participant, syncExistingBetForm],
   )
 
   const silentReload = useCallback(async () => {
@@ -236,14 +264,6 @@ export function useBetViewModel(matchId: number): BetViewModelState & BetViewMod
       setIsReloading(false)
     }
   }, [loadMatchData])
-
-  useEffect(() => {
-    if (!participant?.personName) return
-
-    personNameRef.current = participant.personName
-    setPersonName(participant.personName)
-    syncExistingBetForm(matchBets, participant.personName)
-  }, [participant?.personName, matchBets, syncExistingBetForm])
 
   const reload = useCallback(
     (options?: { silent?: boolean }) => {
@@ -311,8 +331,7 @@ export function useBetViewModel(matchId: number): BetViewModelState & BetViewMod
 
   const setPersonNameSafe = useCallback(
     (value: string) => {
-      personNameRef.current = value
-      setPersonName(value)
+      setPersonNameDraft(value)
       setValidationError(null)
 
       if (!hasValidPersonName(value)) {
@@ -444,16 +463,7 @@ export function useBetViewModel(matchId: number): BetViewModelState & BetViewMod
         setIsSubmitting(false)
       }
     })()
-  }, [
-    match,
-    personName,
-    winnerPick,
-    homeScore,
-    awayScore,
-    navigate,
-    complementMode,
-    existingBet,
-  ])
+  }, [match, personName, winnerPick, homeScore, awayScore, navigate, complementMode, existingBet])
 
   const applyAiPrediction = useCallback(() => {
     if (!aiPrediction || isScoreLocked) return
@@ -466,20 +476,18 @@ export function useBetViewModel(matchId: number): BetViewModelState & BetViewMod
   const resetForm = useCallback(() => {
     if (!formBaseline) return
 
-    personNameRef.current = formBaseline.personName
-    setPersonName(formBaseline.personName)
+    if (!participant) {
+      setPersonNameDraft(formBaseline.personName)
+    }
     setWinnerPick(formBaseline.winnerPick)
     setHomeScore(formBaseline.homeScore)
     setAwayScore(formBaseline.awayScore)
     setValidationError(null)
-  }, [formBaseline])
+  }, [formBaseline, participant])
 
   const isFormDirty =
     formBaseline !== null &&
-    !isSameFormSnapshot(
-      { personName, winnerPick, homeScore, awayScore },
-      formBaseline,
-    )
+    !isSameFormSnapshot({ personName, winnerPick, homeScore, awayScore }, formBaseline)
 
   const canPlaceBet = Boolean(match && !betBlockedMessage)
 

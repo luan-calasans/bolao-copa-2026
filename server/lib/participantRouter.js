@@ -2,6 +2,7 @@ import { sendJson } from './httpUtils.js'
 import {
   handleParticipantCheckNameRequest,
   handleParticipantClaimRequest,
+  handleParticipantBetsRequest,
   handleParticipantLoginRequest,
   handleParticipantLogoutRequest,
   handleParticipantRegisterRequest,
@@ -49,6 +50,9 @@ export async function handleParticipantRouterRequest(req, res) {
       return
     case 'check-name':
       await handleParticipantCheckNameRequest(req, res)
+      return
+    case 'bets':
+      await handleParticipantBetsRequest(req, res)
       return
     default:
       sendJson(res, 404, { message: 'Rota de participante não encontrada.' })

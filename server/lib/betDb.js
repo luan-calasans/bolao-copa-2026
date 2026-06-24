@@ -558,6 +558,24 @@ export async function findAllBets() {
   return rows.map(rowToMatchBet)
 }
 
+export async function findBetOwnerKeyByReceiptId(receiptId) {
+  const safeReceiptId = assertSafeReceiptId(receiptId)
+  const sql = await getReadySql()
+
+  const rows = await sql`
+    SELECT COALESCE(b.person_name_key, cb.person_name_key) AS person_name_key
+    FROM receipts r
+    LEFT JOIN bets b ON b.receipt_id = r.id
+    LEFT JOIN champion_bets cb ON cb.receipt_id = r.id
+    WHERE r.id = ${safeReceiptId}
+      AND r.deleted_at IS NULL
+      AND (b.receipt_id IS NOT NULL OR cb.receipt_id IS NOT NULL)
+    LIMIT 1
+  `
+
+  return rows[0]?.person_name_key ?? null
+}
+
 export async function deleteBetByReceiptId(receiptId) {
   const safeReceiptId = assertSafeReceiptId(receiptId)
 
@@ -565,7 +583,17 @@ export async function deleteBetByReceiptId(receiptId) {
 
   const rows = await sql`
 
-    WITH cleared_bet AS (
+    WITH cleared_champion AS (
+
+      DELETE FROM champion_bets
+
+      WHERE receipt_id = ${safeReceiptId}
+
+      RETURNING receipt_id
+
+    ),
+
+    cleared_bet AS (
 
       UPDATE bets
 
@@ -590,4 +618,20 @@ export async function deleteBetByReceiptId(receiptId) {
   `
 
   return rows.length > 0
+}
+
+export async function deleteOwnedBetByReceiptId(receiptId, personNameKey) {
+  const ownerKey = await findBetOwnerKeyByReceiptId(receiptId)
+
+  if (!ownerKey) {
+    return { deleted: false, reason: 'not_found' }
+  }
+
+  if (ownerKey !== personNameKey) {
+    return { deleted: false, reason: 'forbidden' }
+  }
+
+  const deleted = await deleteBetByReceiptId(receiptId)
+
+  return { deleted, reason: deleted ? 'ok' : 'not_found' }
 }

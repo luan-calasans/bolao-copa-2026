@@ -4,10 +4,12 @@ import { PageHeader } from '../components/layout/PageHeader'
 import { BetsListSection } from '../components/bet/BetsListSection'
 import { AllBetsStatsSkeleton } from '../components/bet/AllBetsStatsSkeleton'
 import { BetsListSectionSkeleton } from '../components/bet/BetsListSectionSkeleton'
+import { DeleteBetConfirmModal } from '../components/bet/DeleteBetConfirmModal'
 import { EmptyState } from '../components/ui/EmptyState'
 import { ErrorState } from '../components/ui/ErrorState'
 import { RankingPlacementBadge } from '../components/ranking/RankingPlacementBadge'
 import { StatCard } from '../components/ui/StatCard'
+import { useDeleteBetConfirmation } from '../hooks/useDeleteBetConfirmation'
 import { useParticipantBetsViewModel } from '../viewmodels/useParticipantBetsViewModel'
 import { formatEfficiencyPercent } from '../utils/betEfficiency'
 import { APP_ROUTES } from '../routes/routePaths'
@@ -19,6 +21,7 @@ interface ParticipantBetsViewProps {
   backTo?: string
   backLabel?: string
   description?: string
+  allowDelete?: boolean
 }
 
 export function ParticipantBetsView({
@@ -27,8 +30,10 @@ export function ParticipantBetsView({
   backTo = APP_ROUTES.ranking,
   backLabel = 'Voltar ao ranking',
   description = 'Palpites registrados por este participante, incluindo o palpite de campeão.',
+  allowDelete = false,
 }: ParticipantBetsViewProps) {
-  const vm = useParticipantBetsViewModel(personNameKey)
+  const vm = useParticipantBetsViewModel(personNameKey, { allowDelete })
+  const deleteConfirmation = useDeleteBetConfirmation(vm.removeBet ?? (async () => {}))
   const [resultFilter, setResultFilter] = useState<BetResultFilter>('all')
 
   function showAllBets() {
@@ -101,6 +106,7 @@ export function ParticipantBetsView({
           showFilters={false}
           showReceiptLink
           showParticipantColumn={false}
+          showActions={allowDelete}
         />
       )}
       {vm.error && (
@@ -130,6 +136,21 @@ export function ParticipantBetsView({
           resultFilter={resultFilter}
           onResultFilterChange={setResultFilter}
           showClearFilters
+          deletingReceiptId={allowDelete ? vm.deletingReceiptId : undefined}
+          onDelete={
+            allowDelete && vm.removeBet
+              ? (receiptId) => deleteConfirmation.requestDelete(receiptId)
+              : undefined
+          }
+        />
+      )}
+
+      {allowDelete && (
+        <DeleteBetConfirmModal
+          isOpen={deleteConfirmation.isOpen}
+          isDeleting={vm.deletingReceiptId === deleteConfirmation.pendingReceiptId}
+          onConfirm={() => void deleteConfirmation.confirmDelete()}
+          onCancel={deleteConfirmation.cancelDelete}
         />
       )}
     </AppLayout>
