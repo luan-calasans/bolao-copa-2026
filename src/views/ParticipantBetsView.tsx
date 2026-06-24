@@ -112,6 +112,7 @@ export function ParticipantBetsView({
         <BetsListSectionSkeleton
           showFilters={false}
           showReceiptLink
+          showGeneratedAt
           showParticipantColumn={false}
           showActions={allowDelete}
         />
@@ -136,6 +137,7 @@ export function ParticipantBetsView({
           searchInputId="participant-bets-search"
           sortable
           showFilters={false}
+          showGeneratedAt
           linkParticipantProfile={false}
           showReceiptLink
           showParticipantColumn={false}
