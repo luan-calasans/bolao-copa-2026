@@ -162,26 +162,28 @@ export function Header() {
           id="main-nav-menu"
           aria-label="Navegação principal"
           aria-hidden={!isMenuOpen}
-          className={`overflow-hidden border-t border-slate-800/60 bg-pitch-950/95 transition-all duration-300 ease-out lg:hidden ${
+          className={`grid border-t border-slate-800/60 bg-pitch-950/95 transition-[grid-template-rows,opacity] duration-300 ease-out lg:hidden ${
             isMenuOpen
-              ? 'pointer-events-auto max-h-80 opacity-100'
-              : 'pointer-events-none max-h-0 opacity-0'
+              ? 'pointer-events-auto grid-rows-[1fr] opacity-100'
+              : 'pointer-events-none grid-rows-[0fr] opacity-0'
           }`}
         >
-          <ul className="mx-auto flex max-w-7xl flex-col gap-1 px-4 py-2.5 sm:px-6">
-            {MAIN_NAV_ROUTES.map((item) => (
-              <li key={item.path}>
-                <NavLink
-                  to={item.path}
-                  end={item.end}
-                  className={mobileNavLinkClass}
-                  onClick={handleNavClick}
-                >
-                  {item.label}
-                </NavLink>
-              </li>
-            ))}
-          </ul>
+          <div className="overflow-hidden">
+            <ul className="mx-auto flex max-w-7xl flex-col gap-1 px-4 py-2.5 sm:px-6">
+              {MAIN_NAV_ROUTES.map((item) => (
+                <li key={item.path}>
+                  <NavLink
+                    to={item.path}
+                    end={item.end}
+                    className={mobileNavLinkClass}
+                    onClick={handleNavClick}
+                  >
+                    {item.label}
+                  </NavLink>
+                </li>
+              ))}
+            </ul>
+          </div>
         </nav>
 
         {isMenuOpen && (

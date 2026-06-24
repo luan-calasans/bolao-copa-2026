@@ -7,7 +7,6 @@ import { fetchWorldCupMatches } from '../services/matchService'
 import { normalizePersonNameKey } from './participantKey'
 import { buildBetsMatchGroups } from './matchBetRows'
 import { getTeamDisplayName } from './teamDisplay'
-import { PARTIAL_MAX_GOAL_DIFFERENCE } from './betScoring'
 import { buildChampionBetTableItem, formatChampionBetStatLabel } from './championBetRanking'
 import {
   getParticipantBetItemsCache,
@@ -34,16 +33,6 @@ export const RANKING_STAT_LABELS: Record<RankingStatKind, string> = {
   partial: 'Parciais',
   bets: 'Palpites',
   pending: 'Aguardando',
-}
-
-export const RANKING_STAT_DESCRIPTIONS: Record<RankingStatKind, string> = {
-  points:
-    'Detalhamento de cada palpite em jogo encerrado, com o que foi acertado e a pontuação obtida.',
-  exact: 'Palpites em que o placar completo foi acertado (+10 pts, ou mais com Quem vence?).',
-  partial:
-    `Palpites que acertaram quem venceu ou o empate pelo placar previsto, com diferença total de no máximo ${PARTIAL_MAX_GOAL_DIFFERENCE} gols entre palpite e resultado (+3 pts, ou mais com Quem vence?).`,
-  bets: 'Todos os palpites registrados por este participante, incluindo o palpite de campeão.',
-  pending: 'Palpites em jogos que ainda não terminaram, incluindo o palpite de campeão enquanto a final não encerra.',
 }
 
 function buildBetItemsFromEntries(

@@ -16,6 +16,7 @@ interface BetScoreWithOutcomeProps {
   align?: 'start' | 'center'
   layout?: 'stack' | 'inline'
   comfortable?: boolean
+  compact?: boolean
 }
 
 export function BetScoreWithOutcome({
@@ -27,6 +28,7 @@ export function BetScoreWithOutcome({
   align = 'start',
   layout = 'stack',
   comfortable = false,
+  compact = false,
 }: BetScoreWithOutcomeProps) {
   const hasScore = hasBetScorePick(homeScore, awayScore)
   const outcome =
@@ -36,8 +38,14 @@ export function BetScoreWithOutcome({
   const alignClass = align === 'center' ? 'items-center' : 'items-start'
   const layoutClass =
     layout === 'inline'
-      ? 'min-w-0 max-w-full flex-row items-center gap-3'
-      : `min-w-0 max-w-full flex-col gap-2 ${alignClass}`
+      ? `min-w-0 max-w-full flex-row items-center ${compact ? 'gap-1.5' : 'gap-3'}`
+      : `min-w-0 max-w-full flex-col ${compact ? 'gap-1' : 'gap-2'} ${alignClass}`
+
+  const scoreBadgeClass = compact
+    ? 'px-2 py-0.5 text-sm'
+    : comfortable
+      ? 'text-lg px-3 py-1.5'
+      : 'text-base px-3 py-1.5'
 
   if (!hasScore) {
     if (match && winnerPick && isValidWinnerPick(winnerPick)) {
@@ -46,7 +54,7 @@ export function BetScoreWithOutcome({
       return (
         <div className={`inline-flex ${layoutClass}`}>
           <span
-            className={`inline-flex max-w-full min-w-0 truncate rounded-lg border border-slate-600/50 bg-pitch-950 px-3 py-1.5 text-sm font-semibold ${getWinnerPickTextClass(winnerPick)} ${comfortable ? 'text-base' : ''}`}
+            className={`inline-flex max-w-full min-w-0 truncate rounded-lg border border-slate-600/50 bg-pitch-950 font-semibold ${scoreBadgeClass} ${getWinnerPickTextClass(winnerPick)} ${comfortable && !compact ? 'text-base' : ''}`}
             title={winnerLabel}
           >
             {winnerLabel}
@@ -55,7 +63,7 @@ export function BetScoreWithOutcome({
       )
     }
 
-    return <span className="text-sm text-slate-500">Sem placar</span>
+    return <span className={`text-slate-500 ${compact ? 'text-xs' : 'text-sm'}`}>Sem placar</span>
   }
 
   const winnerLabel =
@@ -66,7 +74,7 @@ export function BetScoreWithOutcome({
   return (
     <div className={`inline-flex ${layoutClass}`}>
       <span
-        className={`inline-flex shrink-0 rounded-lg border border-slate-600/50 bg-pitch-950 px-3 py-1.5 font-bold tabular-nums text-gold-400 ${comfortable ? 'text-lg' : 'text-base'}`}
+        className={`inline-flex shrink-0 rounded-lg border border-slate-600/50 bg-pitch-950 font-bold tabular-nums text-gold-400 ${scoreBadgeClass}`}
       >
         {homeScore} x {awayScore}
       </span>
@@ -90,7 +98,7 @@ export function BetScoreWithOutcome({
 
       {winnerLabel && (
         <span
-          className={`min-w-0 truncate text-sm font-semibold ${getWinnerPickTextClass(winnerPick!)}`}
+          className={`min-w-0 truncate font-semibold ${compact ? 'text-xs' : 'text-sm'} ${getWinnerPickTextClass(winnerPick!)}`}
           title={winnerLabel}
         >
           {winnerLabel}

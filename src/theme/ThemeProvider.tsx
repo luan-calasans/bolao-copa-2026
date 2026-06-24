@@ -1,5 +1,5 @@
 import { createContext, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { applyThemeClass, DEFAULT_THEME, type Theme } from './theme'
+import { applyThemeClass, getStoredTheme, persistTheme, type Theme } from './theme'
 
 interface ThemeContextValue {
   theme: Theme
@@ -14,10 +14,11 @@ interface ThemeProviderProps {
 }
 
 export function ThemeProvider({ children }: ThemeProviderProps) {
-  const [theme, setThemeState] = useState<Theme>(DEFAULT_THEME)
+  const [theme, setThemeState] = useState<Theme>(getStoredTheme)
 
   useEffect(() => {
     applyThemeClass(theme)
+    persistTheme(theme)
   }, [theme])
 
   const setTheme = useCallback((nextTheme: Theme) => {

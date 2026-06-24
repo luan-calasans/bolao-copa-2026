@@ -187,7 +187,12 @@
     </style>
     <script>
       ;(function () {
-        document.documentElement.classList.add('dark')
+        try {
+          var stored = localStorage.getItem('bolao-theme')
+          document.documentElement.classList.add(stored === 'light' ? 'light' : 'dark')
+        } catch (error) {
+          document.documentElement.classList.add('dark')
+        }
       })()
     </script>
   </head>

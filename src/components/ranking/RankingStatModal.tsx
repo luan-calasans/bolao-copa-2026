@@ -5,13 +5,11 @@ import {
   filterRankingStatItems,
   formatRankingStatMatchLabel,
   loadParticipantBetItemsMap,
-  RANKING_STAT_DESCRIPTIONS,
   RANKING_STAT_LABELS,
   sortRankingStatItems,
   type RankingStatSelection,
 } from '../../utils/rankingStatDetails'
 import { buildBetScoreBreakdown } from '../../utils/betScoreBreakdown'
-import { formatBetResultLabel } from '../../utils/betResult'
 import { CHAMPION_BET_POINTS } from '../../utils/championBet'
 import { getTeamDisplayName } from '../../utils/teamDisplay'
 import { BetScoreBreakdownModal } from '../bet/BetScoreBreakdownModal'
@@ -30,17 +28,17 @@ interface RankingStatModalProps {
 
 function RankingStatModalSkeleton() {
   return (
-    <div className="grid gap-3 sm:grid-cols-2">
+    <div className="grid gap-2 sm:gap-3 sm:grid-cols-2">
       {Array.from({ length: 4 }, (_, index) => (
         <div
           key={index}
-          className="min-w-0 rounded-xl border border-slate-700/40 bg-pitch-950/50 p-3 sm:col-span-2"
+          className="min-w-0 rounded-lg border border-slate-700/40 bg-pitch-950/50 p-2.5 sm:col-span-2 sm:rounded-xl sm:p-3"
         >
-          <Skeleton className="h-4 w-3/4" />
-          <Skeleton className="mt-2 h-3 w-1/2" />
-          <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-1">
-            <Skeleton className="h-8 w-full" />
-            <Skeleton className="h-8 w-full" />
+          <Skeleton className="h-3.5 w-3/4" />
+          <Skeleton className="mt-1.5 h-3 w-1/2" />
+          <div className="mt-2 grid grid-cols-2 gap-1.5 sm:mt-3 sm:grid-cols-1 sm:gap-2">
+            <Skeleton className="h-7 w-full sm:h-8" />
+            <Skeleton className="h-7 w-full sm:h-8" />
           </div>
         </div>
       ))}
@@ -48,23 +46,22 @@ function RankingStatModalSkeleton() {
   )
 }
 
-function formatSelectionValueLabel(selection: RankingStatSelection): string {
-  const { kind, value } = selection
+function formatSelectionSubtitle(
+  selection: RankingStatSelection,
+  itemCount: number,
+  isLoading: boolean,
+): string | null {
+  const count =
+    selection.kind === 'points'
+      ? isLoading
+        ? null
+        : itemCount
+      : selection.value
 
-  if (kind === 'points') {
-    return `${value} ponto${value === 1 ? '' : 's'} no total`
-  }
+  if (count == null) return null
 
-  if (kind === 'bets') {
-    return `${value} palpite${value === 1 ? '' : 's'}`
-  }
-
-  if (kind === 'pending') {
-    return `${value} palpite${value === 1 ? '' : 's'} aguardando`
-  }
-
-  const resultLabel = formatBetResultLabel(kind === 'exact' ? 'exact' : 'partial').toLowerCase()
-  return `${value} palpite${value === 1 ? '' : 's'} ${resultLabel}${value === 1 ? '' : 's'}`
+  const palpiteLabel = count === 1 ? 'palpite' : 'palpites'
+  return `${count} ${palpiteLabel} de ${selection.displayName}`
 }
 
 function resolveRankingStatItems(
@@ -78,11 +75,11 @@ function resolveRankingStatItems(
 
 function ChampionBetBreakdown() {
   return (
-    <ul className="mt-2.5 grid grid-cols-1 gap-2">
-      <li className="flex items-start justify-between gap-2 rounded-lg border border-slate-700/30 bg-pitch-900/40 px-2.5 py-2">
+    <ul className="mt-2 grid grid-cols-1 gap-1.5 sm:mt-2.5 sm:gap-2">
+      <li className="flex items-start justify-between gap-2 rounded-lg border border-slate-700/30 bg-pitch-900/40 px-2 py-1.5 sm:px-2.5 sm:py-2">
         <div className="min-w-0">
-          <p className="text-xs font-semibold text-slate-300">Campeão da Copa</p>
-          <p className="mt-0.5 break-words text-[11px] leading-snug text-slate-500">
+          <p className="text-[11px] font-semibold text-slate-300 sm:text-xs">Campeão da Copa</p>
+          <p className="mt-0.5 hidden break-words text-[11px] leading-snug text-slate-500 sm:block">
             Acertou a seleção vencedora da final.
           </p>
         </div>
@@ -138,17 +135,17 @@ function RankingStatBetCard({
 
   return (
     <article
-      className={`flex min-w-0 w-full max-w-full flex-col rounded-xl border border-slate-700/40 bg-pitch-950/50 p-3 ${
+      className={`flex min-w-0 w-full max-w-full flex-col rounded-lg border border-slate-700/40 bg-pitch-950/50 p-2.5 sm:rounded-xl sm:p-3 ${
         spansFullWidth ? 'sm:col-span-2' : ''
       }`}
     >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-semibold text-white">
+          <p className="truncate text-xs font-semibold text-white sm:text-sm">
             {formatRankingStatMatchLabel(item)}
           </p>
           {match?.utcDate && (
-            <p className="mt-0.5 text-[11px] text-slate-500">
+            <p className="mt-0.5 text-[10px] text-slate-500 sm:text-[11px]">
               {isChampionBet && resultStatus === 'pending'
                 ? `Final em ${new Intl.DateTimeFormat('pt-BR', {
                     dateStyle: 'short',
@@ -164,7 +161,7 @@ function RankingStatBetCard({
         <BetResultBadge
           points={points}
           resultStatus={resultStatus}
-          className="shrink-0 text-xs"
+          className="shrink-0 text-[10px] sm:text-xs"
           onClick={
             !isChampionBet && resultStatus !== 'pending'
               ? () => onResultClick(item)
@@ -174,22 +171,22 @@ function RankingStatBetCard({
       </div>
 
       <div
-        className={`mt-2.5 grid gap-2 ${
+        className={`mt-2 grid gap-1.5 sm:mt-2.5 sm:gap-2 ${
           resultStatus !== 'pending' ? 'grid-cols-2 sm:grid-cols-1' : 'grid-cols-1'
         }`}
       >
-        <div className="min-w-0 rounded-lg border border-slate-700/30 bg-pitch-900/30 px-2.5 py-2">
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Palpite</p>
-          <div className="mt-1">
+        <div className="min-w-0 rounded-lg border border-slate-700/30 bg-pitch-900/30 px-2 py-1.5 sm:px-2.5 sm:py-2">
+          <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-500 sm:text-[10px]">Palpite</p>
+          <div className="mt-0.5 sm:mt-1">
             {championTeam ? (
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 sm:gap-2">
                 <TeamCrest
                   crest={championTeam.crest}
                   name={teamName}
                   size="sm"
                   className="rounded-lg bg-pitch-950/50 p-0.5"
                 />
-                <span className="text-sm font-semibold text-white">{teamName}</span>
+                <span className="truncate text-xs font-semibold text-white sm:text-sm">{teamName}</span>
               </div>
             ) : (
               <BetScoreWithOutcome
@@ -199,27 +196,28 @@ function RankingStatBetCard({
                 match={match}
                 showBetOutcome={false}
                 layout="inline"
+                compact
               />
             )}
           </div>
         </div>
 
         {resultStatus !== 'pending' && (
-          <div className="min-w-0 rounded-lg border border-slate-700/30 bg-pitch-900/30 px-2.5 py-2">
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+          <div className="min-w-0 rounded-lg border border-slate-700/30 bg-pitch-900/30 px-2 py-1.5 sm:px-2.5 sm:py-2">
+            <p className="text-[9px] font-semibold uppercase tracking-wide text-slate-500 sm:text-[10px]">
               {isChampionBet ? 'Pontuação' : 'Resultado'}
             </p>
-            <div className="mt-1">
+            <div className="mt-0.5 sm:mt-1">
               {isChampionBet ? (
-                <span className="text-sm font-bold tabular-nums text-gold-400">
+                <span className="text-xs font-bold tabular-nums text-gold-400 sm:text-sm">
                   {resultStatus === 'exact' ? `${CHAMPION_BET_POINTS} pts` : '0 pts'}
                 </span>
               ) : actualScore ? (
-                <span className="inline-flex rounded-lg border border-slate-600/50 bg-pitch-950 px-2.5 py-1 text-sm font-bold tabular-nums text-slate-200">
+                <span className="inline-flex rounded-lg border border-slate-600/50 bg-pitch-950 px-2 py-0.5 text-xs font-bold tabular-nums text-slate-200 sm:px-2.5 sm:py-1 sm:text-sm">
                   {actualScore.replace('×', ' x ')}
                 </span>
               ) : (
-                <span className="text-xs text-slate-500">—</span>
+                <span className="text-[11px] text-slate-500 sm:text-xs">—</span>
               )}
             </div>
           </div>
@@ -229,15 +227,15 @@ function RankingStatBetCard({
       {showChampionBreakdown && <ChampionBetBreakdown />}
 
       {breakdown && breakdown.hits.length > 0 && (
-        <ul className="mt-2.5 grid grid-cols-1 gap-2">
+        <ul className="mt-2 grid grid-cols-1 gap-1.5 sm:mt-2.5 sm:gap-2">
           {breakdown.hits.map((hit) => (
             <li
               key={hit.title}
-              className="flex items-start justify-between gap-2 rounded-lg border border-slate-700/30 bg-pitch-900/40 px-2.5 py-2"
+              className="flex items-start justify-between gap-2 rounded-lg border border-slate-700/30 bg-pitch-900/40 px-2 py-1.5 sm:px-2.5 sm:py-2"
             >
               <div className="min-w-0">
-                <p className="text-xs font-semibold text-slate-300">{hit.title}</p>
-                <p className="mt-0.5 break-words text-[11px] leading-snug text-slate-500">
+                <p className="text-[11px] font-semibold text-slate-300 sm:text-xs">{hit.title}</p>
+                <p className="mt-0.5 line-clamp-2 break-words text-[10px] leading-snug text-slate-500 sm:line-clamp-none sm:text-[11px]">
                   {hit.description}
                 </p>
               </div>
@@ -261,7 +259,6 @@ interface RankingStatModalContentProps {
 
 function RankingStatModalContent({ selection, onClose }: RankingStatModalContentProps) {
   const titleId = useId()
-  const descriptionId = useId()
   const [breakdownItem, setBreakdownItem] = useState<BetsTableItem | null>(null)
 
   const loadItems = useCallback(async () => {
@@ -291,14 +288,14 @@ function RankingStatModalContent({ selection, onClose }: RankingStatModalContent
   }, [onClose])
 
   const label = RANKING_STAT_LABELS[selection.kind]
-  const description = RANKING_STAT_DESCRIPTIONS[selection.kind]
+  const subtitle = formatSelectionSubtitle(selection, items.length, isLoading)
   const showBreakdown =
     selection.kind === 'points' || selection.kind === 'exact' || selection.kind === 'partial'
   const totalPoints = items.reduce((sum, item) => sum + (item.row.points ?? 0), 0)
 
   return (
     <>
-      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      <div className="fixed inset-0 z-[100] flex items-center justify-center p-2 sm:p-4">
         <button
           type="button"
           aria-label="Fechar modal"
@@ -310,22 +307,20 @@ function RankingStatModalContent({ selection, onClose }: RankingStatModalContent
           role="dialog"
           aria-modal="true"
           aria-labelledby={titleId}
-          aria-describedby={descriptionId}
-          className="relative z-10 flex max-h-[min(90vh,720px)] w-full max-w-2xl flex-col overflow-hidden rounded-2xl border border-slate-700/60 bg-pitch-900 shadow-2xl shadow-black/40"
+          className="relative z-10 flex max-h-[min(82vh,720px)] w-full max-w-2xl flex-col overflow-hidden rounded-xl border border-slate-700/60 bg-pitch-900 shadow-2xl shadow-black/40 sm:max-h-[min(90vh,720px)] sm:rounded-2xl"
         >
-          <div className="border-b border-slate-700/40 px-5 py-4">
-            <h2 id={titleId} className="text-lg font-bold text-white">
-              {label} — {selection.displayName}
+          <div className="border-b border-slate-700/40 px-3 py-2.5 sm:px-5 sm:py-4">
+            <h2 id={titleId} className="text-base font-bold text-white sm:text-lg">
+              {label}
             </h2>
-            <p id={descriptionId} className="mt-1 text-sm text-slate-400">
-              {description}
-            </p>
-            <p className="mt-2 text-sm font-semibold tabular-nums text-gold-400">
-              {formatSelectionValueLabel(selection)}
-            </p>
+            {subtitle && (
+              <p className="mt-1 text-xs font-semibold tabular-nums text-gold-400 sm:mt-2 sm:text-sm">
+                {subtitle}
+              </p>
+            )}
           </div>
 
-          <div className="flex-1 overflow-y-auto px-5 py-4">
+          <div className="flex-1 overflow-y-auto px-3 py-2.5 sm:px-5 sm:py-4">
             {isLoading && <RankingStatModalSkeleton />}
             {error && (
               <ErrorState
@@ -335,12 +330,12 @@ function RankingStatModalContent({ selection, onClose }: RankingStatModalContent
               />
             )}
             {!isLoading && !error && items.length === 0 && (
-              <p className="rounded-xl border border-slate-700/40 bg-pitch-950/50 p-4 text-sm text-slate-400">
+              <p className="rounded-lg border border-slate-700/40 bg-pitch-950/50 p-3 text-xs text-slate-400 sm:rounded-xl sm:p-4 sm:text-sm">
                 Nenhum palpite encontrado para este filtro.
               </p>
             )}
             {!isLoading && !error && items.length > 0 && (
-              <div className={`grid min-w-0 gap-3 ${items.length > 1 ? 'sm:grid-cols-2' : ''}`}>
+              <div className={`grid min-w-0 gap-2 sm:gap-3 ${items.length > 1 ? 'sm:grid-cols-2' : ''}`}>
                 {items.map((item) => (
                   <RankingStatBetCard
                     key={item.row.entry.receiptId}
@@ -354,16 +349,16 @@ function RankingStatModalContent({ selection, onClose }: RankingStatModalContent
           </div>
 
           {!isLoading && !error && selection.kind === 'points' && items.length > 0 && (
-            <div className="border-t border-slate-700/40 bg-pitch-950/30 px-5 py-3">
+            <div className="border-t border-slate-700/40 bg-pitch-950/30 px-3 py-2 sm:px-5 sm:py-3">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-slate-400">Total exibido</span>
-                <span className="text-lg font-bold tabular-nums text-gold-400">{totalPoints} pts</span>
+                <span className="text-xs font-medium text-slate-400 sm:text-sm">Total exibido</span>
+                <span className="text-base font-bold tabular-nums text-gold-400 sm:text-lg">{totalPoints} pts</span>
               </div>
             </div>
           )}
 
-          <div className="border-t border-slate-700/40 bg-pitch-950/40 px-5 py-4">
-            <Button type="button" variant="gold" className="w-full" onClick={onClose}>
+          <div className="border-t border-slate-700/40 bg-pitch-950/40 px-3 py-2.5 sm:px-5 sm:py-4">
+            <Button type="button" variant="gold" className="w-full py-2 text-sm sm:py-2.5" onClick={onClose}>
               Fechar
             </Button>
           </div>
