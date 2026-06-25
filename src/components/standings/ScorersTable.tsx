@@ -1,13 +1,6 @@
 import { Link } from 'react-router-dom'
 import type { ApiScorer } from '../../models/api.types'
 import { getTeamDisplayName } from '../../utils/teamDisplay'
-import {
-  getPodiumNameClass,
-  getPodiumRankClass,
-  getPodiumRowClass,
-  isPodiumRank,
-} from '../../utils/podiumPlacement'
-import { PodiumTrophyIcon } from '../ui/PodiumTrophyIcon'
 import { TeamCrest } from '../ui/TeamCrest'
 
 interface ScorersTableProps {
@@ -19,19 +12,15 @@ function ScorerPlayerCell({
   teamName,
   teamId,
   crest,
-  rank,
 }: {
   playerName: string
   teamName: string
   teamId: number | null | undefined
   crest: string | null | undefined
-  rank: number
 }) {
-  const isPodium = isPodiumRank(rank)
   const content = (
     <span className="inline-flex min-w-0 max-w-full items-center gap-2">
-      {isPodium && <PodiumTrophyIcon rank={rank} />}
-      <span className="truncate" title={playerName}>
+      <span className="truncate text-white" title={playerName}>
         {playerName}
       </span>
       <TeamCrest
@@ -47,7 +36,7 @@ function ScorerPlayerCell({
     return (
       <Link
         to={`/times/${teamId}`}
-        className={`inline-flex min-w-0 max-w-full items-center transition hover:text-gold-400 ${getPodiumNameClass(rank)}`}
+        className="inline-flex min-w-0 max-w-full items-center transition hover:text-gold-400"
         title={`${playerName} · ${teamName}`}
       >
         {content}
@@ -56,7 +45,7 @@ function ScorerPlayerCell({
   }
 
   return (
-    <div className={`inline-flex min-w-0 max-w-full items-center ${getPodiumNameClass(rank)}`} title={playerName}>
+    <div className="inline-flex min-w-0 max-w-full items-center text-white" title={playerName}>
       {content}
     </div>
   )
@@ -89,18 +78,13 @@ export function ScorersTable({ scorers }: ScorersTableProps) {
             const teamId = scorer.team.id
             const goals = scorer.goals ?? 0
             const rank = index + 1
-            const showPodium = isPodiumRank(rank)
 
             return (
               <tr
                 key={`${scorer.player.id ?? playerName}-${teamId ?? teamName}`}
-                className={`border-b border-slate-700/20 last:border-b-0 ${getPodiumRowClass(rank)}`}
+                className="border-b border-slate-700/20 last:border-b-0"
               >
-                <td
-                  className={`whitespace-nowrap px-4 py-3 font-bold tabular-nums ${
-                    showPodium ? getPodiumRankClass(rank) : 'text-slate-300'
-                  }`}
-                >
+                <td className="whitespace-nowrap px-4 py-3 font-bold tabular-nums text-slate-300">
                   {rank}
                 </td>
                 <td className="whitespace-nowrap px-4 py-3 font-semibold">
@@ -109,7 +93,6 @@ export function ScorersTable({ scorers }: ScorersTableProps) {
                     teamName={teamName}
                     teamId={teamId}
                     crest={scorer.team.crest}
-                    rank={rank}
                   />
                 </td>
                 <td className="w-px whitespace-nowrap px-3 py-3 text-center text-base tabular-nums text-lg font-bold text-gold-400">

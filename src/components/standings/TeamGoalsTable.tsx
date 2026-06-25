@@ -2,14 +2,7 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import type { TeamGoalsEntry } from '../../utils/teamGoalsFromMatches'
 import { getTeamDisplayName } from '../../utils/teamDisplay'
-import {
-  getPodiumNameClass,
-  getPodiumRankClass,
-  getPodiumRowClass,
-  isPodiumRank,
-} from '../../utils/podiumPlacement'
 import { Button } from '../ui/Button'
-import { PodiumTrophyIcon } from '../ui/PodiumTrophyIcon'
 import { TeamCrest } from '../ui/TeamCrest'
 
 interface TeamGoalsTableProps {
@@ -47,28 +40,22 @@ export function TeamGoalsTable({ entries }: TeamGoalsTableProps) {
             const teamName = getTeamDisplayName(entry.team.shortName, entry.team.name)
             const teamId = entry.team.id
             const rank = index + 1
-            const showPodium = isPodiumRank(rank)
 
             return (
               <tr
                 key={teamId ?? teamName}
-                className={`border-b border-slate-700/20 last:border-b-0 ${getPodiumRowClass(rank)}`}
+                className="border-b border-slate-700/20 last:border-b-0"
               >
-                <td
-                  className={`whitespace-nowrap px-4 py-3 font-bold tabular-nums ${
-                    showPodium ? getPodiumRankClass(rank) : 'text-slate-300'
-                  }`}
-                >
+                <td className="whitespace-nowrap px-4 py-3 font-bold tabular-nums text-slate-300">
                   {rank}
                 </td>
                 <td className="whitespace-nowrap px-4 py-3 font-semibold">
                   {teamId != null ? (
                     <Link
                       to={`/times/${teamId}`}
-                      className={`inline-flex min-w-0 max-w-full items-center gap-2 transition hover:text-gold-400 ${getPodiumNameClass(rank)}`}
+                      className="inline-flex min-w-0 max-w-full items-center gap-2 text-white transition hover:text-gold-400"
                       title={teamName}
                     >
-                      {showPodium && <PodiumTrophyIcon rank={rank} />}
                       <TeamCrest
                         crest={entry.team.crest}
                         name={teamName}
@@ -78,8 +65,7 @@ export function TeamGoalsTable({ entries }: TeamGoalsTableProps) {
                       <span className="truncate">{teamName}</span>
                     </Link>
                   ) : (
-                    <span className={`inline-flex min-w-0 max-w-full items-center gap-2 ${getPodiumNameClass(rank)}`}>
-                      {showPodium && <PodiumTrophyIcon rank={rank} />}
+                    <span className="inline-flex min-w-0 max-w-full items-center gap-2 text-white">
                       <TeamCrest
                         crest={entry.team.crest}
                         name={teamName}
