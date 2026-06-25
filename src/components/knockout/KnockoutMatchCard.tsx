@@ -1,9 +1,10 @@
 import { Link } from 'react-router-dom'
 import type { KnockoutMatch } from '../../models/knockout'
 import { formatMatchDate, formatMatchTime } from '../../utils/dateFormatter'
-import { getTeamDisplayName, isTeamDefined } from '../../utils/teamDisplay'
+import { getTeamDisplayName } from '../../utils/teamDisplay'
 import { TeamCrest } from '../ui/TeamCrest'
 import { matchBetsPath } from '../../routes/routePaths'
+import { isKnockoutMatchPlayable } from './knockoutBracketLayout'
 
 interface KnockoutMatchCardProps {
   match: KnockoutMatch
@@ -75,11 +76,7 @@ export function KnockoutMatchCard({ match, index }: KnockoutMatchCardProps) {
     showScore && match.score.home != null && match.score.away != null
       ? match.score.away > match.score.home
       : false
-  const bothTeamsDefined =
-    match.home.team != null &&
-    match.away.team != null &&
-    isTeamDefined(match.home.team) &&
-    isTeamDefined(match.away.team)
+  const bothTeamsDefined = isKnockoutMatchPlayable(match)
 
   return (
     <article
@@ -112,10 +109,10 @@ export function KnockoutMatchCard({ match, index }: KnockoutMatchCardProps) {
         </p>
       )}
 
-      {match.id && bothTeamsDefined && (
+      {bothTeamsDefined && (
         <div className="mt-3 border-t border-slate-700/30 pt-3">
           <Link
-            to={matchBetsPath(match.id)}
+            to={matchBetsPath(match.id!)}
             className="block text-center text-xs font-semibold text-gold-400 transition hover:text-gold-300"
           >
             Ver jogo e palpites

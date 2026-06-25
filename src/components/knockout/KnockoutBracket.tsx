@@ -1,11 +1,12 @@
 import type { KnockoutRound } from '../../models/knockout'
+import { KnockoutBracketDesktop } from './KnockoutBracketDesktop'
 import { KnockoutMatchCard } from './KnockoutMatchCard'
 
 interface KnockoutBracketProps {
   rounds: KnockoutRound[]
 }
 
-export function KnockoutBracket({ rounds }: KnockoutBracketProps) {
+function KnockoutBracketDetails({ rounds }: KnockoutBracketProps) {
   return (
     <div className="space-y-8">
       {rounds.map((round) => (
@@ -19,5 +20,17 @@ export function KnockoutBracket({ rounds }: KnockoutBracketProps) {
         </section>
       ))}
     </div>
+  )
+}
+
+export function KnockoutBracket({ rounds }: KnockoutBracketProps) {
+  return (
+    <>
+      <KnockoutBracketDesktop rounds={rounds} />
+
+      <div className="lg:mt-12 lg:border-t lg:border-slate-700/40 lg:pt-12">
+        <KnockoutBracketDetails rounds={rounds} />
+      </div>
+    </>
   )
 }
