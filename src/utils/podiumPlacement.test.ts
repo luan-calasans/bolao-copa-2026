@@ -21,9 +21,10 @@ describe('podiumPlacement', () => {
   })
 
   it('returns name and rank color classes', () => {
-    expect(getPodiumNameClass(1)).toContain('gold')
-    expect(getPodiumNameClass(2)).toContain('slate')
-    expect(getPodiumNameClass(3)).toContain('amber')
+    expect(getPodiumNameClass(1)).toBe('podium-name-first')
+    expect(getPodiumNameClass(2)).toBe('podium-name-second')
+    expect(getPodiumNameClass(3)).toBe('podium-name-third')
+    expect(getPodiumRankClass(1)).toBe('podium-rank-first')
     expect(getPodiumRankClass(4)).toContain('slate')
   })
 })

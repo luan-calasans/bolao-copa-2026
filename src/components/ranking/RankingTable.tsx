@@ -202,7 +202,7 @@ export function RankingTable({ ranking }: RankingTableProps) {
                   <td className="px-4 py-3 font-semibold">
                     <Link
                       to={getParticipantBetsPathFromKey(row.personNameKey)}
-                      className={`inline-flex min-w-0 max-w-full items-center gap-2 transition hover:text-gold-400 ${getPodiumNameClass(showPodium ? rank : 0)}`}
+                      className={`inline-flex min-w-0 max-w-full items-center gap-2 transition ${showPodium ? getPodiumNameClass(rank) : 'text-white hover:text-gold-400'}`}
                       title="Ver palpites do participante"
                     >
                       {showPodium && <PodiumTrophyIcon rank={rank} />}

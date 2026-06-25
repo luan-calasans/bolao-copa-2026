@@ -20,11 +20,11 @@ export function getPodiumRowClass(rank: number): string {
 export function getPodiumNameClass(rank: number): string {
   switch (rank) {
     case 1:
-      return 'text-gold-300'
+      return 'podium-name-first'
     case 2:
-      return 'text-slate-200'
+      return 'podium-name-second'
     case 3:
-      return 'text-amber-300'
+      return 'podium-name-third'
     default:
       return 'text-white'
   }
@@ -33,11 +33,11 @@ export function getPodiumNameClass(rank: number): string {
 export function getPodiumRankClass(rank: number): string {
   switch (rank) {
     case 1:
-      return 'text-gold-400'
+      return 'podium-rank-first'
     case 2:
-      return 'text-slate-300'
+      return 'podium-rank-second'
     case 3:
-      return 'text-amber-400'
+      return 'podium-rank-third'
     default:
       return 'text-slate-300'
   }

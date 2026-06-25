@@ -1,9 +1,9 @@
 import type { PodiumRank } from '../../utils/podiumPlacement'
 
 const TROPHY_COLOR: Record<PodiumRank, string> = {
-  1: 'text-gold-400',
-  2: 'text-slate-300',
-  3: 'text-amber-500',
+  1: 'podium-rank-first',
+  2: 'podium-rank-second',
+  3: 'podium-rank-third',
 }
 
 interface PodiumTrophyIconProps {

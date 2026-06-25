@@ -288,6 +288,78 @@ html.light .bet-result-pending {
   color: #475569;
 }
 
+.podium-name-first {
+  color: #fde68a;
+}
+
+.podium-rank-first {
+  color: #ffdf00;
+}
+
+.podium-name-second {
+  color: #e2e8f0;
+}
+
+.podium-rank-second {
+  color: #cbd5e1;
+}
+
+.podium-name-third {
+  color: #fcd34d;
+}
+
+.podium-rank-third {
+  color: #f59e0b;
+}
+
+html.light .podium-name-first {
+  color: #a16207;
+}
+
+html.light .podium-name-first:hover {
+  color: #ca8a04;
+}
+
+html.light .podium-rank-first {
+  color: #ca8a04;
+}
+
+html.light .podium-name-second {
+  color: #64748b;
+}
+
+html.light .podium-name-second:hover {
+  color: #475569;
+}
+
+html.light .podium-rank-second {
+  color: #475569;
+}
+
+html.light .podium-name-third {
+  color: #b45309;
+}
+
+html.light .podium-name-third:hover {
+  color: #92400e;
+}
+
+html.light .podium-rank-third {
+  color: #92400e;
+}
+
+.podium-name-first:hover {
+  color: #ffdf00;
+}
+
+.podium-name-second:hover {
+  color: #f1f5f9;
+}
+
+.podium-name-third:hover {
+  color: #fbbf24;
+}
+
 .podium-row-first,
 .ranking-row-first {
   background-color: rgb(255 223 0 / 0.08);

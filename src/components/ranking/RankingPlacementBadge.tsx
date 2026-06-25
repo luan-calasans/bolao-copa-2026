@@ -1,14 +1,14 @@
 function getPlacementStyles(position: number): string {
   if (position === 1) {
-    return 'border-gold-400/50 bg-gold-500/15 text-gold-300'
+    return 'border-[#ffdf00]/50 bg-[#ffdf00]/15 podium-name-first'
   }
 
   if (position === 2) {
-    return 'border-slate-400/50 bg-slate-400/10 text-slate-200'
+    return 'border-slate-400/50 bg-slate-400/10 podium-name-second'
   }
 
   if (position === 3) {
-    return 'border-amber-600/50 bg-amber-700/15 text-amber-300'
+    return 'border-amber-600/50 bg-amber-700/15 podium-name-third'
   }
 
   return 'border-slate-600/50 bg-slate-700/30 text-slate-400'
