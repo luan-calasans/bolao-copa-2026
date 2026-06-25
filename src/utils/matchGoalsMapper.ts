@@ -54,6 +54,8 @@ export function mapTimelineToGoals(entries: SportsdbTimelineEntry[] | null | und
       const minuteLabel = formatGoalMinute(entry.intTime)
       const detail = entry.strTimelineDetail?.trim() || 'Gol'
       const playerName = entry.strPlayer?.trim() || 'Jogador desconhecido'
+      const assistRaw = entry.strAssist?.trim()
+      const assistName = assistRaw && assistRaw !== '0' ? assistRaw : null
       const teamName = entry.strTeam?.trim() || 'Time desconhecido'
 
       return {
@@ -61,6 +63,7 @@ export function mapTimelineToGoals(entries: SportsdbTimelineEntry[] | null | und
         minute: parseMinuteSortValue(entry.intTime),
         minuteLabel,
         playerName,
+        assistName,
         teamName,
         isHomeTeam: entry.strHome?.trim().toLowerCase() === 'yes',
         detail,

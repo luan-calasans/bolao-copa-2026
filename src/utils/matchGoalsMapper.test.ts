@@ -118,6 +118,32 @@ describe('mapTimelineToGoals', () => {
     expect(goals[0]?.isOwnGoal).toBe(true)
   })
 
+  it('maps assist name when available', () => {
+    const goals = mapTimelineToGoals([
+      createTimelineEntry({
+        strTimeline: 'Goal',
+        strTimelineDetail: 'Normal Goal',
+        strPlayer: 'Haaland',
+        strAssist: 'Ødegaard',
+        intTime: '23',
+      }),
+    ])
+
+    expect(goals[0]?.assistName).toBe('Ødegaard')
+  })
+
+  it('ignores empty or zero assist values', () => {
+    const goals = mapTimelineToGoals([
+      createTimelineEntry({
+        strTimeline: 'Goal',
+        strTimelineDetail: 'Normal Goal',
+        strAssist: '0',
+      }),
+    ])
+
+    expect(goals[0]?.assistName).toBeNull()
+  })
+
   it('excludes missed penalties from goals', () => {
     const goals = mapTimelineToGoals([
       createTimelineEntry({

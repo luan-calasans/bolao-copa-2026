@@ -9,6 +9,9 @@ import { APP_ROUTES } from './routePaths'
 const StandingsView = lazy(() =>
   import('../views/StandingsView').then((module) => ({ default: module.StandingsView })),
 )
+const ScorersView = lazy(() =>
+  import('../views/ScorersView').then((module) => ({ default: module.ScorersView })),
+)
 const KnockoutView = lazy(() =>
   import('../views/KnockoutView').then((module) => ({ default: module.KnockoutView })),
 )
@@ -151,6 +154,14 @@ export function AppRoutes() {
         element={
           <LazyRoute>
             <StandingsView />
+          </LazyRoute>
+        }
+      />
+      <Route
+        path={APP_ROUTES.scorers}
+        element={
+          <LazyRoute>
+            <ScorersView />
           </LazyRoute>
         }
       />

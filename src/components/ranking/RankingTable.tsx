@@ -16,6 +16,13 @@ import {
   type RankingTableSortColumn,
   type RankingTableSortState,
 } from '../../utils/rankingTableSort'
+import { PodiumTrophyIcon } from '../ui/PodiumTrophyIcon'
+import {
+  getPodiumNameClass,
+  getPodiumRankClass,
+  getPodiumRowClass,
+  isPodiumRank,
+} from '../../utils/podiumPlacement'
 import { RankingStatModal } from './RankingStatModal'
 
 interface RankingTableProps {
@@ -76,16 +83,7 @@ function RankingStatCell({ value, kind, row, className = '', onSelect }: Ranking
 function getRankingRowClass(index: number, usePodiumStyles: boolean): string {
   if (!usePodiumStyles) return ''
 
-  switch (index) {
-    case 0:
-      return 'ranking-row-first'
-    case 1:
-      return 'ranking-row-second'
-    case 2:
-      return 'ranking-row-third'
-    default:
-      return ''
-  }
+  return getPodiumRowClass(index + 1)
 }
 
 interface SortableHeaderProps {
@@ -189,19 +187,30 @@ export function RankingTable({ ranking }: RankingTableProps) {
               </tr>
             </thead>
             <tbody>
-              {sortedRanking.map((row, index) => (
+              {sortedRanking.map((row, index) => {
+                const rank = index + 1
+                const showPodium = usePodiumStyles && isPodiumRank(rank)
+
+                return (
                 <tr
                   key={row.personNameKey}
                   className={`border-b border-slate-700/20 last:border-b-0 ${getRankingRowClass(index, usePodiumStyles)}`}
                 >
-                  <td className="px-4 py-3 font-bold text-slate-300">{index + 1}</td>
-                  <td className="px-4 py-3 font-semibold text-white">
+                  <td
+                    className={`px-4 py-3 font-bold tabular-nums ${
+                      showPodium ? getPodiumRankClass(rank) : 'text-slate-300'
+                    }`}
+                  >
+                    {rank}
+                  </td>
+                  <td className="px-4 py-3 font-semibold">
                     <Link
                       to={getParticipantBetsPathFromKey(row.personNameKey)}
-                      className="transition hover:text-gold-400"
+                      className={`inline-flex min-w-0 max-w-full items-center gap-2 transition hover:text-gold-400 ${getPodiumNameClass(showPodium ? rank : 0)}`}
                       title="Ver palpites do participante"
                     >
-                      {row.displayName}
+                      {showPodium && <PodiumTrophyIcon rank={rank} />}
+                      <span className="truncate">{row.displayName}</span>
                     </Link>
                   </td>
                   <RankingStatCell
@@ -248,7 +257,8 @@ export function RankingTable({ ranking }: RankingTableProps) {
                     onSelect={setSelection}
                   />
                 </tr>
-              ))}
+                )
+              })}
             </tbody>
           </table>
         </div>

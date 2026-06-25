@@ -288,31 +288,37 @@ html.light .bet-result-pending {
   color: #475569;
 }
 
+.podium-row-first,
 .ranking-row-first {
-  background-color: rgb(0 156 59 / 0.16);
-  box-shadow: inset 3px 0 0 rgb(0 156 59 / 0.7);
+  background-color: rgb(255 223 0 / 0.08);
+  box-shadow: inset 3px 0 0 rgb(255 223 0 / 0.75);
 }
 
+.podium-row-second,
 .ranking-row-second {
   background-color: rgb(148 163 184 / 0.12);
   box-shadow: inset 3px 0 0 rgb(148 163 184 / 0.55);
 }
 
+.podium-row-third,
 .ranking-row-third {
   background-color: rgb(180 83 9 / 0.12);
   box-shadow: inset 3px 0 0 rgb(180 83 9 / 0.55);
 }
 
+html.light .podium-row-first,
 html.light .ranking-row-first {
-  background-color: rgb(0 156 59 / 0.12);
-  box-shadow: inset 3px 0 0 rgb(0 122 47 / 0.75);
+  background-color: rgb(255 223 0 / 0.14);
+  box-shadow: inset 3px 0 0 rgb(202 138 4 / 0.85);
 }
 
+html.light .podium-row-second,
 html.light .ranking-row-second {
   background-color: rgb(100 116 139 / 0.14);
   box-shadow: inset 3px 0 0 rgb(100 116 139 / 0.5);
 }
 
+html.light .podium-row-third,
 html.light .ranking-row-third {
   background-color: rgb(180 83 9 / 0.1);
   box-shadow: inset 3px 0 0 rgb(146 64 14 / 0.55);

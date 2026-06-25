@@ -142,6 +142,23 @@ export interface ApiStandingsResponse {
   standings: ApiStandingTable[]
 }
 
+export interface ApiScorer {
+  player: ApiPerson
+  team: ApiTeam
+  playedMatches?: number | null
+  goals: number | null
+  assists?: number | null
+  penalties?: number | null
+}
+
+export interface ApiScorersResponse {
+  count?: number
+  filters?: Record<string, string | number>
+  competition?: ApiCompetition
+  season?: ApiSeason
+  scorers: ApiScorer[]
+}
+
 export interface ApiTeamMatchesResponse {
   filters?: Record<string, string | number>
   resultSet?: {

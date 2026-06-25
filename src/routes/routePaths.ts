@@ -1,6 +1,7 @@
 export const APP_ROUTES = {
   home: '/',
   standings: '/classificacao',
+  scorers: '/artilharia',
   knockout: '/mata-a-mata',
   ranking: '/ranking',
   participant: '/participante/:personNameKey',
@@ -30,6 +31,7 @@ export const MAIN_NAV_ROUTES: ReadonlyArray<{
   { path: APP_ROUTES.ranking, label: 'Ranking' },
   { path: APP_ROUTES.championBet, label: 'Campeão' },
   { path: APP_ROUTES.standings, label: 'Classificação' },
+  { path: APP_ROUTES.scorers, label: 'Artilharia' },
   { path: APP_ROUTES.knockout, label: 'Mata-mata' },
   { path: APP_ROUTES.teams, label: 'Seleções' },
 ]

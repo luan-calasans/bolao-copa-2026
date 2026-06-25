@@ -212,6 +212,12 @@ function GoalRow({ goal, match }: { goal: MatchGoal; match: Match }) {
       <div className="min-w-0 flex-1">
         <p className="font-medium text-white">{goal.playerName}</p>
         <p className="text-xs text-slate-400">
+          {goal.assistName && !goal.isOwnGoal && (
+            <>
+              Assistência: <span className="text-slate-300">{goal.assistName}</span>
+              {' · '}
+            </>
+          )}
           {teamLabel} · <EventDetailLabel detail={formatMatchGoalDetail(goal.detail, goal.isOwnGoal)} />
         </p>
       </div>

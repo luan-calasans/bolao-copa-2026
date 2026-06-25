@@ -3,6 +3,7 @@ const ALLOWED_PATH_PATTERNS = [
   /^competitions\/WC\/matches$/,
   /^competitions\/WC\/teams$/,
   /^competitions\/WC\/standings$/,
+  /^competitions\/WC\/scorers$/,
   /^matches\/\d+$/,
   /^teams\/\d+$/,
   /^teams\/\d+\/matches$/,

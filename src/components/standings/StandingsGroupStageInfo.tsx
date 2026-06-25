@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useId, useState } from 'react'
+import { Button } from '../ui/Button'
 
 const TIEBREAKER_CRITERIA = [
   'Maior saldo de gols no grupo',
@@ -10,125 +11,156 @@ const TIEBREAKER_CRITERIA = [
   'Sorteio da FIFA',
 ]
 
-function ChevronIcon({ className }: { className?: string }) {
+export function StandingsGroupStageInfo() {
+  const [isOpen, setIsOpen] = useState(false)
+
   return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={className}
-      aria-hidden="true"
-    >
-      <path d="m6 9 6 6 6-6" />
-    </svg>
+    <>
+      <button
+        type="button"
+        aria-label="Como funciona a fase de grupos"
+        title="Como funciona a fase de grupos"
+        onClick={() => setIsOpen(true)}
+        className="flex h-9 w-9 shrink-0 cursor-pointer items-center justify-center rounded-full border border-slate-600/60 bg-pitch-800/80 text-sm font-bold text-slate-300 transition hover:border-gold-500/50 hover:bg-gold-500/10 hover:text-gold-400"
+      >
+        i
+      </button>
+
+      <GroupStageInfoModal isOpen={isOpen} onClose={() => setIsOpen(false)} />
+    </>
   )
 }
 
-export function StandingsGroupStageInfo() {
-  const [isExpanded, setIsExpanded] = useState(false)
+interface GroupStageInfoModalProps {
+  isOpen: boolean
+  onClose: () => void
+}
+
+function GroupStageInfoModal({ isOpen, onClose }: GroupStageInfoModalProps) {
+  const titleId = useId()
+  const descriptionId = useId()
+
+  useEffect(() => {
+    if (!isOpen) return
+
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+
+    function handleEscape(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        onClose()
+      }
+    }
+
+    window.addEventListener('keydown', handleEscape)
+
+    return () => {
+      document.body.style.overflow = previousOverflow
+      window.removeEventListener('keydown', handleEscape)
+    }
+  }, [isOpen, onClose])
+
+  if (!isOpen) return null
 
   return (
-    <section className="mb-6 rounded-2xl border border-slate-700/50 bg-pitch-800/40 p-4 sm:p-5">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       <button
         type="button"
-        onClick={() => setIsExpanded((open) => !open)}
-        aria-expanded={isExpanded}
-        aria-controls="standings-group-stage-info"
-        className="flex w-full cursor-pointer items-center justify-between gap-2 text-left"
-      >
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-slate-300">
-          Como funciona a fase de grupos
-        </h2>
-        <ChevronIcon
-          className={`h-4 w-4 shrink-0 text-slate-400 transition-transform duration-300 ${
-            isExpanded ? 'rotate-180' : ''
-          }`}
-        />
-      </button>
+        aria-label="Fechar modal"
+        className="absolute inset-0 cursor-default bg-pitch-950/80 backdrop-blur-sm"
+        onClick={onClose}
+      />
 
       <div
-        id="standings-group-stage-info"
-        className={`grid transition-[grid-template-rows] duration-300 ease-out ${
-          isExpanded ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'
-        }`}
-        aria-hidden={!isExpanded}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby={titleId}
+        aria-describedby={descriptionId}
+        className="relative z-10 flex max-h-[min(90vh,640px)] w-full max-w-lg flex-col overflow-hidden rounded-2xl border border-slate-700/60 bg-pitch-900 shadow-2xl shadow-black/40"
       >
-        <div className="min-h-0 overflow-hidden">
-          <div
-            className={`space-y-4 text-sm leading-relaxed text-slate-400 ${isExpanded ? 'mt-4' : ''}`}
-          >
-            <p>
-              Na fase de grupos, as 48 seleções são divididas em{' '}
-              <strong className="text-slate-200">12 grupos de 4 equipes</strong> (A a L). Cada
-              seleção disputa <strong className="text-slate-200">3 partidas</strong> em turno único,
-              enfrentando todos os adversários do seu grupo. A pontuação é{' '}
-              <strong className="text-slate-200">3 pontos por vitória</strong>,{' '}
-              <strong className="text-slate-200">1 por empate</strong> e nenhum por derrota.
+        <div className="border-b border-slate-700/40 px-5 py-4">
+          <h2 id={titleId} className="text-lg font-bold text-white">
+            Como funciona a fase de grupos
+          </h2>
+          <p id={descriptionId} className="mt-1 text-sm text-slate-400">
+            Regras de classificação da Copa do Mundo 2026.
+          </p>
+        </div>
+
+        <div className="flex-1 space-y-4 overflow-y-auto px-5 py-4 text-sm leading-relaxed text-slate-400">
+          <p>
+            Na fase de grupos, as 48 seleções são divididas em{' '}
+            <strong className="text-slate-200">12 grupos de 4 equipes</strong> (A a L). Cada
+            seleção disputa <strong className="text-slate-200">3 partidas</strong> em turno único,
+            enfrentando todos os adversários do seu grupo. A pontuação é{' '}
+            <strong className="text-slate-200">3 pontos por vitória</strong>,{' '}
+            <strong className="text-slate-200">1 por empate</strong> e nenhum por derrota.
+          </p>
+
+          <div>
+            <h3 className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Quem avança
+            </h3>
+            <ul className="list-disc space-y-1 pl-5">
+              <li>Os 2 primeiros colocados de cada um dos 12 grupos</li>
+              <li>Os 8 melhores terceiros colocados na classificação geral</li>
+            </ul>
+          </div>
+
+          <div>
+            <h3 className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Critérios de desempate
+            </h3>
+            <p className="mb-2">
+              Se duas ou mais equipes terminarem com o mesmo número de pontos, a FIFA aplica os
+              critérios abaixo, nesta ordem:
             </p>
+            <ol className="list-decimal space-y-1 pl-5">
+              {TIEBREAKER_CRITERIA.map((criterion) => (
+                <li key={criterion}>{criterion}</li>
+              ))}
+            </ol>
+          </div>
 
-            <div>
-              <h3 className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Quem avança
-              </h3>
-              <ul className="list-disc space-y-1 pl-5">
-                <li>Os 2 primeiros colocados de cada um dos 12 grupos</li>
-                <li>Os 8 melhores terceiros colocados na classificação geral</li>
-              </ul>
-            </div>
-
-            <div>
-              <h3 className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Critérios de desempate
-              </h3>
-              <p className="mb-2">
-                Se duas ou mais equipes terminarem com o mesmo número de pontos, a FIFA aplica os
-                critérios abaixo, nesta ordem:
-              </p>
-              <ol className="list-decimal space-y-1 pl-5">
-                {TIEBREAKER_CRITERIA.map((criterion) => (
-                  <li key={criterion}>{criterion}</li>
-                ))}
-              </ol>
-            </div>
-
-            <div>
-              <h3 className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                Significado da tabela
-              </h3>
-              <ul className="grid gap-1 sm:grid-cols-2">
-                <li>
-                  <strong className="text-slate-200">J</strong>: Jogos
-                </li>
-                <li>
-                  <strong className="text-slate-200">V</strong>: Vitórias
-                </li>
-                <li>
-                  <strong className="text-slate-200">E</strong>: Empates
-                </li>
-                <li>
-                  <strong className="text-slate-200">D</strong>: Derrotas
-                </li>
-                <li>
-                  <strong className="text-slate-200">GP</strong>: Gols pro
-                </li>
-                <li>
-                  <strong className="text-slate-200">GC</strong>: Gols contra
-                </li>
-                <li>
-                  <strong className="text-slate-200">SG</strong>: Saldo de gols
-                </li>
-                <li>
-                  <strong className="text-slate-200">Pts</strong>: Pontos
-                </li>
-              </ul>
-            </div>
+          <div>
+            <h3 className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">
+              Significado da tabela
+            </h3>
+            <ul className="grid gap-1 sm:grid-cols-2">
+              <li>
+                <strong className="text-slate-200">J</strong>: Jogos
+              </li>
+              <li>
+                <strong className="text-slate-200">V</strong>: Vitórias
+              </li>
+              <li>
+                <strong className="text-slate-200">E</strong>: Empates
+              </li>
+              <li>
+                <strong className="text-slate-200">D</strong>: Derrotas
+              </li>
+              <li>
+                <strong className="text-slate-200">GP</strong>: Gols pro
+              </li>
+              <li>
+                <strong className="text-slate-200">GC</strong>: Gols contra
+              </li>
+              <li>
+                <strong className="text-slate-200">SG</strong>: Saldo de gols
+              </li>
+              <li>
+                <strong className="text-slate-200">Pts</strong>: Pontos
+              </li>
+            </ul>
           </div>
         </div>
+
+        <div className="border-t border-slate-700/40 bg-pitch-950/40 px-5 py-4">
+          <Button type="button" variant="gold" className="w-full" onClick={onClose}>
+            Entendi
+          </Button>
+        </div>
       </div>
-    </section>
+    </div>
   )
 }

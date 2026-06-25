@@ -1,53 +1,30 @@
-import { useState } from 'react'
 import { AppLayout } from '../components/layout/AppLayout'
 import { PageHeader } from '../components/layout/PageHeader'
-import { StandingsFiltersPanel } from '../components/standings/StandingsFiltersPanel'
 import { StandingsGroupStageInfo } from '../components/standings/StandingsGroupStageInfo'
 import { StandingsGroupTable } from '../components/standings/StandingsGroupTable'
 import { StandingsSkeleton } from '../components/standings/StandingsSkeleton'
+import { StandingsThirdPlaceRanking } from '../components/standings/StandingsThirdPlaceRanking'
 import { EmptyState } from '../components/ui/EmptyState'
 import { ErrorState } from '../components/ui/ErrorState'
-import { ClearFiltersButton } from '../components/ui/ClearFiltersButton'
-import {
-  DEFAULT_STANDINGS_GRID_COLUMNS,
-  getStandingsGridClass,
-  type StandingsGridColumns,
-} from '../utils/standingsGrid'
+import { DEFAULT_STANDINGS_GRID_COLUMNS, getStandingsGridClass } from '../utils/standingsGrid'
 import { useStandingsViewModel } from '../viewmodels/useStandingsViewModel'
 
 export function StandingsView() {
-  const {
-    standings,
-    countryFilterOptions,
-    selectedCountryId,
-    isLoading,
-    error,
-    isEmpty,
-    isFilterEmpty,
-    filterEmptyMessage,
-    hasActiveFilters,
-    reload,
-    setSelectedCountryId,
-    clearFilters,
-  } = useStandingsViewModel()
-  const [columnsPerRow, setColumnsPerRow] = useState<StandingsGridColumns>(
-    DEFAULT_STANDINGS_GRID_COLUMNS,
-  )
-  const effectiveColumnsPerRow: StandingsGridColumns =
-    selectedCountryId != null ? 1 : columnsPerRow
-  const hasActiveViewFilters =
-    hasActiveFilters || columnsPerRow !== DEFAULT_STANDINGS_GRID_COLUMNS
-
-  function handleClearFilters() {
-    clearFilters()
-    setColumnsPerRow(DEFAULT_STANDINGS_GRID_COLUMNS)
-  }
+  const { standings, thirdPlaceRanking, isLoading, error, isEmpty, reload } = useStandingsViewModel()
 
   return (
     <AppLayout>
-      <PageHeader title="Classificação" description="Tabelas dos grupos da Copa do Mundo 2026." />
+      <PageHeader
+        title="Classificação"
+        description="Tabelas dos grupos da Copa do Mundo 2026."
+        titleAction={<StandingsGroupStageInfo />}
+      />
 
-      <StandingsGroupStageInfo />
+      {!isLoading && !error && !isEmpty && thirdPlaceRanking.length > 0 && (
+        <div className="mb-6">
+          <StandingsThirdPlaceRanking entries={thirdPlaceRanking} />
+        </div>
+      )}
 
       {isLoading && <StandingsSkeleton />}
       {error && (
@@ -61,34 +38,11 @@ export function StandingsView() {
       )}
 
       {!isLoading && !error && !isEmpty && (
-        <>
-          <StandingsFiltersPanel
-            countryFilterOptions={countryFilterOptions}
-            selectedCountryId={selectedCountryId}
-            onCountryChange={setSelectedCountryId}
-            columnsPerRow={columnsPerRow}
-            onColumnsPerRowChange={setColumnsPerRow}
-            hasActiveFilters={hasActiveViewFilters}
-            onClearFilters={handleClearFilters}
-          />
-
-          {isFilterEmpty && (
-            <div>
-              <EmptyState title="Nenhum grupo neste filtro" message={filterEmptyMessage} />
-              {hasActiveViewFilters && (
-                <ClearFiltersButton onClick={handleClearFilters} className="mt-4" />
-              )}
-            </div>
-          )}
-
-          {!isFilterEmpty && (
-            <div className={`grid gap-6 ${getStandingsGridClass(effectiveColumnsPerRow)}`}>
-              {standings.map((standing) => (
-                <StandingsGroupTable key={standing.group ?? standing.stage} standing={standing} />
-              ))}
-            </div>
-          )}
-        </>
+        <div className={`grid gap-6 ${getStandingsGridClass(DEFAULT_STANDINGS_GRID_COLUMNS)}`}>
+          {standings.map((standing) => (
+            <StandingsGroupTable key={standing.group ?? standing.stage} standing={standing} />
+          ))}
+        </div>
       )}
     </AppLayout>
   )

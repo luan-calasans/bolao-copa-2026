@@ -1,6 +1,7 @@
 import type {
   ApiCompetition,
   ApiCompetitionsResponse,
+  ApiScorersResponse,
   ApiStandingsResponse,
   ApiTeamsResponse,
 } from '../models/api.types'
@@ -19,6 +20,13 @@ function competitionStandingsCacheKey(
   season: number | string,
 ): string {
   return `football:competition:${competitionId}:standings:${season}`
+}
+
+function competitionScorersCacheKey(
+  competitionId: string | number,
+  season: number | string,
+): string {
+  return `football:competition:${competitionId}:scorers:${season}`
 }
 
 export async function fetchCompetitions(): Promise<ApiCompetition[]> {
@@ -67,4 +75,25 @@ export async function fetchWorldCupStandings(
   options?: FetchCacheOptions,
 ): Promise<ApiStandingsResponse> {
   return fetchCompetitionStandings(WORLD_CUP_CODE, season, options)
+}
+
+export async function fetchCompetitionScorers(
+  competitionId: string | number,
+  season = WORLD_CUP_SEASON,
+  options?: FetchCacheOptions,
+): Promise<ApiScorersResponse> {
+  return cachedFetch(
+    competitionScorersCacheKey(competitionId, season),
+    COMPETITION_CACHE_TTL_MS,
+    () =>
+      apiFetch<ApiScorersResponse>(`/competitions/${competitionId}/scorers?season=${season}`),
+    options,
+  )
+}
+
+export async function fetchWorldCupScorers(
+  season = WORLD_CUP_SEASON,
+  options?: FetchCacheOptions,
+): Promise<ApiScorersResponse> {
+  return fetchCompetitionScorers(WORLD_CUP_CODE, season, options)
 }

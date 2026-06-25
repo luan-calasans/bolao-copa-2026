@@ -106,6 +106,7 @@ export interface MatchGoal {
   minute: number
   minuteLabel: string
   playerName: string
+  assistName: string | null
   teamName: string
   isHomeTeam: boolean
   detail: string

@@ -1,21 +1,17 @@
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useMemo } from 'react'
 import type { ApiStandingTable } from '../models/api.types'
 import { useAsyncResource } from '../hooks/useAsyncResource'
 import { fetchWorldCupStandings } from '../services/competitionService'
 import { fetchWorldCupMatches } from '../services/matchService'
-import {
-  filterStandingsByCountry,
-  getStandingsCountryFilterOptions,
-} from '../utils/standingsFilters'
 import { resolveGroupStandings } from '../utils/standingsBuilder'
+import { buildThirdPlaceRanking, type ThirdPlaceRankingEntry } from '../utils/thirdPlaceRanking'
 
 interface StandingsData {
   standings: ApiStandingTable[]
+  thirdPlaceRanking: ThirdPlaceRankingEntry[]
 }
 
 export function useStandingsViewModel() {
-  const [selectedCountryId, setSelectedCountryId] = useState<number | null>(null)
-
   const loadStandings = useCallback(async (forceRefresh = false): Promise<StandingsData> => {
     const options = forceRefresh ? { force: true as const } : undefined
     const [standingsResult, matchesResult] = await Promise.allSettled([
@@ -33,61 +29,29 @@ export function useStandingsViewModel() {
         : { standings: [] as ApiStandingTable[] }
 
     const matches = matchesResult.status === 'fulfilled' ? matchesResult.value : []
+    const standings = resolveGroupStandings(response.standings ?? [], matches)
 
     return {
-      standings: resolveGroupStandings(response.standings ?? [], matches),
+      standings,
+      thirdPlaceRanking: buildThirdPlaceRanking(standings),
     }
   }, [])
 
   const { data, isLoading, error, reload } = useAsyncResource(loadStandings, [])
 
-  const allStandings = useMemo(() => data?.standings ?? [], [data?.standings])
-  const isEmpty = !isLoading && !error && allStandings.length === 0
-
-  const countryFilterOptions = useMemo(
-    () => getStandingsCountryFilterOptions(allStandings),
-    [allStandings],
+  const standings = useMemo(() => data?.standings ?? [], [data?.standings])
+  const thirdPlaceRanking = useMemo(
+    () => data?.thirdPlaceRanking ?? [],
+    [data?.thirdPlaceRanking],
   )
-
-  const visibleStandings = useMemo(
-    () => filterStandingsByCountry(allStandings, selectedCountryId),
-    [allStandings, selectedCountryId],
-  )
-
-  const isFilterEmpty = useMemo(
-    () => !isLoading && !error && !isEmpty && visibleStandings.length === 0,
-    [isLoading, error, isEmpty, visibleStandings],
-  )
-
-  const filterEmptyMessage = useMemo(() => {
-    if (selectedCountryId == null) {
-      return 'Nenhum grupo encontrado com os filtros selecionados.'
-    }
-
-    const country = countryFilterOptions.find((option) => option.id === selectedCountryId)
-    return country
-      ? `Nenhum grupo encontrado para ${country.label}.`
-      : 'Nenhum grupo encontrado para o país selecionado.'
-  }, [selectedCountryId, countryFilterOptions])
-
-  const hasActiveFilters = selectedCountryId != null
-
-  const clearFilters = useCallback(() => {
-    setSelectedCountryId(null)
-  }, [])
+  const isEmpty = !isLoading && !error && standings.length === 0
 
   return {
-    standings: visibleStandings,
-    countryFilterOptions,
-    selectedCountryId,
+    standings,
+    thirdPlaceRanking,
     isLoading,
     error,
     isEmpty,
-    isFilterEmpty,
-    filterEmptyMessage,
-    hasActiveFilters,
     reload,
-    setSelectedCountryId,
-    clearFilters,
   }
 }
