@@ -64,17 +64,20 @@ function ScorerPlayerCell({
 
 export function ScorersTable({ scorers }: ScorersTableProps) {
   return (
-    <div className="w-fit max-w-full overflow-hidden rounded-2xl border border-slate-700/50 bg-pitch-800/40">
-      <table className="w-auto text-left text-sm">
+    <div className="w-full overflow-hidden rounded-2xl border border-slate-700/50 bg-pitch-800/40">
+      <div className="border-b border-slate-700/40 bg-pitch-900/60 px-4 py-3">
+        <h3 className="text-sm font-bold uppercase tracking-wider text-white">Goleadores</h3>
+      </div>
+      <table className="w-full text-left text-sm">
         <thead>
           <tr className="border-b border-slate-700/40">
-            <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+            <th className="w-px whitespace-nowrap px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
               #
             </th>
-            <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+            <th className="w-full px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500">
               Jogador
             </th>
-            <th className="px-4 py-3 text-center text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+            <th className="w-px whitespace-nowrap px-3 py-3 text-center text-[11px] font-semibold uppercase tracking-wider text-slate-500">
               Gols
             </th>
           </tr>
@@ -109,7 +112,7 @@ export function ScorersTable({ scorers }: ScorersTableProps) {
                     rank={rank}
                   />
                 </td>
-                <td className="whitespace-nowrap px-4 py-3 text-center text-base tabular-nums text-lg font-bold text-gold-400">
+                <td className="w-px whitespace-nowrap px-3 py-3 text-center text-base tabular-nums text-lg font-bold text-gold-400">
                   <span className="inline-block min-w-[1.25rem] rounded-lg px-2 py-1 tabular-nums">
                     {goals}
                   </span>
