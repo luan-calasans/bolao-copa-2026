@@ -58,10 +58,13 @@ export function StandingsGroupStageInfo() {
         aria-hidden={!isExpanded}
       >
         <div className="min-h-0 overflow-hidden">
-          <div className={`space-y-4 text-sm leading-relaxed text-slate-400 ${isExpanded ? 'mt-4' : ''}`}>
+          <div
+            className={`space-y-4 text-sm leading-relaxed text-slate-400 ${isExpanded ? 'mt-4' : ''}`}
+          >
             <p>
-              Na fase de grupos, as 48 seleções são divididas em <strong className="text-slate-200">12 grupos de 4 equipes</strong>{' '}
-              (A a L). Cada seleção disputa <strong className="text-slate-200">3 partidas</strong> em turno único,
+              Na fase de grupos, as 48 seleções são divididas em{' '}
+              <strong className="text-slate-200">12 grupos de 4 equipes</strong> (A a L). Cada
+              seleção disputa <strong className="text-slate-200">3 partidas</strong> em turno único,
               enfrentando todos os adversários do seu grupo. A pontuação é{' '}
               <strong className="text-slate-200">3 pontos por vitória</strong>,{' '}
               <strong className="text-slate-200">1 por empate</strong> e nenhum por derrota.
@@ -82,14 +85,46 @@ export function StandingsGroupStageInfo() {
                 Critérios de desempate
               </h3>
               <p className="mb-2">
-                Se duas ou mais equipes terminarem com o mesmo número de pontos, a FIFA aplica os critérios
-                abaixo, nesta ordem:
+                Se duas ou mais equipes terminarem com o mesmo número de pontos, a FIFA aplica os
+                critérios abaixo, nesta ordem:
               </p>
               <ol className="list-decimal space-y-1 pl-5">
                 {TIEBREAKER_CRITERIA.map((criterion) => (
                   <li key={criterion}>{criterion}</li>
                 ))}
               </ol>
+            </div>
+
+            <div>
+              <h3 className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                Significado da tabela
+              </h3>
+              <ul className="grid gap-1 sm:grid-cols-2">
+                <li>
+                  <strong className="text-slate-200">J</strong>: Jogos
+                </li>
+                <li>
+                  <strong className="text-slate-200">V</strong>: Vitórias
+                </li>
+                <li>
+                  <strong className="text-slate-200">E</strong>: Empates
+                </li>
+                <li>
+                  <strong className="text-slate-200">D</strong>: Derrotas
+                </li>
+                <li>
+                  <strong className="text-slate-200">GP</strong>: Gols pro
+                </li>
+                <li>
+                  <strong className="text-slate-200">GC</strong>: Gols contra
+                </li>
+                <li>
+                  <strong className="text-slate-200">SG</strong>: Saldo de gols
+                </li>
+                <li>
+                  <strong className="text-slate-200">Pts</strong>: Pontos
+                </li>
+              </ul>
             </div>
           </div>
         </div>

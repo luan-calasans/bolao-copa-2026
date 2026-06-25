@@ -93,7 +93,7 @@ export default defineConfig(({ mode }) => {
           navigateFallback: '/index.html',
           navigateFallbackDenylist: [/^\/api\//],
           globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,woff2,json}'],
-          globIgnores: ['**/trofeu.png'],
+          globIgnores: ['**/trofeu.webp'],
           runtimeCaching: [
             {
               urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,

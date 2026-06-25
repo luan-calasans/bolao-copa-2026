@@ -23,7 +23,7 @@ interface KnockoutBracketDesktopProps {
   rounds: KnockoutRound[]
 }
 
-const TROPHY_IMAGE_SRC = '/trofeu.png'
+const TROPHY_IMAGE_SRC = '/trofeu.webp'
 
 function centerStyle(x: number, y: number): CSSProperties {
   return {

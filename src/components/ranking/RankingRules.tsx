@@ -141,11 +141,6 @@ function ScoringRulesModal({ isOpen, rules, onClose }: ScoringRulesModalProps) {
                       <ScoringRuleCard {...item} />
                     </div>
                   ))}
-                  {rule.title === 'Acerto parcial' && (
-                    <div className="rounded-lg border border-slate-700/30 bg-pitch-900/40 p-3">
-                      <EfficiencyRuleCard />
-                    </div>
-                  )}
                 </div>
               </li>
             ) : (
@@ -157,6 +152,9 @@ function ScoringRulesModal({ isOpen, rules, onClose }: ScoringRulesModalProps) {
               </li>
             ),
           )}
+          <li className="rounded-xl border border-slate-700/40 bg-pitch-950/50 p-4">
+            <EfficiencyRuleCard />
+          </li>
         </ul>
 
         <div className="border-t border-slate-700/40 bg-pitch-950/40 px-5 py-4">
