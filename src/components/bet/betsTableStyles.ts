@@ -52,6 +52,9 @@ export const deleteButtonClass =
 export const deleteButtonDisabledClass =
   'inline-flex cursor-not-allowed rounded-full border border-slate-600/50 bg-slate-700/20 px-2.5 py-1 text-xs font-semibold text-slate-500'
 
+export const receiptLinkClass =
+  'inline-flex cursor-pointer rounded-full border border-gold-500/50 bg-gold-500/10 px-2.5 py-1 text-xs font-semibold text-gold-300 transition hover:border-gold-400/50 hover:bg-gold-500/15 hover:text-gold-200'
+
 export const matchMetaColumnClass = 'min-w-[10rem] text-left'
 export const matchTeamsColumnClass = 'w-[10rem] min-w-[10rem] text-center'
 export const participantColumnClass = 'w-[14rem] min-w-[14rem] max-w-[14rem] text-left'

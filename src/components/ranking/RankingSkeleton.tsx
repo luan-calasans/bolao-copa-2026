@@ -3,10 +3,6 @@ import { Skeleton } from '../ui/Skeleton'
 export function RankingSkeleton() {
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-700/50 bg-pitch-800/40" aria-busy="true" aria-label="Carregando ranking">
-      <div className="border-b border-slate-700/40 bg-pitch-900/40 px-4 py-3">
-        <Skeleton className="h-4 w-24" />
-      </div>
-
       <div className="overflow-x-auto">
         <table className="w-full min-w-[720px] text-left text-sm">
           <thead>

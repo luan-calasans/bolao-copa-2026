@@ -29,7 +29,7 @@ function ScorerPlayerCell({
 }) {
   const isPodium = isPodiumRank(rank)
   const content = (
-    <span className="inline-flex min-w-0 max-w-full items-center gap-1.5">
+    <span className="inline-flex min-w-0 max-w-full items-center gap-2">
       {isPodium && <PodiumTrophyIcon rank={rank} />}
       <span className="truncate" title={playerName}>
         {playerName}
@@ -64,18 +64,19 @@ function ScorerPlayerCell({
 
 export function ScorersTable({ scorers }: ScorersTableProps) {
   return (
-    <div className="w-full max-w-lg overflow-hidden rounded-2xl border border-slate-700/50 bg-pitch-800/40">
-      <table className="w-full border-collapse table-fixed text-left text-xs sm:text-sm">
-        <colgroup>
-          <col style={{ width: '2.5rem' }} />
-          <col />
-          <col style={{ width: '4.5rem' }} />
-        </colgroup>
+    <div className="w-fit max-w-full overflow-hidden rounded-2xl border border-slate-700/50 bg-pitch-800/40">
+      <table className="w-auto text-left text-sm">
         <thead>
-          <tr className="bg-pitch-900/60 text-[10px] font-semibold uppercase tracking-wider text-slate-400 sm:text-[11px]">
-            <th className="px-3 py-2.5 text-left">#</th>
-            <th className="border-b border-slate-700/40 px-3 py-2.5 text-left">Jogador</th>
-            <th className="px-2 py-2.5 pr-4 text-center">Gols</th>
+          <tr className="border-b border-slate-700/40">
+            <th className="px-4 py-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+              #
+            </th>
+            <th className="px-4 py-3 text-left text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+              Jogador
+            </th>
+            <th className="px-4 py-3 text-center text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+              Gols
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -85,23 +86,21 @@ export function ScorersTable({ scorers }: ScorersTableProps) {
             const teamId = scorer.team.id
             const goals = scorer.goals ?? 0
             const rank = index + 1
-            const isPodium = isPodiumRank(rank)
-            const isLastRow = index === scorers.length - 1
-            const rowDivider = isLastRow ? '' : 'border-b border-slate-700/20'
+            const showPodium = isPodiumRank(rank)
 
             return (
               <tr
                 key={`${scorer.player.id ?? playerName}-${teamId ?? teamName}`}
-                className={getPodiumRowClass(rank)}
+                className={`border-b border-slate-700/20 last:border-b-0 ${getPodiumRowClass(rank)}`}
               >
                 <td
-                  className={`px-3 py-2.5 text-left font-bold tabular-nums ${getPodiumRankClass(rank)}`}
+                  className={`whitespace-nowrap px-4 py-3 font-bold tabular-nums ${
+                    showPodium ? getPodiumRankClass(rank) : 'text-slate-300'
+                  }`}
                 >
                   {rank}
                 </td>
-                <td
-                  className={`max-w-0 overflow-hidden px-3 py-2.5 text-left font-semibold ${rowDivider}`}
-                >
+                <td className="whitespace-nowrap px-4 py-3 font-semibold">
                   <ScorerPlayerCell
                     playerName={playerName}
                     teamName={teamName}
@@ -110,12 +109,10 @@ export function ScorersTable({ scorers }: ScorersTableProps) {
                     rank={rank}
                   />
                 </td>
-                <td
-                  className={`px-2 py-2.5 pr-4 text-center text-sm font-bold tabular-nums sm:text-base ${
-                    isPodium ? getPodiumRankClass(rank) : 'text-gold-400'
-                  }`}
-                >
-                  {goals}
+                <td className="whitespace-nowrap px-4 py-3 text-center text-base tabular-nums text-lg font-bold text-gold-400">
+                  <span className="inline-block min-w-[1.25rem] rounded-lg px-2 py-1 tabular-nums">
+                    {goals}
+                  </span>
                 </td>
               </tr>
             )
