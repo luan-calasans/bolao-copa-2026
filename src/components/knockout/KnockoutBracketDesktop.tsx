@@ -9,16 +9,23 @@ import {
   type BracketSide,
   computeBracketDimensions,
   deriveBracketProfile,
+  getBracketTotalHeight,
+  getCenterPodConnectorAnchors,
+  getCenterPodTargetY,
+  measureCenterPodConnectors,
+  type CenterPodConnectorLayout,
   getFinalMatch,
-  getMainBracketRounds,
   getMatchWinner,
   getNodeCenterY,
   getRoundColumnX,
+  getSemiFinalMatches,
   getSideMatches,
   getSeedSlotY,
   getSideSeedParticipants,
   getSideTeamSlots,
   getTeamRowY,
+  getThirdPlaceMatch,
+  getTreeBracketRounds,
   isKnockoutMatchPlayable,
 } from './knockoutBracketLayout'
 
@@ -26,8 +33,6 @@ interface KnockoutBracketDesktopProps {
   rounds: KnockoutRound[]
   linkTeams?: boolean
 }
-
-const TROPHY_IMAGE_SRC = '/trofeu.webp'
 
 function centerStyle(x: number, y: number): CSSProperties {
   return {
@@ -48,7 +53,21 @@ function buildConnectorPath(
   return `M ${fromX} ${fromY} H ${midX} V ${toY} H ${toX}`
 }
 
-function buildBracketPaths(rounds: KnockoutRound[], dimensions: BracketDimensions): string[] {
+function buildCenterPodConnectorPath(
+  fromX: number,
+  fromY: number,
+  toX: number,
+  toY: number,
+  side: BracketSide,
+): string {
+  return buildConnectorPath(fromX, fromY, toX, toY, side)
+}
+
+function buildBracketPaths(
+  rounds: KnockoutRound[],
+  dimensions: BracketDimensions,
+  connectorLayout?: CenterPodConnectorLayout | null,
+): string[] {
   const paths: string[] = []
   const profile = dimensions.profile
   const outermostNodes = profile.teamRows / 2
@@ -72,10 +91,16 @@ function buildBracketPaths(rounds: KnockoutRound[], dimensions: BracketDimension
     return paths
   }
 
-  const mainRounds = getMainBracketRounds(rounds, profile)
+  const mainRounds = getTreeBracketRounds(rounds, profile)
   if (mainRounds.length === 0) return paths
 
-  const semiY = getNodeCenterY(0, 1, rowHeight, pairGap, intraPairGap, outermostNodes)
+  const semiCount = getSemiFinalMatches(rounds).length
+  const hasThirdPlace = getThirdPlaceMatch(rounds) != null
+  const centerAnchors = connectorLayout ?? {
+    ...getCenterPodConnectorAnchors(dimensions, semiCount, hasThirdPlace),
+    leftEdgeX: dimensions.centerX - dimensions.centerPodWidth / 2,
+    rightEdgeX: dimensions.centerX + dimensions.centerPodWidth / 2,
+  }
 
   for (const side of ['left', 'right'] as const) {
     const roundColumns = mainRounds.map((round) => getSideMatches(round.matches, side))
@@ -124,17 +149,27 @@ function buildBracketPaths(rounds: KnockoutRound[], dimensions: BracketDimension
         paths.push(buildConnectorPath(fromX, y, toX, parentY, side))
       })
     }
+
+    const lastMatches = roundColumns[roundColumns.length - 1]
+    if (!lastMatches?.length) continue
+
+    const lastColX = getRoundColumnX(side, mainRounds.length - 1, dimensions)
+    const toX = side === 'left' ? centerAnchors.leftEdgeX : centerAnchors.rightEdgeX
+
+    lastMatches.forEach((_match, nodeIndex) => {
+      const fromY = getNodeCenterY(
+        nodeIndex,
+        lastMatches.length,
+        rowHeight,
+        pairGap,
+        intraPairGap,
+        outermostNodes,
+      )
+      const toY = getCenterPodTargetY(centerAnchors, nodeIndex, lastMatches.length, side)
+      const fromX = side === 'left' ? lastColX + nodeSize / 2 : lastColX - nodeSize / 2
+      paths.push(buildCenterPodConnectorPath(fromX, fromY, toX, toY, side))
+    })
   }
-
-  const leftSemiX = getRoundColumnX('left', mainRounds.length - 1, dimensions)
-  const rightSemiX = getRoundColumnX('right', mainRounds.length - 1, dimensions)
-
-  paths.push(
-    buildConnectorPath(leftSemiX + nodeSize / 2, semiY, centerX - trophySize / 2 - 6, centerY, 'left'),
-  )
-  paths.push(
-    buildConnectorPath(rightSemiX - nodeSize / 2, semiY, centerX + trophySize / 2 + 6, centerY, 'right'),
-  )
 
   return paths
 }
@@ -195,81 +230,204 @@ function BracketTeamSlot({
   )
 }
 
-function BracketChampionSlot({
-  match,
-  x,
-  y,
-  dimensions,
+function BracketParticipantCrest({
+  participant,
+  size,
+  isWinner = false,
+  isLoser = false,
+  isDefined = true,
   linkTeams = true,
 }: {
-  match: KnockoutMatch | undefined
-  x: number
-  y: number
-  dimensions: BracketDimensions
+  participant: KnockoutParticipant
+  size: number
+  isWinner?: boolean
+  isLoser?: boolean
+  isDefined?: boolean
   linkTeams?: boolean
 }) {
-  const winner = match ? getMatchWinner(match) : null
-  const isPlayable = match ? isKnockoutMatchPlayable(match) : false
-  const size = dimensions.trophySize
-  const winnerName = winner?.team
-    ? getTeamDisplayName(winner.team.shortName, winner.team.name)
-    : match
-      ? `${match.home.label} x ${match.away.label}`
-      : 'Final da Copa'
+  const name = participant.team
+    ? getTeamDisplayName(participant.team.shortName, participant.team.name)
+    : participant.label
 
-  const slot = (
+  const crest = (
     <div
-      className={`relative flex items-center justify-center rounded-full border border-dashed border-slate-600/70 bg-pitch-900/30 ${
-        match?.status === 'live' ? 'border-brazil-green/70 shadow-sm shadow-brazil-green/20' : ''
-      } ${isPlayable ? 'cursor-pointer transition hover:border-brazil-green/60 hover:bg-pitch-800/60' : 'cursor-default'}`}
+      className={`relative flex items-center justify-center rounded-full border bg-pitch-900/40 transition ${
+        isWinner
+          ? 'border-brazil-green bg-pitch-800/70 shadow-md shadow-brazil-green/25 ring-2 ring-brazil-green/45'
+          : isLoser
+            ? 'border-slate-700/40 opacity-70'
+            : isDefined
+              ? 'border-slate-700/50 opacity-80'
+              : 'border-dashed border-slate-600/70 opacity-60'
+      }`}
       style={{ width: size, height: size }}
-      title={winnerName}
+      title={name}
     >
-      {winner?.team ? (
-        <TeamCrest
-          crest={winner.team.crest}
-          name={winner.team.name}
-          isDefined
-          size="sm"
-          className="!h-[78%] !w-[78%] rounded-full object-contain p-0"
-        />
-      ) : null}
-      <img
-        src={TROPHY_IMAGE_SRC}
-        alt="Troféu da Copa do Mundo"
-        className="pointer-events-none absolute -right-1 -top-1 h-[42%] w-[42%] object-contain drop-shadow-md"
-        loading="lazy"
-        decoding="async"
+      <TeamCrest
+        crest={participant.team?.crest ?? null}
+        name={name}
+        isDefined={Boolean(participant.team)}
+        size="sm"
+        className="!h-[88%] !w-[88%] rounded-full object-contain p-0"
       />
     </div>
   )
 
-  const style = centerStyle(x, y)
-
-  if (isPlayable && match?.id != null) {
+  if (linkTeams && participant.team?.id) {
     return (
-      <Link to={matchBetsPath(match.id)} className="absolute" style={style} aria-label={winnerName}>
-        {slot}
+      <Link
+        to={`/times/${participant.team.id}`}
+        className="transition hover:opacity-80"
+        title={name}
+        aria-label={name}
+      >
+        {crest}
       </Link>
     )
   }
 
-  if (linkTeams && winner?.team?.id) {
+  return crest
+}
+
+function BracketMatchupRow({
+  match,
+  crestSize,
+  linkTeams = true,
+  connectorAnchor,
+}: {
+  match: KnockoutMatch
+  crestSize: number
+  linkTeams?: boolean
+  connectorAnchor?: 'semi' | 'final' | 'third'
+}) {
+  const winner = getMatchWinner(match)
+  const isPlayable = isKnockoutMatchPlayable(match)
+  const matchLabel = `${match.home.label} x ${match.away.label}`
+  const isDecided = winner != null
+  const anchorProps =
+    connectorAnchor === 'semi'
+      ? { 'data-bracket-semi-anchor': true }
+      : connectorAnchor === 'final'
+        ? { 'data-bracket-final-anchor': true }
+        : connectorAnchor === 'third'
+          ? { 'data-bracket-third-anchor': true }
+          : {}
+
+  const row = (
+    <div className="flex items-center justify-center gap-3 py-0.5">
+      <BracketParticipantCrest
+        participant={match.home}
+        size={crestSize}
+        isWinner={winner === match.home}
+        isLoser={isDecided && winner !== match.home}
+        linkTeams={linkTeams}
+      />
+      <span className={`text-[11px] font-medium ${isDecided ? 'text-slate-600' : 'text-slate-500'}`}>×</span>
+      <BracketParticipantCrest
+        participant={match.away}
+        size={crestSize}
+        isWinner={winner === match.away}
+        isLoser={isDecided && winner !== match.away}
+        linkTeams={linkTeams}
+      />
+    </div>
+  )
+
+  if (isPlayable && match.id != null) {
     return (
       <Link
-        to={`/times/${winner.team.id}`}
-        className="absolute transition hover:opacity-80"
-        style={style}
-        aria-label={winnerName}
+        to={matchBetsPath(match.id)}
+        className="rounded-lg transition hover:bg-pitch-800/40"
+        aria-label={matchLabel}
+        {...anchorProps}
       >
-        {slot}
+        {row}
       </Link>
     )
   }
 
   return (
-    <div className="absolute" style={style} aria-label={winnerName}>
-      {slot}
+    <div aria-label={matchLabel} {...anchorProps}>
+      {row}
+    </div>
+  )
+}
+
+function BracketCenterFinale({
+  rounds,
+  dimensions,
+  linkTeams = true,
+}: {
+  rounds: KnockoutRound[]
+  dimensions: BracketDimensions
+  linkTeams?: boolean
+}) {
+  const semiMatches = getSemiFinalMatches(rounds)
+  const finalMatch = getFinalMatch(rounds)
+  const thirdPlaceMatch = getThirdPlaceMatch(rounds)
+  const crestSize = dimensions.matchupCrestSize
+
+  return (
+    <div
+      className="absolute flex flex-col items-center"
+      style={{
+        left: dimensions.centerX,
+        top: dimensions.centerPodCenterY,
+        width: dimensions.centerPodWidth,
+        transform: 'translate(-50%, -50%)',
+      }}
+    >
+      <div
+        className="flex w-full flex-col items-stretch gap-3 rounded-2xl border border-slate-700/45 bg-pitch-900/35 px-3 py-3 shadow-sm"
+        data-bracket-center-pod
+      >
+        {semiMatches.length > 0 && (
+          <div className="flex flex-col gap-2 border-b border-slate-700/35 pb-3">
+            <span className="text-center text-[10px] font-semibold uppercase tracking-wider text-slate-400">
+              Semifinais
+            </span>
+            {semiMatches.map((match) => (
+              <BracketMatchupRow
+                key={match.key}
+                match={match}
+                crestSize={crestSize}
+                linkTeams={linkTeams}
+                connectorAnchor="semi"
+              />
+            ))}
+          </div>
+        )}
+
+        <div className="flex flex-col items-center gap-2">
+          <span className="text-[10px] font-semibold uppercase tracking-wider text-gold-400/90">
+            Final
+          </span>
+          {finalMatch ? (
+            <BracketMatchupRow
+              match={finalMatch}
+              crestSize={crestSize}
+              linkTeams={linkTeams}
+              connectorAnchor="final"
+            />
+          ) : (
+            <span className="text-xs text-slate-500">A definir</span>
+          )}
+        </div>
+
+        {thirdPlaceMatch && (
+          <div className="flex flex-col gap-2 border-t border-slate-700/35 pt-3">
+            <span className="text-center text-[10px] font-semibold uppercase tracking-wider text-amber-400/85">
+              3º lugar
+            </span>
+            <BracketMatchupRow
+              match={thirdPlaceMatch}
+              crestSize={crestSize}
+              linkTeams={linkTeams}
+              connectorAnchor="third"
+            />
+          </div>
+        )}
+      </div>
     </div>
   )
 }
@@ -365,7 +523,7 @@ function BracketSideLayout({
     )
   }
 
-  const mainRounds = getMainBracketRounds(rounds, profile)
+  const mainRounds = getTreeBracketRounds(rounds, profile)
   const outermostMatches = mainRounds[0] ? getSideMatches(mainRounds[0].matches, side) : []
   const teamSlots = getSideTeamSlots(outermostMatches)
   const roundColumns = mainRounds.map((round) => getSideMatches(round.matches, side))
@@ -408,7 +566,11 @@ function BracketSideLayout({
 export function KnockoutBracketDesktop({ rounds, linkTeams = true }: KnockoutBracketDesktopProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [dimensions, setDimensions] = useState<BracketDimensions | null>(null)
+  const [connectorLayout, setConnectorLayout] = useState<CenterPodConnectorLayout | null>(null)
   const profile = useMemo(() => deriveBracketProfile(rounds), [rounds])
+  const semiMatches = useMemo(() => getSemiFinalMatches(rounds), [rounds])
+  const thirdPlaceMatch = useMemo(() => getThirdPlaceMatch(rounds), [rounds])
+  const hasThirdPlace = thirdPlaceMatch != null
 
   useLayoutEffect(() => {
     const container = containerRef.current
@@ -417,7 +579,12 @@ export function KnockoutBracketDesktop({ rounds, linkTeams = true }: KnockoutBra
     const updateDimensions = () => {
       const nextWidth = container.clientWidth
       if (nextWidth > 0) {
-        setDimensions(computeBracketDimensions(nextWidth, profile) ?? null)
+        setDimensions(
+          computeBracketDimensions(nextWidth, profile, {
+            semiCount: semiMatches.length,
+            hasThirdPlace,
+          }) ?? null,
+        )
       }
     }
 
@@ -431,12 +598,24 @@ export function KnockoutBracketDesktop({ rounds, linkTeams = true }: KnockoutBra
       observer.disconnect()
       window.removeEventListener('resize', updateDimensions)
     }
-  }, [profile])
+  }, [profile, semiMatches.length, hasThirdPlace])
+
+  useLayoutEffect(() => {
+    const container = containerRef.current
+    if (!container || !dimensions) {
+      setConnectorLayout(null)
+      return
+    }
+
+    setConnectorLayout(
+      measureCenterPodConnectors(container, dimensions, semiMatches.length, hasThirdPlace),
+    )
+  }, [dimensions, rounds, semiMatches.length, hasThirdPlace])
 
   if (!profile) return null
 
-  const finalMatch = getFinalMatch(rounds)
-  const paths = dimensions ? buildBracketPaths(rounds, dimensions) : []
+  const paths = dimensions ? buildBracketPaths(rounds, dimensions, connectorLayout) : []
+  const totalHeight = dimensions ? getBracketTotalHeight(dimensions) : 0
 
   return (
     <section className="hidden w-full lg:block">
@@ -448,12 +627,12 @@ export function KnockoutBracketDesktop({ rounds, linkTeams = true }: KnockoutBra
         {dimensions && (
           <div
             className="relative mx-auto"
-            style={{ width: dimensions.totalWidth, height: dimensions.height }}
+            style={{ width: dimensions.totalWidth, height: totalHeight }}
           >
             <svg
               className="pointer-events-none absolute inset-0 overflow-visible"
               width={dimensions.totalWidth}
-              height={dimensions.height}
+              height={totalHeight}
               aria-hidden="true"
             >
               {paths.map((path, index) => (
@@ -469,16 +648,20 @@ export function KnockoutBracketDesktop({ rounds, linkTeams = true }: KnockoutBra
               ))}
             </svg>
 
-            <BracketSideLayout side="left" rounds={rounds} dimensions={dimensions} linkTeams={linkTeams} />
-            <BracketSideLayout side="right" rounds={rounds} dimensions={dimensions} linkTeams={linkTeams} />
-
-            <BracketChampionSlot
-              match={finalMatch}
-              x={dimensions.centerX}
-              y={dimensions.height / 2}
+            <BracketSideLayout
+              side="left"
+              rounds={rounds}
               dimensions={dimensions}
               linkTeams={linkTeams}
             />
+            <BracketSideLayout
+              side="right"
+              rounds={rounds}
+              dimensions={dimensions}
+              linkTeams={linkTeams}
+            />
+
+            <BracketCenterFinale rounds={rounds} dimensions={dimensions} linkTeams={linkTeams} />
           </div>
         )}
       </div>

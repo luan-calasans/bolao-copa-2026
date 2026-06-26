@@ -26,6 +26,7 @@ import {
   type GroupCode,
   type R32TemplateMatch,
 } from './knockoutBracketTemplate'
+import { orderKnockoutRounds } from './knockoutBracketOrdering'
 
 const KNOCKOUT_STAGES = new Set<string>(KNOCKOUT_STAGE_ORDER)
 
@@ -345,7 +346,7 @@ export function buildKnockoutBracket(
     })
   }
 
-  return { rounds }
+  return { rounds: orderKnockoutRounds(rounds) }
 }
 
 export function getKnockoutMatches(matches: Match[]): Match[] {

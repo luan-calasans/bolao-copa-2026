@@ -1,4 +1,9 @@
-import type { KnockoutMatch, KnockoutParticipant, KnockoutRound, KnockoutStage } from '../../models/knockout'
+import type {
+  KnockoutMatch,
+  KnockoutParticipant,
+  KnockoutRound,
+  KnockoutStage,
+} from '../../models/knockout'
 import { isTeamDefined } from '../../utils/teamDisplay'
 
 const KNOCKOUT_STAGE_ORDER: KnockoutStage[] = [
@@ -37,6 +42,11 @@ export interface BracketDimensions {
   leftTeamX: number
   rightTeamX: number
   centerX: number
+  centerPodWidth: number
+  centerPodHeight: number
+  centerPodCenterY: number
+  centerPodBottom: number
+  matchupCrestSize: number
 }
 
 export type BracketSide = 'left' | 'right'
@@ -93,7 +103,7 @@ export function deriveBracketProfile(rounds: KnockoutRound[]): BracketProfile | 
 
     return {
       kind: 'knockout',
-      teamRows: outermost.round.matches.length * 2,
+      teamRows: outermost.round.matches.length,
       roundsPerSide: knockoutStages.length,
       stages: knockoutStages.map((entry) => entry.stage),
     }
@@ -120,7 +130,10 @@ export function supportsDesktopKnockoutLayout(rounds: KnockoutRound[]): boolean 
 export function computeBracketDimensions(
   containerWidth: number,
   profile: BracketProfile | null | undefined,
+  options: { semiCount?: number; hasThirdPlace?: boolean } = {},
 ): BracketDimensions | null {
+  const semiCount = options.semiCount ?? 0
+  const hasThirdPlace = options.hasThirdPlace ?? false
   if (!profile) return null
 
   const width = Math.max(Math.round(containerWidth), 1)
@@ -129,9 +142,7 @@ export function computeBracketDimensions(
   const remaining = width - initialCenter
   const teamColWidth = Math.max(48, Math.round(remaining * 0.085))
   const roundColWidth =
-    roundsPerSide > 0
-      ? Math.floor((remaining - 2 * teamColWidth) / (roundsPerSide * 2))
-      : 0
+    roundsPerSide > 0 ? Math.floor((remaining - 2 * teamColWidth) / (roundsPerSide * 2)) : 0
   const halfWidth = teamColWidth + roundsPerSide * roundColWidth
   const centerWidth = width - halfWidth * 2
   const totalWidth = width
@@ -145,6 +156,15 @@ export function computeBracketDimensions(
   const pairStride = getPairStride(rowHeight, intraPairGap, pairGap)
   const height = (profile.teamRows / 2) * pairStride - pairGap
   const trophySize = Math.min(112, Math.max(80, Math.round(centerWidth * 0.5)))
+  const matchupCrestSize = Math.min(48, Math.max(36, Math.round(nodeSize * 0.82)))
+  const matchupRowHeight = matchupCrestSize + 12
+  const semiBlockHeight = semiCount > 0 ? 22 + semiCount * matchupRowHeight + 6 : 0
+  const finalBlockHeight = 22 + matchupRowHeight + 6
+  const thirdPlaceBlockHeight = hasThirdPlace ? 22 + matchupRowHeight + 6 : 0
+  const centerPodHeight = semiBlockHeight + finalBlockHeight + thirdPlaceBlockHeight
+  const centerPodWidth = Math.max(trophySize + 48, semiCount > 0 ? 168 : trophySize + 32)
+  const centerPodCenterY = height / 2
+  const centerPodBottom = centerPodCenterY + centerPodHeight / 2
 
   const leftRoundXs = Array.from(
     { length: roundsPerSide },
@@ -175,6 +195,11 @@ export function computeBracketDimensions(
     leftTeamX: teamColWidth / 2,
     rightTeamX: totalWidth - teamColWidth / 2,
     centerX: halfWidth + centerWidth / 2,
+    centerPodWidth,
+    centerPodHeight,
+    centerPodCenterY,
+    centerPodBottom,
+    matchupCrestSize,
   }
 }
 
@@ -200,41 +225,39 @@ export function getNodeCenterY(
   outermostNodes: number,
 ): number {
   const pairStride = getPairStride(rowHeight, intraPairGap, pairGap)
-  const bracketHeight = Math.max(outermostNodes * pairStride - pairGap, rowHeight)
-
-  if (nodesInRound <= 1) {
-    return bracketHeight / 2
-  }
 
   if (nodesInRound === outermostNodes) {
     return nodeIndex * pairStride + rowHeight + intraPairGap / 2
   }
 
-  if (nodesInRound * 2 <= outermostNodes) {
-    const childY1 = getNodeCenterY(
-      nodeIndex * 2,
-      nodesInRound * 2,
-      rowHeight,
-      pairGap,
-      intraPairGap,
-      outermostNodes,
-    )
-    const childY2 = getNodeCenterY(
-      nodeIndex * 2 + 1,
-      nodesInRound * 2,
-      rowHeight,
-      pairGap,
-      intraPairGap,
-      outermostNodes,
-    )
-    return (childY1 + childY2) / 2
+  if (nodesInRound === 1) {
+    return (outermostNodes * pairStride - pairGap) / 2
   }
 
-  const step = bracketHeight / (nodesInRound - 1)
-  return nodeIndex * step
+  const childY1 = getNodeCenterY(
+    nodeIndex * 2,
+    nodesInRound * 2,
+    rowHeight,
+    pairGap,
+    intraPairGap,
+    outermostNodes,
+  )
+  const childY2 = getNodeCenterY(
+    nodeIndex * 2 + 1,
+    nodesInRound * 2,
+    rowHeight,
+    pairGap,
+    intraPairGap,
+    outermostNodes,
+  )
+  return (childY1 + childY2) / 2
 }
 
-export function getSeedSlotY(slotIndex: number, slotCount: number, dimensions: BracketDimensions): number {
+export function getSeedSlotY(
+  slotIndex: number,
+  slotCount: number,
+  dimensions: BracketDimensions,
+): number {
   if (slotCount <= 1) {
     return dimensions.height / 2
   }
@@ -243,7 +266,11 @@ export function getSeedSlotY(slotIndex: number, slotCount: number, dimensions: B
   return slotIndex * step
 }
 
-export function getRoundColumnX(side: BracketSide, roundIndex: number, dimensions: BracketDimensions): number {
+export function getRoundColumnX(
+  side: BracketSide,
+  roundIndex: number,
+  dimensions: BracketDimensions,
+): number {
   return side === 'left' ? dimensions.leftRoundXs[roundIndex] : dimensions.rightRoundXs[roundIndex]
 }
 
@@ -327,6 +354,136 @@ export function getMainBracketRounds(rounds: KnockoutRound[], profile: BracketPr
     .filter((round): round is KnockoutRound => round != null)
 }
 
+export function getTreeBracketRounds(rounds: KnockoutRound[], profile: BracketProfile) {
+  return getMainBracketRounds(rounds, profile).filter((round) => round.stage !== 'SEMI_FINALS')
+}
+
+export function getSemiFinalMatches(rounds: KnockoutRound[]): KnockoutMatch[] {
+  return getRoundByStage(rounds, 'SEMI_FINALS')?.matches ?? []
+}
+
 export function getFinalMatch(rounds: KnockoutRound[]): KnockoutMatch | undefined {
   return getRoundByStage(rounds, 'FINAL')?.matches[0]
+}
+
+export function getThirdPlaceMatch(rounds: KnockoutRound[]): KnockoutMatch | undefined {
+  return getRoundByStage(rounds, 'THIRD_PLACE')?.matches[0]
+}
+
+export function getBracketTotalHeight(dimensions: BracketDimensions): number {
+  return Math.max(dimensions.height, dimensions.centerPodBottom + 28)
+}
+
+export interface CenterPodConnectorAnchors {
+  semiRowYs: number[]
+  finalRowY: number
+  thirdPlaceRowY: number | null
+}
+
+export interface CenterPodConnectorLayout extends CenterPodConnectorAnchors {
+  leftEdgeX: number
+  rightEdgeX: number
+}
+
+/** Y anchors aligned with BracketCenterFinale layout (px-3, gap-2/3, labels). */
+export function getCenterPodConnectorAnchors(
+  dimensions: BracketDimensions,
+  semiCount: number,
+  hasThirdPlace: boolean,
+): CenterPodConnectorAnchors {
+  const podTop = dimensions.centerPodCenterY - dimensions.centerPodHeight / 2
+  const crestBlock = dimensions.matchupCrestSize + 4
+  const labelBlock = 20
+  const podPad = 12
+  const outerGap = 12
+  const rowGap = 8
+  const sectionPad = 12
+
+  let y = podTop + podPad
+  const semiRowYs: number[] = []
+
+  if (semiCount > 0) {
+    y += labelBlock
+    for (let index = 0; index < semiCount; index += 1) {
+      semiRowYs.push(y + crestBlock / 2)
+      y += crestBlock
+      if (index < semiCount - 1) y += rowGap
+    }
+    y += sectionPad
+  }
+
+  y += outerGap + labelBlock
+  const finalRowY = y + crestBlock / 2
+  y += crestBlock
+
+  let thirdPlaceRowY: number | null = null
+  if (hasThirdPlace) {
+    y += outerGap + sectionPad + labelBlock
+    thirdPlaceRowY = y + crestBlock / 2
+  }
+
+  return { semiRowYs, finalRowY, thirdPlaceRowY }
+}
+
+export function getCenterPodTargetY(
+  anchors: CenterPodConnectorAnchors,
+  nodeIndex: number,
+  nodesInRound: number,
+  side?: BracketSide,
+): number {
+  const targetIndex =
+    side === 'right' && nodesInRound > 1 ? nodesInRound - 1 - nodeIndex : nodeIndex
+
+  if (anchors.semiRowYs.length > 0) {
+    if (nodesInRound <= anchors.semiRowYs.length) {
+      return (
+        anchors.semiRowYs[targetIndex] ?? anchors.semiRowYs[anchors.semiRowYs.length - 1]!
+      )
+    }
+
+    const step = (anchors.semiRowYs.length - 1) / Math.max(nodesInRound - 1, 1)
+    const anchorIndex = Math.round(targetIndex * step)
+    return anchors.semiRowYs[anchorIndex] ?? anchors.semiRowYs[anchors.semiRowYs.length - 1]!
+  }
+
+  return anchors.finalRowY
+}
+
+export function measureCenterPodConnectors(
+  container: HTMLElement,
+  dimensions: BracketDimensions,
+  semiCount: number,
+  hasThirdPlace: boolean,
+): CenterPodConnectorLayout {
+  const fallback = getCenterPodConnectorAnchors(dimensions, semiCount, hasThirdPlace)
+  const containerRect = container.getBoundingClientRect()
+
+  const relativeCenterY = (element: Element): number => {
+    const rect = element.getBoundingClientRect()
+    return rect.top + rect.height / 2 - containerRect.top
+  }
+
+  const semiRowYs = Array.from(container.querySelectorAll('[data-bracket-semi-anchor]')).map(
+    relativeCenterY,
+  )
+  const finalEl = container.querySelector('[data-bracket-final-anchor]')
+  const thirdEl = container.querySelector('[data-bracket-third-anchor]')
+  const podEl = container.querySelector('[data-bracket-center-pod]')
+
+  let leftEdgeX = dimensions.centerX - dimensions.centerPodWidth / 2
+  let rightEdgeX = dimensions.centerX + dimensions.centerPodWidth / 2
+
+  if (podEl) {
+    const podRect = podEl.getBoundingClientRect()
+    leftEdgeX = podRect.left - containerRect.left
+    rightEdgeX = podRect.right - containerRect.left
+  }
+
+  return {
+    semiRowYs: semiRowYs.length > 0 ? semiRowYs : fallback.semiRowYs,
+    finalRowY: finalEl ? relativeCenterY(finalEl) : fallback.finalRowY,
+    thirdPlaceRowY: thirdEl ? relativeCenterY(thirdEl) : fallback.thirdPlaceRowY,
+    leftEdgeX,
+    rightEdgeX,
+  }
 }

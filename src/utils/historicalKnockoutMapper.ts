@@ -11,6 +11,7 @@ import {
   isCountedHistoricalMatch,
   resolveMatchOutcome,
 } from './historicalMatchUtils'
+import { orderKnockoutRounds } from './knockoutBracketOrdering'
 
 const STAGE_ORDER: KnockoutStage[] = [
   'LAST_32',
@@ -169,7 +170,7 @@ export function buildHistoricalKnockoutBracket(matches: HistoricalRawMatch[]): K
     ]
   })
 
-  return { rounds }
+  return { rounds: orderKnockoutRounds(rounds) }
 }
 
 export { supportsDesktopKnockoutLayout } from '../components/knockout/knockoutBracketLayout'

@@ -20,15 +20,18 @@ function isNavGroupActive(pathname: string, items: ReadonlyArray<MainNavLink>): 
   return items.some((item) => isNavLinkActive(pathname, item))
 }
 
+const navItemBase =
+  'inline-flex h-9 shrink-0 items-center gap-1 whitespace-nowrap rounded-lg px-3 text-sm font-semibold leading-none transition'
+
 const navLinkClass = ({ isActive }: { isActive: boolean }) =>
-  `shrink-0 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold transition ${
+  `${navItemBase} ${
     isActive
       ? 'bg-pitch-700 text-brazil-yellow'
       : 'text-slate-300 hover:bg-pitch-800 hover:text-white'
   }`
 
 const navGroupButtonClass = (isActive: boolean) =>
-  `flex shrink-0 cursor-pointer items-center gap-1 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-semibold transition ${
+  `${navItemBase} cursor-pointer border-0 bg-transparent ${
     isActive
       ? 'bg-pitch-700 text-brazil-yellow'
       : 'text-slate-300 hover:bg-pitch-800 hover:text-white'
@@ -77,7 +80,7 @@ function NavGroupDropdown({
   }
 
   return (
-    <li ref={containerRef} className="relative shrink-0">
+    <li ref={containerRef} className="relative flex shrink-0 items-center">
       <button
         type="button"
         className={navGroupButtonClass(isActive)}
@@ -123,7 +126,7 @@ function MainNavDesktop() {
     <ul className="flex items-center gap-1">
       {MAIN_NAV.map((item) =>
         item.type === 'link' ? (
-          <li key={item.path} className="shrink-0">
+          <li key={item.path} className="flex shrink-0 items-center">
             <NavLink to={item.path} end={item.end} className={navLinkClass} onClick={scrollToTop}>
               {item.label}
             </NavLink>
