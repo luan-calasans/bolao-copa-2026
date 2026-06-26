@@ -10,8 +10,6 @@ import { WORLD_CUP_CODE, WORLD_CUP_SEASON } from './footballConstants'
 import { cachedFetch, type FetchCacheOptions } from './requestCache'
 
 const COMPETITION_CACHE_TTL_MS = 20_000
-const WORLD_CUP_TEAMS_JSON_URL = `${import.meta.env.BASE_URL}json/teams-season2026.json`
-const WORLD_CUP_TEAMS_JSON_CACHE_KEY = 'football:wc-teams-json'
 
 function competitionTeamsCacheKey(competitionId: string | number, season: number | string): string {
   return `football:competition:${competitionId}:teams:${season}`
@@ -54,25 +52,6 @@ export async function fetchWorldCupTeams(
   options?: FetchCacheOptions,
 ): Promise<ApiTeamsResponse> {
   return fetchCompetitionTeams(WORLD_CUP_CODE, season, options)
-}
-
-export async function fetchWorldCupTeamsFromSeasonJson(
-  options?: FetchCacheOptions,
-): Promise<ApiTeamsResponse> {
-  return cachedFetch(
-    WORLD_CUP_TEAMS_JSON_CACHE_KEY,
-    COMPETITION_CACHE_TTL_MS,
-    async () => {
-      const response = await fetch(WORLD_CUP_TEAMS_JSON_URL)
-
-      if (!response.ok) {
-        throw new Error(`Falha ao carregar seleções (${response.status}).`)
-      }
-
-      return response.json() as Promise<ApiTeamsResponse>
-    },
-    options,
-  )
 }
 
 export async function fetchCompetitionStandings(
