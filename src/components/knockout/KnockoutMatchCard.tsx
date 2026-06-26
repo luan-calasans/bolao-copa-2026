@@ -65,17 +65,41 @@ function ParticipantRow({
   return <div className="flex items-center gap-2.5 px-1 py-1">{content}</div>
 }
 
+function resolveKnockoutWinner(
+  match: KnockoutMatch,
+  showScore: boolean,
+): { homeWins: boolean; awayWins: boolean } {
+  if (!showScore || match.score.home == null || match.score.away == null) {
+    return { homeWins: false, awayWins: false }
+  }
+
+  const { home, away } = match.score
+
+  if (home !== away) {
+    return { homeWins: home > away, awayWins: away > home }
+  }
+
+  const penHome = match.penalties?.home
+  const penAway = match.penalties?.away
+
+  if (penHome != null && penAway != null && penHome !== penAway) {
+    return { homeWins: penHome > penAway, awayWins: penAway > penHome }
+  }
+
+  return { homeWins: false, awayWins: false }
+}
+
 export function KnockoutMatchCard({ match, index }: KnockoutMatchCardProps) {
   const hasScore = match.score.home != null && match.score.away != null
   const showScore = hasScore && (match.status === 'finished' || match.status === 'live')
-  const homeWins =
-    showScore && match.score.home != null && match.score.away != null
-      ? match.score.home > match.score.away
-      : false
-  const awayWins =
-    showScore && match.score.home != null && match.score.away != null
-      ? match.score.away > match.score.home
-      : false
+  const { homeWins, awayWins } = resolveKnockoutWinner(match, showScore)
+  const showPenalties =
+    showScore &&
+    match.score.home != null &&
+    match.score.away != null &&
+    match.score.home === match.score.away &&
+    match.penalties?.home != null &&
+    match.penalties?.away != null
   const bothTeamsDefined = isKnockoutMatchPlayable(match)
 
   return (
@@ -102,6 +126,12 @@ export function KnockoutMatchCard({ match, index }: KnockoutMatchCardProps) {
         <ParticipantRow participant={match.home} goals={showScore ? match.score.home : null} isWinner={homeWins} />
         <ParticipantRow participant={match.away} goals={showScore ? match.score.away : null} isWinner={awayWins} />
       </div>
+
+      {showPenalties && (
+        <p className="mt-2 text-center text-[10px] font-medium text-slate-400">
+          Pênaltis: {match.penalties?.home}×{match.penalties?.away}
+        </p>
+      )}
 
       {match.status === 'live' && (
         <p className="mt-2 text-center text-[10px] font-semibold uppercase tracking-wide text-emerald-400">

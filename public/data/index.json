@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "worldCups": [
+    { "year": 1930, "files": ["worldcup.json"] },
+    { "year": 1934, "files": ["worldcup.json"] },
+    { "year": 1938, "files": ["worldcup.json"] },
+    { "year": 1950, "files": ["worldcup.json"] },
+    { "year": 1954, "files": ["worldcup.json"] },
+    { "year": 1958, "files": ["worldcup.json"] },
+    { "year": 1962, "files": ["worldcup.json"] },
+    { "year": 1966, "files": ["worldcup.json"] },
+    { "year": 1970, "files": ["worldcup.json"] },
+    { "year": 1974, "files": ["worldcup.json"] },
+    { "year": 1978, "files": ["worldcup.json"] },
+    { "year": 1982, "files": ["worldcup.json"] },
+    { "year": 1986, "files": ["worldcup.json"] },
+    { "year": 1990, "files": ["worldcup.json"] },
+    { "year": 1994, "files": ["worldcup.json"] },
+    { "year": 1998, "files": ["worldcup.json"] },
+    { "year": 2002, "files": ["worldcup.json"] },
+    { "year": 2006, "files": ["worldcup.json"] },
+    { "year": 2010, "files": ["worldcup.json"] },
+    { "year": 2014, "files": ["worldcup.json", "worldcup.groups.json", "worldcup.standings.json", "worldcup.teams.json", "worldcup.stadiums.json"] },
+    { "year": 2018, "files": ["worldcup.json", "worldcup.groups.json", "worldcup.standings.json", "worldcup.teams.json", "worldcup.stadiums.json"] },
+    { "year": 2022, "files": ["worldcup.json", "worldcup.groups.json", "worldcup.stadiums.json"] }
+  ]
+}

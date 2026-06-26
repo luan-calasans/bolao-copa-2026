@@ -1,10 +1,15 @@
-import { lazy, Suspense, type ReactNode } from 'react'
+import { lazy, Suspense, useEffect, useState, type ReactNode } from 'react'
 import { Navigate, Route, Routes, useParams } from 'react-router-dom'
 import { AdminRoute } from '../components/auth/AdminRoute'
 import { ParticipantRoute as ParticipantAuthRoute } from '../components/auth/ParticipantRoute'
 import { LoadingState } from '../components/ui/LoadingState'
 import { HomeView } from '../views/HomeView'
 import { APP_ROUTES } from './routePaths'
+import {
+  fetchHistoricalDataIndex,
+  getHistoricalWorldCupYears,
+  isValidHistoricalYear,
+} from '../services/historicalWorldCupService'
 
 const StandingsView = lazy(() =>
   import('../views/StandingsView').then((module) => ({ default: module.StandingsView })),
@@ -61,6 +66,12 @@ const AdminBetsView = lazy(() =>
 const NotFoundView = lazy(() =>
   import('../views/NotFoundView').then((module) => ({ default: module.NotFoundView })),
 )
+const HistoricoView = lazy(() =>
+  import('../views/HistoricoView').then((module) => ({ default: module.HistoricoView })),
+)
+const HistoricoYearView = lazy(() =>
+  import('../views/HistoricoYearView').then((module) => ({ default: module.HistoricoYearView })),
+)
 
 function RouteFallback() {
   return <LoadingState lines={4} />
@@ -108,6 +119,50 @@ function ReceiptRoute() {
   return (
     <Suspense fallback={<RouteFallback />}>
       <ReceiptView receiptId={receiptId} />
+    </Suspense>
+  )
+}
+
+function HistoricoYearRoute() {
+  const { year: yearParam } = useParams<{ year: string }>()
+  const parsedYear = isValidHistoricalYear(yearParam ?? '')
+  const [years, setYears] = useState<number[] | null>(null)
+
+  useEffect(() => {
+    let cancelled = false
+
+    void fetchHistoricalDataIndex()
+      .then((index) => {
+        if (!cancelled) {
+          setYears(getHistoricalWorldCupYears(index))
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setYears([])
+        }
+      })
+
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  if (!parsedYear) {
+    return <Navigate to={APP_ROUTES.notFound} replace />
+  }
+
+  if (years == null) {
+    return <RouteFallback />
+  }
+
+  if (!years.includes(parsedYear)) {
+    return <Navigate to={APP_ROUTES.notFound} replace />
+  }
+
+  return (
+    <Suspense fallback={<RouteFallback />}>
+      <HistoricoYearView year={parsedYear} availableYears={years} />
     </Suspense>
   )
 }
@@ -173,6 +228,15 @@ export function AppRoutes() {
           </LazyRoute>
         }
       />
+      <Route
+        path={APP_ROUTES.historico}
+        element={
+          <LazyRoute>
+            <HistoricoView />
+          </LazyRoute>
+        }
+      />
+      <Route path={APP_ROUTES.historicoYear} element={<HistoricoYearRoute />} />
       <Route
         path={APP_ROUTES.ranking}
         element={

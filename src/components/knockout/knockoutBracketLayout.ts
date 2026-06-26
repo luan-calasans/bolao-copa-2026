@@ -152,9 +152,20 @@ export function getMatchWinner(match: KnockoutMatch): KnockoutParticipant | null
   if (match.status !== 'finished') return null
 
   const { home, away } = match.score
-  if (home == null || away == null || home === away) return null
+  if (home == null || away == null) return null
 
-  return home > away ? match.home : match.away
+  if (home !== away) {
+    return home > away ? match.home : match.away
+  }
+
+  const penHome = match.penalties?.home
+  const penAway = match.penalties?.away
+
+  if (penHome != null && penAway != null && penHome !== penAway) {
+    return penHome > penAway ? match.home : match.away
+  }
+
+  return null
 }
 
 export function isKnockoutMatchPlayable(match: KnockoutMatch): boolean {

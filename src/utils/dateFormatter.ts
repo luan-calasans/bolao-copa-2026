@@ -14,16 +14,26 @@ const numericDateFormatter = new Intl.DateTimeFormat('pt-BR', {
   month: '2-digit',
 })
 
+function toValidDate(utcDate: string): Date | null {
+  const date = new Date(utcDate)
+  return Number.isNaN(date.getTime()) ? null : date
+}
+
 export function formatMatchDate(utcDate: string): string {
-  return dateFormatter.format(new Date(utcDate))
+  const date = toValidDate(utcDate)
+  if (!date) return '—'
+  return dateFormatter.format(date)
 }
 
 export function formatMatchTime(utcDate: string): string {
-  return timeFormatter.format(new Date(utcDate))
+  const date = toValidDate(utcDate)
+  if (!date) return '—'
+  return timeFormatter.format(date)
 }
 
 export function formatDateTime(isoDate: string): string {
-  const date = new Date(isoDate)
+  const date = toValidDate(isoDate)
+  if (!date) return '—'
   return `${numericDateFormatter.format(date)} às ${timeFormatter.format(date)}`
 }
 
@@ -50,7 +60,9 @@ const cardDateFormatter = new Intl.DateTimeFormat('pt-BR', {
 })
 
 export function formatMatchCardDate(utcDate: string): string {
-  return cardDateFormatter.format(new Date(utcDate)).replace(/\./g, '')
+  const date = toValidDate(utcDate)
+  if (!date) return '—'
+  return cardDateFormatter.format(date).replace(/\./g, '')
 }
 
 export function formatGroup(group: string | null): string {

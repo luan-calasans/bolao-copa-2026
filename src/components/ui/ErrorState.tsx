@@ -7,10 +7,13 @@ interface ErrorStateProps {
   message: string
   statusCode?: number
   onRetry?: () => void
+  retryHint?: string | null
 }
 
-export function ErrorState({ message, statusCode, onRetry }: ErrorStateProps) {
+export function ErrorState({ message, statusCode, onRetry, retryHint }: ErrorStateProps) {
   const title = statusCode != null ? `Erro ao carregar ${statusCode}` : 'Erro ao carregar'
+  const hint =
+    retryHint === undefined ? API_LOAD_ERROR_HINT : retryHint
 
   return (
     <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-8 text-center">
@@ -19,7 +22,7 @@ export function ErrorState({ message, statusCode, onRetry }: ErrorStateProps) {
       </div>
       <h3 className="mb-2 text-lg font-semibold text-white">{title}</h3>
       <p className={`text-sm text-white ${onRetry ? 'mb-3' : 'mb-6'}`}>{message}</p>
-      {onRetry && <p className="mb-6 text-sm text-white">{API_LOAD_ERROR_HINT}</p>}
+      {onRetry && hint && <p className="mb-6 text-sm text-white">{hint}</p>}
       {onRetry && (
         <Button variant="secondary" onClick={onRetry}>
           Tentar novamente

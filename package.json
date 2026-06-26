@@ -9,6 +9,7 @@
     "dev:full": "vercel dev",
     "db:init": "node scripts/init-db.mjs",
     "pwa:icons": "node scripts/generate-pwa-icons.mjs",
+    "teams:crests": "node scripts/fetch-team-crests.mjs",
     "scores:sync": "node scripts/sync-bet-scores.mjs",
     "participant:remove": "node scripts/remove-participant.mjs",
     "build": "tsc -b && vite build",

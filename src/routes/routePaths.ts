@@ -16,6 +16,8 @@ export const APP_ROUTES = {
   myBets: '/meus-palpites',
   adminLogin: '/admin/login',
   adminBets: '/admin/palpites',
+  historico: '/historico',
+  historicoYear: '/historico/:year',
   notFound: '/404',
 } as const
 
@@ -33,6 +35,7 @@ export const MAIN_NAV_ROUTES: ReadonlyArray<{
   { path: APP_ROUTES.standings, label: 'Classificação' },
   { path: APP_ROUTES.scorers, label: 'Artilharia' },
   { path: APP_ROUTES.knockout, label: 'Mata-mata' },
+  { path: APP_ROUTES.historico, label: 'Histórico' },
   { path: APP_ROUTES.teams, label: 'Seleções' },
 ]
 
@@ -54,4 +57,8 @@ export function betPath(matchId: number): string {
 
 export function receiptPath(receiptId: string): string {
   return `/comprovante/${receiptId}`
+}
+
+export function historicoYearPath(year: number): string {
+  return `/historico/${year}`
 }

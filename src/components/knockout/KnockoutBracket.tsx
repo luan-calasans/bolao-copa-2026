@@ -4,6 +4,7 @@ import { KnockoutMatchCard } from './KnockoutMatchCard'
 
 interface KnockoutBracketProps {
   rounds: KnockoutRound[]
+  showDesktop?: boolean
 }
 
 function KnockoutBracketDetails({ rounds }: KnockoutBracketProps) {
@@ -23,12 +24,16 @@ function KnockoutBracketDetails({ rounds }: KnockoutBracketProps) {
   )
 }
 
-export function KnockoutBracket({ rounds }: KnockoutBracketProps) {
+export function KnockoutBracket({ rounds, showDesktop = true }: KnockoutBracketProps) {
   return (
     <>
-      <KnockoutBracketDesktop rounds={rounds} />
+      {showDesktop && <KnockoutBracketDesktop rounds={rounds} />}
 
-      <div className="lg:mt-12 lg:border-t lg:border-slate-700/40 lg:pt-12">
+      <div
+        className={
+          showDesktop ? 'lg:mt-12 lg:border-t lg:border-slate-700/40 lg:pt-12' : undefined
+        }
+      >
         <KnockoutBracketDetails rounds={rounds} />
       </div>
     </>
