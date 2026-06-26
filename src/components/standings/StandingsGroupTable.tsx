@@ -12,6 +12,7 @@ interface StandingsGroupTableProps {
   positionTrends?: Map<number, StandingsTrend>
   showTrends?: boolean
   variant?: 'standings' | 'match'
+  linkTeams?: boolean
 }
 
 export function StandingsGroupTable({
@@ -20,6 +21,7 @@ export function StandingsGroupTable({
   positionTrends,
   showTrends = false,
   variant = 'standings',
+  linkTeams = true,
 }: StandingsGroupTableProps) {
   const highlightSet = new Set(highlightTeamIds)
   const isMatchVariant = variant === 'match'
@@ -79,7 +81,7 @@ export function StandingsGroupTable({
                     </td>
                   )}
                   <td className="px-3 py-3">
-                    {teamId != null ? (
+                    {linkTeams && teamId != null ? (
                       <Link
                         to={`/times/${teamId}`}
                         className="flex min-w-0 items-center gap-2.5 transition hover:text-gold-400"

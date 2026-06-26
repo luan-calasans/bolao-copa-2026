@@ -36,6 +36,18 @@ const CREST_CODE_FILES: Record<string, string> = {
   CHN: 'cn.webp',
   CN: 'cn.webp',
   IRL: 'irl.svg',
+  NIR: 'irdn.png',
+  IRDN: 'irdn.png',
+  JAM: 'jm.svg',
+  JM: 'jm.svg',
+  UAE: 'eau.png',
+  EAU: 'eau.png',
+  SLV: 'esd.svg',
+  ESD: 'esd.svg',
+  KUW: 'kwtt.png',
+  KWTT: 'kwtt.png',
+  ISR: 'isral.png',
+  ISRAL: 'isral.png',
 }
 
 const CREST_CANONICAL_FILES: Record<string, string> = {
@@ -57,6 +69,12 @@ const CREST_CANONICAL_FILES: Record<string, string> = {
   Togo: 'tg.png',
   China: 'cn.webp',
   Ireland: 'irl.svg',
+  'Northern Ireland': 'irdn.png',
+  Jamaica: 'jm.svg',
+  'United Arab Emirates': 'eau.png',
+  'El Salvador': 'esd.svg',
+  Kuwait: 'kwtt.png',
+  Israel: 'isral.png',
 }
 
 const CREST_NAME_FALLBACKS: Record<string, string> = {

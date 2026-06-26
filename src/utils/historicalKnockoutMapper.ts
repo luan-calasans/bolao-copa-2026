@@ -3,7 +3,7 @@ import type { Team } from '../models/team'
 import type { HistoricalRawMatch } from '../models/historicalWorldCup'
 import { canonicalizeTeamName, getHistoricalTeamDisplayName, getTeamCode, syntheticTeamId } from './historicalTeamNames'
 import { getHistoricalTeamCrestUrl } from './historicalTeamCrest'
-import { getPenaltyScore, getRegulationScore, isCountedHistoricalMatch, resolveMatchOutcome } from './historicalMatchUtils'
+import { getExtraTimeScore, getPenaltyScore, getRegulationScore, isCountedHistoricalMatch, resolveMatchOutcome } from './historicalMatchUtils'
 
 const STAGE_ORDER: KnockoutStage[] = [
   'LAST_32',
@@ -72,6 +72,7 @@ function buildUtcDate(match: HistoricalRawMatch): string | null {
 function mapHistoricalMatch(match: HistoricalRawMatch, index: number, stage: KnockoutStage): KnockoutMatch {
   const regulation = getRegulationScore(match.score)
   const penalties = getPenaltyScore(match.score)
+  const extraTime = getExtraTimeScore(match.score)
   const outcome = resolveMatchOutcome(match.score)
 
   const homeTeam = buildHistoricalTeam(match.team1)
@@ -97,6 +98,10 @@ function mapHistoricalMatch(match: HistoricalRawMatch, index: number, stage: Kno
     penalties:
       penalties && regulation && regulation[0] === regulation[1]
         ? { home: penalties[0], away: penalties[1] }
+        : null,
+    extraTime:
+      extraTime && regulation && regulation[0] === regulation[1] && !penalties
+        ? { home: extraTime[0], away: extraTime[1] }
         : null,
     status: outcome == null ? 'scheduled' : 'finished',
     utcDate: buildUtcDate(match),

@@ -194,6 +194,14 @@
       "crestUrl": "https://crests.football-data.org/825.svg"
     },
     {
+      "id": 9021,
+      "name": "El Salvador",
+      "shortName": "El Salvador",
+      "tla": "SLV",
+      "file": "esd.svg",
+      "crestUrl": "local://esd.svg"
+    },
+    {
       "id": 770,
       "name": "England",
       "shortName": "England",
@@ -254,8 +262,8 @@
       "name": "Hungary",
       "shortName": "Hungary",
       "tla": "HUN",
-      "file": "hun.svg",
-      "crestUrl": "https://crests.football-data.org/827.svg"
+      "file": "hun.jpg",
+      "crestUrl": "local://hun.jpg"
     },
     {
       "id": 9006,
@@ -290,6 +298,14 @@
       "crestUrl": "local://irl.svg"
     },
     {
+      "id": 9023,
+      "name": "Israel",
+      "shortName": "Israel",
+      "tla": "ISR",
+      "file": "isral.png",
+      "crestUrl": "local://isral.png"
+    },
+    {
       "id": 784,
       "name": "Italy",
       "shortName": "Italy",
@@ -306,6 +322,14 @@
       "crestUrl": "https://crests.football-data.org/787.svg"
     },
     {
+      "id": 9019,
+      "name": "Jamaica",
+      "shortName": "Jamaica",
+      "tla": "JAM",
+      "file": "jm.svg",
+      "crestUrl": "local://jm.svg"
+    },
+    {
       "id": 766,
       "name": "Japan",
       "shortName": "Japan",
@@ -320,6 +344,14 @@
       "tla": "JOR",
       "file": "jor.png",
       "crestUrl": "https://crests.football-data.org/8049.png"
+    },
+    {
+      "id": 9022,
+      "name": "Kuwait",
+      "shortName": "Kuwait",
+      "tla": "KUW",
+      "file": "kwtt.png",
+      "crestUrl": "local://kwtt.png"
     },
     {
       "id": 769,
@@ -374,8 +406,8 @@
       "name": "Northern Ireland",
       "shortName": "Northern Ireland",
       "tla": "NIR",
-      "file": "nir.png",
-      "crestUrl": "https://crests.football-data.org/1132.png"
+      "file": "irdn.png",
+      "crestUrl": "local://irdn.png"
     },
     {
       "id": 8872,
@@ -584,6 +616,14 @@
       "tla": "UKR",
       "file": "ukr.svg",
       "crestUrl": "https://crests.football-data.org/791.svg"
+    },
+    {
+      "id": 9020,
+      "name": "United Arab Emirates",
+      "shortName": "United Arab Emirates",
+      "tla": "UAE",
+      "file": "eau.png",
+      "crestUrl": "local://eau.png"
     },
     {
       "id": 771,

@@ -21,6 +21,7 @@ import {
 
 interface KnockoutBracketDesktopProps {
   rounds: KnockoutRound[]
+  linkTeams?: boolean
 }
 
 const TROPHY_IMAGE_SRC = '/trofeu.webp'
@@ -104,11 +105,13 @@ function BracketTeamSlot({
   x,
   y,
   dimensions,
+  linkTeams = true,
 }: {
   participant: KnockoutParticipant
   x: number
   y: number
   dimensions: BracketDimensions
+  linkTeams?: boolean
 }) {
   const name = participant.team
     ? getTeamDisplayName(participant.team.shortName, participant.team.name)
@@ -132,7 +135,7 @@ function BracketTeamSlot({
 
   const style = centerStyle(x, y)
 
-  if (participant.team?.id) {
+  if (linkTeams && participant.team?.id) {
     return (
       <Link
         to={`/times/${participant.team.id}`}
@@ -213,10 +216,12 @@ function BracketSideLayout({
   side,
   rounds,
   dimensions,
+  linkTeams = true,
 }: {
   side: BracketSide
   rounds: KnockoutRound[]
   dimensions: BracketDimensions
+  linkTeams?: boolean
 }) {
   const mainRounds = getMainBracketRounds(rounds)
   const r32Matches = mainRounds[0] ? getSideMatches(mainRounds[0].matches, side) : []
@@ -234,6 +239,7 @@ function BracketSideLayout({
           x={teamX}
           y={getTeamRowY(index, rowHeight, pairGap, intraPairGap)}
           dimensions={dimensions}
+          linkTeams={linkTeams}
         />
       ))}
 
@@ -252,7 +258,7 @@ function BracketSideLayout({
   )
 }
 
-export function KnockoutBracketDesktop({ rounds }: KnockoutBracketDesktopProps) {
+export function KnockoutBracketDesktop({ rounds, linkTeams = true }: KnockoutBracketDesktopProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [dimensions, setDimensions] = useState<BracketDimensions | null>(null)
 
@@ -313,8 +319,8 @@ export function KnockoutBracketDesktop({ rounds }: KnockoutBracketDesktopProps) 
               ))}
             </svg>
 
-            <BracketSideLayout side="left" rounds={rounds} dimensions={dimensions} />
-            <BracketSideLayout side="right" rounds={rounds} dimensions={dimensions} />
+            <BracketSideLayout side="left" rounds={rounds} dimensions={dimensions} linkTeams={linkTeams} />
+            <BracketSideLayout side="right" rounds={rounds} dimensions={dimensions} linkTeams={linkTeams} />
 
             <div
               className="absolute flex items-center justify-center rounded-full border border-dashed border-slate-600/70 bg-pitch-900/30"

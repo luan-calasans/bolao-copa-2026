@@ -23,6 +23,7 @@ export interface KnockoutMatch {
   away: KnockoutParticipant
   score: { home: number | null; away: number | null }
   penalties?: { home: number | null; away: number | null } | null
+  extraTime?: { home: number | null; away: number | null } | null
   status: MatchStatus
   utcDate: string | null
   isProjected: boolean

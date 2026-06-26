@@ -9,16 +9,19 @@ import { isKnockoutMatchPlayable } from './knockoutBracketLayout'
 interface KnockoutMatchCardProps {
   match: KnockoutMatch
   index: number
+  linkTeams?: boolean
 }
 
 function ParticipantRow({
   participant,
   goals,
   isWinner,
+  linkTeams = true,
 }: {
   participant: KnockoutMatch['home']
   goals: number | null
   isWinner: boolean
+  linkTeams?: boolean
 }) {
   const name = participant.team
     ? getTeamDisplayName(participant.team.shortName, participant.team.name)
@@ -51,7 +54,7 @@ function ParticipantRow({
     </>
   )
 
-  if (participant.team?.id) {
+  if (linkTeams && participant.team?.id) {
     return (
       <Link
         to={`/times/${participant.team.id}`}
@@ -86,10 +89,17 @@ function resolveKnockoutWinner(
     return { homeWins: penHome > penAway, awayWins: penAway > penHome }
   }
 
+  const etHome = match.extraTime?.home
+  const etAway = match.extraTime?.away
+
+  if (etHome != null && etAway != null && etHome !== etAway) {
+    return { homeWins: etHome > etAway, awayWins: etAway > etHome }
+  }
+
   return { homeWins: false, awayWins: false }
 }
 
-export function KnockoutMatchCard({ match, index }: KnockoutMatchCardProps) {
+export function KnockoutMatchCard({ match, index, linkTeams = true }: KnockoutMatchCardProps) {
   const hasScore = match.score.home != null && match.score.away != null
   const showScore = hasScore && (match.status === 'finished' || match.status === 'live')
   const { homeWins, awayWins } = resolveKnockoutWinner(match, showScore)
@@ -100,6 +110,13 @@ export function KnockoutMatchCard({ match, index }: KnockoutMatchCardProps) {
     match.score.home === match.score.away &&
     match.penalties?.home != null &&
     match.penalties?.away != null
+  const showExtraTime =
+    showScore &&
+    match.score.home != null &&
+    match.score.away != null &&
+    match.score.home === match.score.away &&
+    match.extraTime?.home != null &&
+    match.extraTime?.away != null
   const bothTeamsDefined = isKnockoutMatchPlayable(match)
 
   return (
@@ -123,13 +140,19 @@ export function KnockoutMatchCard({ match, index }: KnockoutMatchCardProps) {
       </div>
 
       <div className="space-y-2">
-        <ParticipantRow participant={match.home} goals={showScore ? match.score.home : null} isWinner={homeWins} />
-        <ParticipantRow participant={match.away} goals={showScore ? match.score.away : null} isWinner={awayWins} />
+        <ParticipantRow participant={match.home} goals={showScore ? match.score.home : null} isWinner={homeWins} linkTeams={linkTeams} />
+        <ParticipantRow participant={match.away} goals={showScore ? match.score.away : null} isWinner={awayWins} linkTeams={linkTeams} />
       </div>
 
       {showPenalties && (
         <p className="mt-2 text-center text-[10px] font-medium text-slate-400">
           Pênaltis: {match.penalties?.home}×{match.penalties?.away}
+        </p>
+      )}
+
+      {showExtraTime && (
+        <p className="mt-2 text-center text-[10px] font-medium text-slate-400">
+          Prorrogação: {match.extraTime?.home}×{match.extraTime?.away}
         </p>
       )}
 

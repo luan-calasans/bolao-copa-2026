@@ -7,11 +7,12 @@ import { TeamCrest } from '../ui/TeamCrest'
 
 interface TeamGoalsTableProps {
   entries: TeamGoalsEntry[]
+  linkTeams?: boolean
 }
 
 const TEAM_GOALS_PREVIEW_LIMIT = 10
 
-export function TeamGoalsTable({ entries }: TeamGoalsTableProps) {
+export function TeamGoalsTable({ entries, linkTeams = true }: TeamGoalsTableProps) {
   const [expanded, setExpanded] = useState(false)
   const hasMore = entries.length > TEAM_GOALS_PREVIEW_LIMIT
   const visibleEntries = expanded ? entries : entries.slice(0, TEAM_GOALS_PREVIEW_LIMIT)
@@ -50,7 +51,7 @@ export function TeamGoalsTable({ entries }: TeamGoalsTableProps) {
                   {rank}
                 </td>
                 <td className="whitespace-nowrap px-4 py-3 font-semibold">
-                  {teamId != null ? (
+                  {linkTeams && teamId != null ? (
                     <Link
                       to={`/times/${teamId}`}
                       className="inline-flex min-w-0 max-w-full items-center gap-2 text-white transition hover:text-gold-400"

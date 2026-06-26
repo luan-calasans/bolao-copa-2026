@@ -1,22 +1,29 @@
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import type { ApiScorer } from '../../models/api.types'
 import { getTeamDisplayName } from '../../utils/teamDisplay'
+import { Button } from '../ui/Button'
 import { TeamCrest } from '../ui/TeamCrest'
 
 interface ScorersTableProps {
   scorers: ApiScorer[]
+  linkTeams?: boolean
 }
+
+const SCORERS_PREVIEW_LIMIT = 10
 
 function ScorerPlayerCell({
   playerName,
   teamName,
   teamId,
   crest,
+  linkTeams = true,
 }: {
   playerName: string
   teamName: string
   teamId: number | null | undefined
   crest: string | null | undefined
+  linkTeams?: boolean
 }) {
   const content = (
     <span className="inline-flex min-w-0 max-w-full items-center gap-2">
@@ -32,7 +39,7 @@ function ScorerPlayerCell({
     </span>
   )
 
-  if (teamId != null) {
+  if (linkTeams && teamId != null) {
     return (
       <Link
         to={`/times/${teamId}`}
@@ -51,7 +58,11 @@ function ScorerPlayerCell({
   )
 }
 
-export function ScorersTable({ scorers }: ScorersTableProps) {
+export function ScorersTable({ scorers, linkTeams = true }: ScorersTableProps) {
+  const [expanded, setExpanded] = useState(false)
+  const hasMore = scorers.length > SCORERS_PREVIEW_LIMIT
+  const visibleScorers = expanded ? scorers : scorers.slice(0, SCORERS_PREVIEW_LIMIT)
+
   return (
     <div className="w-full overflow-hidden rounded-2xl border border-slate-700/50 bg-pitch-800/40">
       <div className="border-b border-slate-700/40 bg-pitch-900/60 px-4 py-3">
@@ -72,7 +83,7 @@ export function ScorersTable({ scorers }: ScorersTableProps) {
           </tr>
         </thead>
         <tbody>
-          {scorers.map((scorer, index) => {
+          {visibleScorers.map((scorer, index) => {
             const playerName = scorer.player.name?.trim() || 'Jogador'
             const teamName = getTeamDisplayName(scorer.team.shortName, scorer.team.name)
             const teamId = scorer.team.id
@@ -93,6 +104,7 @@ export function ScorersTable({ scorers }: ScorersTableProps) {
                     teamName={teamName}
                     teamId={teamId}
                     crest={scorer.team.crest}
+                    linkTeams={linkTeams}
                   />
                 </td>
                 <td className="w-px whitespace-nowrap px-3 py-3 text-center text-base tabular-nums text-lg font-bold text-gold-400">
@@ -105,6 +117,19 @@ export function ScorersTable({ scorers }: ScorersTableProps) {
           })}
         </tbody>
       </table>
+
+      {hasMore && (
+        <div className="border-t border-slate-700/40 px-4 py-3">
+          <Button
+            type="button"
+            variant="ghost"
+            className="w-full text-slate-400 hover:text-white"
+            onClick={() => setExpanded((current) => !current)}
+          >
+            {expanded ? 'Ver menos' : 'Ver mais'}
+          </Button>
+        </div>
+      )}
     </div>
   )
 }

@@ -18,6 +18,11 @@ export function getPenaltyScore(score: HistoricalScore | null | undefined): [num
   return score.p
 }
 
+export function getExtraTimeScore(score: HistoricalScore | null | undefined): [number, number] | null {
+  if (!score?.et || score.et.length !== 2) return null
+  return score.et
+}
+
 export function resolveMatchOutcome(score: HistoricalScore | null | undefined): MatchOutcome {
   if (!score) return null
 
@@ -29,11 +34,19 @@ export function resolveMatchOutcome(score: HistoricalScore | null | undefined): 
   if (away > home) return 'team2'
 
   const penalties = getPenaltyScore(score)
-  if (!penalties) return 'draw'
+  if (penalties) {
+    const [penHome, penAway] = penalties
+    if (penHome > penAway) return 'team1'
+    if (penAway > penHome) return 'team2'
+    return 'draw'
+  }
 
-  const [penHome, penAway] = penalties
-  if (penHome > penAway) return 'team1'
-  if (penAway > penHome) return 'team2'
+  const extraTime = getExtraTimeScore(score)
+  if (extraTime) {
+    const [etHome, etAway] = extraTime
+    if (etHome > etAway) return 'team1'
+    if (etAway > etHome) return 'team2'
+  }
 
   return 'draw'
 }
@@ -60,9 +73,14 @@ export function formatHistoricalScore(score: HistoricalScore | null | undefined)
 
   const [home, away] = regulation
   const penalties = getPenaltyScore(score)
+  const extraTime = getExtraTimeScore(score)
 
   if (penalties && home === away) {
     return `${home}×${away} (${penalties[0]}×${penalties[1]} nos pênaltis)`
+  }
+
+  if (extraTime && home === away) {
+    return `${home}×${away} (${extraTime[0]}×${extraTime[1]} na prorrogação)`
   }
 
   return `${home}×${away}`

@@ -5,9 +5,10 @@ import { KnockoutMatchCard } from './KnockoutMatchCard'
 interface KnockoutBracketProps {
   rounds: KnockoutRound[]
   showDesktop?: boolean
+  linkTeams?: boolean
 }
 
-function KnockoutBracketDetails({ rounds }: KnockoutBracketProps) {
+function KnockoutBracketDetails({ rounds, linkTeams = true }: KnockoutBracketProps) {
   return (
     <div className="space-y-8">
       {rounds.map((round) => (
@@ -15,7 +16,12 @@ function KnockoutBracketDetails({ rounds }: KnockoutBracketProps) {
           <h2 className="mb-4 text-base font-bold text-white sm:text-lg">{round.label}</h2>
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
             {round.matches.map((match, index) => (
-              <KnockoutMatchCard key={match.key} match={match} index={index} />
+              <KnockoutMatchCard
+                key={match.key}
+                match={match}
+                index={index}
+                linkTeams={linkTeams}
+              />
             ))}
           </div>
         </section>
@@ -24,17 +30,17 @@ function KnockoutBracketDetails({ rounds }: KnockoutBracketProps) {
   )
 }
 
-export function KnockoutBracket({ rounds, showDesktop = true }: KnockoutBracketProps) {
+export function KnockoutBracket({ rounds, showDesktop = true, linkTeams = true }: KnockoutBracketProps) {
   return (
     <>
-      {showDesktop && <KnockoutBracketDesktop rounds={rounds} />}
+      {showDesktop && <KnockoutBracketDesktop rounds={rounds} linkTeams={linkTeams} />}
 
       <div
         className={
           showDesktop ? 'lg:mt-12 lg:border-t lg:border-slate-700/40 lg:pt-12' : undefined
         }
       >
-        <KnockoutBracketDetails rounds={rounds} />
+        <KnockoutBracketDetails rounds={rounds} linkTeams={linkTeams} />
       </div>
     </>
   )

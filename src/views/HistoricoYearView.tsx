@@ -116,7 +116,7 @@ export function HistoricoYearView({ year, availableYears }: HistoricoYearViewPro
           {showKnockout && bracket && (
             <section>
               <h2 className="mb-4 text-base font-bold text-white sm:text-lg">Mata-mata</h2>
-              <KnockoutBracket rounds={bracket.rounds} showDesktop={showDesktopKnockout} />
+              <KnockoutBracket rounds={bracket.rounds} showDesktop={showDesktopKnockout} linkTeams={false} />
             </section>
           )}
 
@@ -125,7 +125,11 @@ export function HistoricoYearView({ year, availableYears }: HistoricoYearViewPro
               <h2 className="mb-4 text-base font-bold text-white sm:text-lg">Fase de grupos</h2>
               <div className={`grid gap-6 ${getStandingsGridClass(DEFAULT_STANDINGS_GRID_COLUMNS)}`}>
                 {standings.map((standing) => (
-                  <StandingsGroupTable key={standing.group ?? standing.stage} standing={standing} />
+                  <StandingsGroupTable
+                    key={standing.group ?? standing.stage}
+                    standing={standing}
+                    linkTeams={false}
+                  />
                 ))}
               </div>
             </section>
@@ -137,12 +141,12 @@ export function HistoricoYearView({ year, availableYears }: HistoricoYearViewPro
               <div className="grid w-full grid-cols-1 gap-8 lg:grid-cols-2">
                 {hasScorers && (
                   <div className={!hasTeamGoals ? 'lg:col-span-2' : 'min-w-0'}>
-                    <ScorersTable scorers={scorers} />
+                    <ScorersTable scorers={scorers} linkTeams={false} />
                   </div>
                 )}
                 {hasTeamGoals && (
                   <div className={!hasScorers ? 'lg:col-span-2' : 'min-w-0'}>
-                    <TeamGoalsTable entries={teamGoals} />
+                    <TeamGoalsTable entries={teamGoals} linkTeams={false} />
                   </div>
                 )}
               </div>
