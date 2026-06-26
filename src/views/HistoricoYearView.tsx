@@ -129,6 +129,7 @@ export function HistoricoYearView({ year, availableYears }: HistoricoYearViewPro
                     key={standing.group ?? standing.stage}
                     standing={standing}
                     linkTeams={false}
+                    showPositionColors={false}
                   />
                 ))}
               </div>

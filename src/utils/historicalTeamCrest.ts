@@ -49,6 +49,9 @@ const CREST_CODE_FILES: Record<string, string> = {
   KWTT: 'kwtt.png',
   ISR: 'isral.png',
   ISRAL: 'isral.png',
+  CUB: 'cba.png',
+  IDN: 'ion.webp',
+  ION: 'ion.webp',
 }
 
 const CREST_CANONICAL_FILES: Record<string, string> = {
@@ -77,6 +80,8 @@ const CREST_CANONICAL_FILES: Record<string, string> = {
   'El Salvador': 'esd.svg',
   Kuwait: 'kwtt.png',
   Israel: 'isral.png',
+  Cuba: 'cba.png',
+  'Dutch East Indies': 'ion.webp',
 }
 
 const CREST_NAME_FALLBACKS: Record<string, string> = {

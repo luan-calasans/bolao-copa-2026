@@ -1,10 +1,25 @@
-import type { KnockoutMatch, KnockoutParticipant, KnockoutRound } from '../../models/knockout'
+import type { KnockoutMatch, KnockoutParticipant, KnockoutRound, KnockoutStage } from '../../models/knockout'
 import { isTeamDefined } from '../../utils/teamDisplay'
 
-export const BRACKET_TEAM_ROWS = 16
-export const BRACKET_ROUNDS_PER_SIDE = 4
+const KNOCKOUT_STAGE_ORDER: KnockoutStage[] = [
+  'LAST_32',
+  'LAST_16',
+  'QUARTER_FINALS',
+  'SEMI_FINALS',
+]
+
+export type BracketProfileKind = 'knockout' | 'finalists' | 'final_round'
+
+export interface BracketProfile {
+  kind: BracketProfileKind
+  teamRows: number
+  roundsPerSide: number
+  stages: KnockoutStage[]
+  seedParticipants?: KnockoutParticipant[]
+}
 
 export interface BracketDimensions {
+  profile: BracketProfile
   rowHeight: number
   height: number
   nodeSize: number
@@ -24,17 +39,100 @@ export interface BracketDimensions {
   centerX: number
 }
 
-const MAIN_BRACKET_STAGES = ['LAST_32', 'LAST_16', 'QUARTER_FINALS', 'SEMI_FINALS'] as const
-
 export type BracketSide = 'left' | 'right'
 
-export function computeBracketDimensions(containerWidth: number): BracketDimensions {
+function getPairStride(rowHeight: number, intraPairGap: number, pairGap: number): number {
+  return 2 * rowHeight + intraPairGap + pairGap
+}
+
+function collectUniqueParticipants(matches: KnockoutMatch[]): KnockoutParticipant[] {
+  const seen = new Map<string, KnockoutParticipant>()
+
+  for (const match of matches) {
+    for (const participant of [match.home, match.away]) {
+      const key = participant.team?.name ?? participant.label
+      if (!seen.has(key)) {
+        seen.set(key, participant)
+      }
+    }
+  }
+
+  return [...seen.values()].sort((left, right) =>
+    (left.team?.name ?? left.label).localeCompare(right.team?.name ?? right.label, 'pt-BR'),
+  )
+}
+
+function isFinalRoundGroup(round: KnockoutRound): boolean {
+  return round.stage === 'SEMI_FINALS' && round.matches.length > 2
+}
+
+export function deriveBracketProfile(rounds: KnockoutRound[]): BracketProfile | null {
+  const knockoutStages = KNOCKOUT_STAGE_ORDER.map((stage) => ({
+    stage,
+    round: getRoundByStage(rounds, stage),
+  })).filter(
+    (entry): entry is { stage: KnockoutStage; round: KnockoutRound } =>
+      entry.round != null && entry.round.matches.length > 0,
+  )
+
+  if (knockoutStages.length > 0) {
+    const outermost = knockoutStages[0]
+
+    if (knockoutStages.length === 1 && isFinalRoundGroup(outermost.round)) {
+      const participants = collectUniqueParticipants(outermost.round.matches)
+      if (participants.length < 2) return null
+
+      return {
+        kind: 'final_round',
+        teamRows: participants.length,
+        roundsPerSide: 0,
+        stages: [],
+        seedParticipants: participants,
+      }
+    }
+
+    return {
+      kind: 'knockout',
+      teamRows: outermost.round.matches.length * 2,
+      roundsPerSide: knockoutStages.length,
+      stages: knockoutStages.map((entry) => entry.stage),
+    }
+  }
+
+  const final = getFinalMatch(rounds)
+  if (final) {
+    return {
+      kind: 'finalists',
+      teamRows: 2,
+      roundsPerSide: 0,
+      stages: [],
+      seedParticipants: [final.home, final.away],
+    }
+  }
+
+  return null
+}
+
+export function supportsDesktopKnockoutLayout(rounds: KnockoutRound[]): boolean {
+  return deriveBracketProfile(rounds) != null
+}
+
+export function computeBracketDimensions(
+  containerWidth: number,
+  profile: BracketProfile | null | undefined,
+): BracketDimensions | null {
+  if (!profile) return null
+
   const width = Math.max(Math.round(containerWidth), 1)
+  const roundsPerSide = profile.roundsPerSide
   const initialCenter = Math.max(160, Math.round(width * 0.11))
   const remaining = width - initialCenter
   const teamColWidth = Math.max(48, Math.round(remaining * 0.085))
-  const roundColWidth = Math.floor((remaining - 2 * teamColWidth) / 8)
-  const halfWidth = teamColWidth + BRACKET_ROUNDS_PER_SIDE * roundColWidth
+  const roundColWidth =
+    roundsPerSide > 0
+      ? Math.floor((remaining - 2 * teamColWidth) / (roundsPerSide * 2))
+      : 0
+  const halfWidth = teamColWidth + roundsPerSide * roundColWidth
   const centerWidth = width - halfWidth * 2
   const totalWidth = width
 
@@ -44,21 +142,22 @@ export function computeBracketDimensions(containerWidth: number): BracketDimensi
   const intraPairGap = 10
   const rowHeight = teamCrestSize + intraPairGap
   const pairGap = 18
-  const pairStride = 2 * rowHeight + intraPairGap + pairGap
-  const height = (BRACKET_TEAM_ROWS / 2) * pairStride - pairGap
+  const pairStride = getPairStride(rowHeight, intraPairGap, pairGap)
+  const height = (profile.teamRows / 2) * pairStride - pairGap
   const trophySize = Math.min(112, Math.max(80, Math.round(centerWidth * 0.5)))
 
   const leftRoundXs = Array.from(
-    { length: BRACKET_ROUNDS_PER_SIDE },
+    { length: roundsPerSide },
     (_, index) => teamColWidth + index * roundColWidth + roundColWidth / 2,
   )
   const rightRoundXs = Array.from(
-    { length: BRACKET_ROUNDS_PER_SIDE },
+    { length: roundsPerSide },
     (_, index) =>
-      halfWidth + centerWidth + (BRACKET_ROUNDS_PER_SIDE - 1 - index) * roundColWidth + roundColWidth / 2,
+      halfWidth + centerWidth + (roundsPerSide - 1 - index) * roundColWidth + roundColWidth / 2,
   )
 
   return {
+    profile,
     rowHeight,
     height,
     nodeSize,
@@ -77,10 +176,6 @@ export function computeBracketDimensions(containerWidth: number): BracketDimensi
     rightTeamX: totalWidth - teamColWidth / 2,
     centerX: halfWidth + centerWidth / 2,
   }
-}
-
-function getPairStride(rowHeight: number, intraPairGap: number, pairGap: number): number {
-  return 2 * rowHeight + intraPairGap + pairGap
 }
 
 export function getTeamRowY(
@@ -102,21 +197,50 @@ export function getNodeCenterY(
   rowHeight: number,
   pairGap: number,
   intraPairGap: number,
+  outermostNodes: number,
 ): number {
-  const outermostNodes = BRACKET_TEAM_ROWS / 2
   const pairStride = getPairStride(rowHeight, intraPairGap, pairGap)
+  const bracketHeight = Math.max(outermostNodes * pairStride - pairGap, rowHeight)
+
+  if (nodesInRound <= 1) {
+    return bracketHeight / 2
+  }
 
   if (nodesInRound === outermostNodes) {
     return nodeIndex * pairStride + rowHeight + intraPairGap / 2
   }
 
-  if (nodesInRound === 1) {
-    return (outermostNodes * pairStride - pairGap) / 2
+  if (nodesInRound * 2 <= outermostNodes) {
+    const childY1 = getNodeCenterY(
+      nodeIndex * 2,
+      nodesInRound * 2,
+      rowHeight,
+      pairGap,
+      intraPairGap,
+      outermostNodes,
+    )
+    const childY2 = getNodeCenterY(
+      nodeIndex * 2 + 1,
+      nodesInRound * 2,
+      rowHeight,
+      pairGap,
+      intraPairGap,
+      outermostNodes,
+    )
+    return (childY1 + childY2) / 2
   }
 
-  const childY1 = getNodeCenterY(nodeIndex * 2, nodesInRound * 2, rowHeight, pairGap, intraPairGap)
-  const childY2 = getNodeCenterY(nodeIndex * 2 + 1, nodesInRound * 2, rowHeight, pairGap, intraPairGap)
-  return (childY1 + childY2) / 2
+  const step = bracketHeight / (nodesInRound - 1)
+  return nodeIndex * step
+}
+
+export function getSeedSlotY(slotIndex: number, slotCount: number, dimensions: BracketDimensions): number {
+  if (slotCount <= 1) {
+    return dimensions.height / 2
+  }
+
+  const step = dimensions.height / (slotCount - 1)
+  return slotIndex * step
 }
 
 export function getRoundColumnX(side: BracketSide, roundIndex: number, dimensions: BracketDimensions): number {
@@ -133,6 +257,17 @@ export function getSideMatches(matches: KnockoutMatch[], side: BracketSide): Kno
   const half = matches.length / 2
   const left = matches.slice(0, half)
   const right = matches.slice(half).reverse()
+
+  return side === 'left' ? left : right
+}
+
+export function getSideSeedParticipants(
+  participants: KnockoutParticipant[],
+  side: BracketSide,
+): KnockoutParticipant[] {
+  const half = participants.length / 2
+  const left = participants.slice(0, half)
+  const right = participants.slice(half).reverse()
 
   return side === 'left' ? left : right
 }
@@ -186,10 +321,10 @@ export function isKnockoutMatchPlayable(match: KnockoutMatch): boolean {
   )
 }
 
-export function getMainBracketRounds(rounds: KnockoutRound[]) {
-  return MAIN_BRACKET_STAGES.map((stage) => getRoundByStage(rounds, stage)).filter(
-    (round): round is KnockoutRound => round != null,
-  )
+export function getMainBracketRounds(rounds: KnockoutRound[], profile: BracketProfile) {
+  return profile.stages
+    .map((stage) => getRoundByStage(rounds, stage))
+    .filter((round): round is KnockoutRound => round != null)
 }
 
 export function getFinalMatch(rounds: KnockoutRound[]): KnockoutMatch | undefined {

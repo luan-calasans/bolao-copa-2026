@@ -191,16 +191,35 @@ function buildMiniLeagueStandings(matches: HistoricalRawMatch[]): MiniLeagueRow[
   })
 }
 
+export function findFinalRoundDecisiveMatch(
+  matches: HistoricalRawMatch[],
+): HistoricalRawMatch | undefined {
+  const finalRoundMatches = matches.filter((match) => match.round === 'Final Round')
+  if (finalRoundMatches.length === 0) return undefined
+
+  const standings = buildMiniLeagueStandings(finalRoundMatches)
+  const champion = standings[0]?.team
+  const runnerUp = standings[1]?.team
+
+  if (!champion || !runnerUp) {
+    return finalRoundMatches.at(-1)
+  }
+
+  return (
+    finalRoundMatches.find(
+      (match) =>
+        canonicalizeTeamName(match.team1) === champion &&
+        canonicalizeTeamName(match.team2) === runnerUp,
+    ) ?? finalRoundMatches.at(-1)
+  )
+}
+
 function extract1950Summary(matches: HistoricalRawMatch[]): TournamentSummary {
   const finalRoundMatches = matches.filter((match) => match.round === 'Final Round')
   const standings = buildMiniLeagueStandings(finalRoundMatches)
   const champion = standings[0]?.team ?? 'Uruguay'
   const runnerUp = standings[1]?.team ?? null
-  const decisiveMatch = finalRoundMatches.find(
-    (match) =>
-      canonicalizeTeamName(match.team1) === champion &&
-      canonicalizeTeamName(match.team2) === runnerUp,
-  ) ?? finalRoundMatches.at(-1)
+  const decisiveMatch = findFinalRoundDecisiveMatch(matches)
 
   return {
     year: 1950,

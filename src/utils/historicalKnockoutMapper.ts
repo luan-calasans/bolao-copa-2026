@@ -3,7 +3,14 @@ import type { Team } from '../models/team'
 import type { HistoricalRawMatch } from '../models/historicalWorldCup'
 import { canonicalizeTeamName, getHistoricalTeamDisplayName, getTeamCode, syntheticTeamId } from './historicalTeamNames'
 import { getHistoricalTeamCrestUrl } from './historicalTeamCrest'
-import { getExtraTimeScore, getPenaltyScore, getRegulationScore, isCountedHistoricalMatch, resolveMatchOutcome } from './historicalMatchUtils'
+import {
+  findFinalRoundDecisiveMatch,
+  getExtraTimeScore,
+  getPenaltyScore,
+  getRegulationScore,
+  isCountedHistoricalMatch,
+  resolveMatchOutcome,
+} from './historicalMatchUtils'
 
 const STAGE_ORDER: KnockoutStage[] = [
   'LAST_32',
@@ -113,17 +120,26 @@ export function buildHistoricalFinalRoundBracket(matches: HistoricalRawMatch[]):
   const finalRoundMatches = matches.filter((match) => match.round === 'Final Round')
   if (finalRoundMatches.length === 0) return null
 
-  return {
-    rounds: [
-      {
-        stage: 'SEMI_FINALS',
-        label: 'Rodada final',
-        matches: finalRoundMatches.map((match, index) =>
-          mapHistoricalMatch(match, index, 'SEMI_FINALS'),
-        ),
-      },
-    ],
+  const rounds: KnockoutRound[] = [
+    {
+      stage: 'SEMI_FINALS',
+      label: 'Rodada final',
+      matches: finalRoundMatches.map((match, index) =>
+        mapHistoricalMatch(match, index, 'SEMI_FINALS'),
+      ),
+    },
+  ]
+
+  const decisiveMatch = findFinalRoundDecisiveMatch(matches)
+  if (decisiveMatch) {
+    rounds.push({
+      stage: 'FINAL',
+      label: 'Final',
+      matches: [mapHistoricalMatch(decisiveMatch, 0, 'FINAL')],
+    })
   }
+
+  return { rounds }
 }
 
 export function buildHistoricalKnockoutBracket(matches: HistoricalRawMatch[]): KnockoutBracket {
@@ -156,15 +172,7 @@ export function buildHistoricalKnockoutBracket(matches: HistoricalRawMatch[]): K
   return { rounds }
 }
 
-export function supportsDesktopKnockoutLayout(rounds: KnockoutRound[]): boolean {
-  const last16 = rounds.find((round) => round.stage === 'LAST_16')
-  const last32 = rounds.find((round) => round.stage === 'LAST_32')
-
-  if (last32 && last32.matches.length >= 16) return true
-  if (last16 && last16.matches.length === 8) return true
-
-  return false
-}
+export { supportsDesktopKnockoutLayout } from '../components/knockout/knockoutBracketLayout'
 
 export function hasKnockoutMatches(matches: HistoricalRawMatch[]): boolean {
   return matches.some((match) => mapRoundToStage(match.round) != null)

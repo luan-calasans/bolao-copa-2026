@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState, type CSSProperties } from 'react'
+import { useLayoutEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
 import { Link } from 'react-router-dom'
 import type { KnockoutMatch, KnockoutParticipant, KnockoutRound } from '../../models/knockout'
 import { matchBetsPath } from '../../routes/routePaths'
@@ -8,12 +8,15 @@ import {
   type BracketDimensions,
   type BracketSide,
   computeBracketDimensions,
+  deriveBracketProfile,
   getFinalMatch,
   getMainBracketRounds,
   getMatchWinner,
   getNodeCenterY,
   getRoundColumnX,
   getSideMatches,
+  getSeedSlotY,
+  getSideSeedParticipants,
   getSideTeamSlots,
   getTeamRowY,
   isKnockoutMatchPlayable,
@@ -47,10 +50,32 @@ function buildConnectorPath(
 
 function buildBracketPaths(rounds: KnockoutRound[], dimensions: BracketDimensions): string[] {
   const paths: string[] = []
-  const mainRounds = getMainBracketRounds(rounds)
+  const profile = dimensions.profile
+  const outermostNodes = profile.teamRows / 2
   const { nodeSize, rowHeight, pairGap, intraPairGap, centerX, trophySize } = dimensions
   const centerY = dimensions.height / 2
-  const semiY = getNodeCenterY(0, 1, rowHeight, pairGap, intraPairGap)
+
+  if (profile.roundsPerSide === 0) {
+    const participants = profile.seedParticipants ?? []
+
+    for (const side of ['left', 'right'] as const) {
+      const teamX = side === 'left' ? dimensions.leftTeamX : dimensions.rightTeamX
+      const toX = side === 'left' ? centerX - trophySize / 2 - 6 : centerX + trophySize / 2 + 6
+      const seeds = getSideSeedParticipants(participants, side)
+
+      seeds.forEach((_participant, index) => {
+        const y = getSeedSlotY(index, seeds.length, dimensions)
+        paths.push(buildConnectorPath(teamX, y, toX, centerY, side))
+      })
+    }
+
+    return paths
+  }
+
+  const mainRounds = getMainBracketRounds(rounds, profile)
+  if (mainRounds.length === 0) return paths
+
+  const semiY = getNodeCenterY(0, 1, rowHeight, pairGap, intraPairGap, outermostNodes)
 
   for (const side of ['left', 'right'] as const) {
     const roundColumns = mainRounds.map((round) => getSideMatches(round.matches, side))
@@ -62,7 +87,14 @@ function buildBracketPaths(rounds: KnockoutRound[], dimensions: BracketDimension
       const colX = getRoundColumnX(side, roundIndex, dimensions)
 
       matches.forEach((_match, nodeIndex) => {
-        const y = getNodeCenterY(nodeIndex, matches.length, rowHeight, pairGap, intraPairGap)
+        const y = getNodeCenterY(
+          nodeIndex,
+          matches.length,
+          rowHeight,
+          pairGap,
+          intraPairGap,
+          outermostNodes,
+        )
 
         if (roundIndex === 0) {
           const homeY = getTeamRowY(nodeIndex * 2, rowHeight, pairGap, intraPairGap)
@@ -76,7 +108,14 @@ function buildBracketPaths(rounds: KnockoutRound[], dimensions: BracketDimension
         if (!nextMatches) return
 
         const parentIndex = Math.floor(nodeIndex / 2)
-        const parentY = getNodeCenterY(parentIndex, nextMatches.length, rowHeight, pairGap, intraPairGap)
+        const parentY = getNodeCenterY(
+          parentIndex,
+          nextMatches.length,
+          rowHeight,
+          pairGap,
+          intraPairGap,
+          outermostNodes,
+        )
         const nextColX = getRoundColumnX(side, roundIndex + 1, dimensions)
 
         const fromX = side === 'left' ? colX + nodeSize / 2 : colX - nodeSize / 2
@@ -302,12 +341,34 @@ function BracketSideLayout({
   dimensions: BracketDimensions
   linkTeams?: boolean
 }) {
-  const mainRounds = getMainBracketRounds(rounds)
-  const r32Matches = mainRounds[0] ? getSideMatches(mainRounds[0].matches, side) : []
-  const teamSlots = getSideTeamSlots(r32Matches)
-  const roundColumns = mainRounds.map((round) => getSideMatches(round.matches, side))
+  const profile = dimensions.profile
+  const outermostNodes = profile.teamRows / 2
   const { rowHeight, pairGap, intraPairGap } = dimensions
   const teamX = side === 'left' ? dimensions.leftTeamX : dimensions.rightTeamX
+
+  if (profile.kind !== 'knockout' && profile.seedParticipants) {
+    const seeds = getSideSeedParticipants(profile.seedParticipants, side)
+
+    return (
+      <>
+        {seeds.map((participant, index) => (
+          <BracketTeamSlot
+            key={`${side}-seed-${participant.team?.name ?? participant.label}`}
+            participant={participant}
+            x={teamX}
+            y={getSeedSlotY(index, seeds.length, dimensions)}
+            dimensions={dimensions}
+            linkTeams={linkTeams}
+          />
+        ))}
+      </>
+    )
+  }
+
+  const mainRounds = getMainBracketRounds(rounds, profile)
+  const outermostMatches = mainRounds[0] ? getSideMatches(mainRounds[0].matches, side) : []
+  const teamSlots = getSideTeamSlots(outermostMatches)
+  const roundColumns = mainRounds.map((round) => getSideMatches(round.matches, side))
 
   return (
     <>
@@ -328,7 +389,14 @@ function BracketSideLayout({
             key={`${side}-${match.key}`}
             match={match}
             x={getRoundColumnX(side, roundIndex, dimensions)}
-            y={getNodeCenterY(nodeIndex, matches.length, rowHeight, pairGap, intraPairGap)}
+            y={getNodeCenterY(
+              nodeIndex,
+              matches.length,
+              rowHeight,
+              pairGap,
+              intraPairGap,
+              outermostNodes,
+            )}
             dimensions={dimensions}
           />
         )),
@@ -340,15 +408,16 @@ function BracketSideLayout({
 export function KnockoutBracketDesktop({ rounds, linkTeams = true }: KnockoutBracketDesktopProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [dimensions, setDimensions] = useState<BracketDimensions | null>(null)
+  const profile = useMemo(() => deriveBracketProfile(rounds), [rounds])
 
   useLayoutEffect(() => {
     const container = containerRef.current
-    if (!container) return
+    if (!container || !profile) return
 
     const updateDimensions = () => {
       const nextWidth = container.clientWidth
       if (nextWidth > 0) {
-        setDimensions(computeBracketDimensions(nextWidth))
+        setDimensions(computeBracketDimensions(nextWidth, profile) ?? null)
       }
     }
 
@@ -362,7 +431,9 @@ export function KnockoutBracketDesktop({ rounds, linkTeams = true }: KnockoutBra
       observer.disconnect()
       window.removeEventListener('resize', updateDimensions)
     }
-  }, [])
+  }, [profile])
+
+  if (!profile) return null
 
   const finalMatch = getFinalMatch(rounds)
   const paths = dimensions ? buildBracketPaths(rounds, dimensions) : []

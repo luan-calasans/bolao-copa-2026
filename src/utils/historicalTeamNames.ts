@@ -30,6 +30,8 @@ const TEAM_ALIASES: Record<string, string> = {
   'north korea': 'North Korea',
   'korea dpr': 'North Korea',
   'dutch east indies': 'Dutch East Indies',
+  'indias orientais holandesas': 'Dutch East Indies',
+  'índias orientais holandesas': 'Dutch East Indies',
   'united arab emirates': 'United Arab Emirates',
   'el salvador': 'El Salvador',
   'czech republic': 'Czech Republic',

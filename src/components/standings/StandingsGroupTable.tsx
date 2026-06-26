@@ -13,6 +13,7 @@ interface StandingsGroupTableProps {
   showTrends?: boolean
   variant?: 'standings' | 'match'
   linkTeams?: boolean
+  showPositionColors?: boolean
 }
 
 export function StandingsGroupTable({
@@ -22,6 +23,7 @@ export function StandingsGroupTable({
   showTrends = false,
   variant = 'standings',
   linkTeams = true,
+  showPositionColors = true,
 }: StandingsGroupTableProps) {
   const highlightSet = new Set(highlightTeamIds)
   const isMatchVariant = variant === 'match'
@@ -71,7 +73,9 @@ export function StandingsGroupTable({
                       ? isHighlighted
                         ? 'bg-gold-500/10'
                         : ''
-                      : getStandingRowClasses(row.position)
+                      : showPositionColors
+                        ? getStandingRowClasses(row.position)
+                        : ''
                   }`}
                 >
                   <td className="px-3 py-3 font-bold text-slate-300">{row.position}</td>
