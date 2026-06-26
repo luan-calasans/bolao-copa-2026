@@ -1,12 +1,11 @@
 import { useCallback, useMemo } from 'react'
 import { useAsyncResource } from '../hooks/useAsyncResource'
-import { fetchWorldCupTeams } from '../services/competitionService'
+import { fetchWorldCupTeamsFromSeasonJson } from '../services/competitionService'
 import { getTeamDisplayName } from '../utils/teamDisplay'
 
 export function useTeamsViewModel() {
   const loadTeams = useCallback(async (forceRefresh = false) => {
-    const response = await fetchWorldCupTeams(
-      undefined,
+    const response = await fetchWorldCupTeamsFromSeasonJson(
       forceRefresh ? { force: true } : undefined,
     )
     return response.teams ?? []
