@@ -614,8 +614,8 @@
       "name": "Ukraine",
       "shortName": "Ukraine",
       "tla": "UKR",
-      "file": "ukr.svg",
-      "crestUrl": "https://crests.football-data.org/791.svg"
+      "file": "ukr.png",
+      "crestUrl": "local://ukr.png"
     },
     {
       "id": 9020,

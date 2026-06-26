@@ -28,11 +28,13 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       <header className="border-b border-slate-800/60">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-5 sm:px-6">
           <BackButton type="button" onClick={() => void handleBackToBolao()}>
-            Bolão 2026
+            Bolão
           </BackButton>
           <div className="flex items-center gap-3">
             <ThemeToggle />
-            <span className="text-sm font-medium uppercase tracking-wider text-slate-600">Admin</span>
+            <span className="text-sm font-medium uppercase tracking-wider text-slate-600">
+              Admin
+            </span>
           </div>
         </div>
       </header>

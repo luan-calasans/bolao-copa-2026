@@ -8,7 +8,10 @@
       rel="preload"
       as="style"
       href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
-      onload="this.onload=null;this.rel='stylesheet'"
+      onload="
+        this.onload = null
+        this.rel = 'stylesheet'
+      "
     />
     <noscript>
       <link
@@ -29,7 +32,7 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="Bolão 2026" />
+    <meta name="apple-mobile-web-app-title" content="Bolão" />
     <meta
       name="viewport"
       content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=overlays-content"
@@ -74,15 +77,11 @@
 
       .app-boot {
         min-height: 100vh;
-        background:
-          radial-gradient(circle at top, #151d2e 0%, #070b14 45%),
-          var(--boot-bg);
+        background: radial-gradient(circle at top, #151d2e 0%, #070b14 45%), var(--boot-bg);
       }
 
       html.light .app-boot {
-        background:
-          radial-gradient(circle at top, #e2e8f0 0%, #eef2f6 45%),
-          var(--boot-bg);
+        background: radial-gradient(circle at top, #e2e8f0 0%, #eef2f6 45%), var(--boot-bg);
       }
 
       .app-boot-header {

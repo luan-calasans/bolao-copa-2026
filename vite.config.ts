@@ -40,7 +40,7 @@ export default defineConfig(({ mode }) => {
         ],
         manifest: {
           name: 'Bolão Copa do Mundo FIFA 2026',
-          short_name: 'Bolão 2026',
+          short_name: 'Bolão',
           description:
             'Bolão Copa do Mundo FIFA 2026 — palpites, comprovantes e acompanhamento dos jogos.',
           theme_color: '#070b14',

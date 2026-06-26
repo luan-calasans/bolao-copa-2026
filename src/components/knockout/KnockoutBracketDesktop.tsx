@@ -156,6 +156,85 @@ function BracketTeamSlot({
   )
 }
 
+function BracketChampionSlot({
+  match,
+  x,
+  y,
+  dimensions,
+  linkTeams = true,
+}: {
+  match: KnockoutMatch | undefined
+  x: number
+  y: number
+  dimensions: BracketDimensions
+  linkTeams?: boolean
+}) {
+  const winner = match ? getMatchWinner(match) : null
+  const isPlayable = match ? isKnockoutMatchPlayable(match) : false
+  const size = dimensions.trophySize
+  const winnerName = winner?.team
+    ? getTeamDisplayName(winner.team.shortName, winner.team.name)
+    : match
+      ? `${match.home.label} x ${match.away.label}`
+      : 'Final da Copa'
+
+  const slot = (
+    <div
+      className={`relative flex items-center justify-center rounded-full border border-dashed border-slate-600/70 bg-pitch-900/30 ${
+        match?.status === 'live' ? 'border-brazil-green/70 shadow-sm shadow-brazil-green/20' : ''
+      } ${isPlayable ? 'cursor-pointer transition hover:border-brazil-green/60 hover:bg-pitch-800/60' : 'cursor-default'}`}
+      style={{ width: size, height: size }}
+      title={winnerName}
+    >
+      {winner?.team ? (
+        <TeamCrest
+          crest={winner.team.crest}
+          name={winner.team.name}
+          isDefined
+          size="sm"
+          className="!h-[78%] !w-[78%] rounded-full object-contain p-0"
+        />
+      ) : null}
+      <img
+        src={TROPHY_IMAGE_SRC}
+        alt="Troféu da Copa do Mundo"
+        className="pointer-events-none absolute -right-1 -top-1 h-[42%] w-[42%] object-contain drop-shadow-md"
+        loading="lazy"
+        decoding="async"
+      />
+    </div>
+  )
+
+  const style = centerStyle(x, y)
+
+  if (isPlayable && match?.id != null) {
+    return (
+      <Link to={matchBetsPath(match.id)} className="absolute" style={style} aria-label={winnerName}>
+        {slot}
+      </Link>
+    )
+  }
+
+  if (linkTeams && winner?.team?.id) {
+    return (
+      <Link
+        to={`/times/${winner.team.id}`}
+        className="absolute transition hover:opacity-80"
+        style={style}
+        aria-label={winnerName}
+      >
+        {slot}
+      </Link>
+    )
+  }
+
+  return (
+    <div className="absolute" style={style} aria-label={winnerName}>
+      {slot}
+    </div>
+  )
+}
+
 function BracketNode({
   match,
   x,
@@ -298,7 +377,7 @@ export function KnockoutBracketDesktop({ rounds, linkTeams = true }: KnockoutBra
         {dimensions && (
           <div
             className="relative mx-auto"
-            style={{ width: dimensions.totalWidth, height: dimensions.height + 48 }}
+            style={{ width: dimensions.totalWidth, height: dimensions.height }}
           >
             <svg
               className="pointer-events-none absolute inset-0 overflow-visible"
@@ -322,31 +401,13 @@ export function KnockoutBracketDesktop({ rounds, linkTeams = true }: KnockoutBra
             <BracketSideLayout side="left" rounds={rounds} dimensions={dimensions} linkTeams={linkTeams} />
             <BracketSideLayout side="right" rounds={rounds} dimensions={dimensions} linkTeams={linkTeams} />
 
-            <div
-              className="absolute flex items-center justify-center rounded-full border border-dashed border-slate-600/70 bg-pitch-900/30"
-              style={{
-                ...centerStyle(dimensions.centerX, dimensions.height / 2),
-                width: dimensions.trophySize,
-                height: dimensions.trophySize,
-              }}
-            >
-              <img
-                src={TROPHY_IMAGE_SRC}
-                alt="Troféu da Copa do Mundo"
-                className="h-[72%] w-[72%] object-contain"
-                loading="lazy"
-                decoding="async"
-              />
-            </div>
-
-            {finalMatch && (
-              <BracketNode
-                match={finalMatch}
-                x={dimensions.centerX}
-                y={dimensions.height / 2 + dimensions.trophySize / 2 + dimensions.nodeSize / 2 + 8}
-                dimensions={dimensions}
-              />
-            )}
+            <BracketChampionSlot
+              match={finalMatch}
+              x={dimensions.centerX}
+              y={dimensions.height / 2}
+              dimensions={dimensions}
+              linkTeams={linkTeams}
+            />
           </div>
         )}
       </div>

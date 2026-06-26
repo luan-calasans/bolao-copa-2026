@@ -165,6 +165,13 @@ export function getMatchWinner(match: KnockoutMatch): KnockoutParticipant | null
     return penHome > penAway ? match.home : match.away
   }
 
+  const etHome = match.extraTime?.home
+  const etAway = match.extraTime?.away
+
+  if (etHome != null && etAway != null && etHome !== etAway) {
+    return etHome > etAway ? match.home : match.away
+  }
+
   return null
 }
 
