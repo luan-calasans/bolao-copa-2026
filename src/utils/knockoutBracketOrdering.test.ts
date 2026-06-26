@@ -1,8 +1,11 @@
 import { describe, expect, it } from 'vitest'
 import { getMatchWinner } from '../components/knockout/knockoutBracketLayout'
+import type { HistoricalWorldCupJson } from '../models/historicalWorldCup'
 import { buildHistoricalKnockoutBracket } from './historicalKnockoutMapper'
 import { orderKnockoutRounds } from './knockoutBracketOrdering'
-import worldCup2018 from '../../public/data/2018/worldcup.json'
+import worldCup2018Data from '../../public/data/2018/worldcup.json'
+
+const worldCup2018 = worldCup2018Data as HistoricalWorldCupJson
 
 function winnerName(
   match: ReturnType<typeof buildHistoricalKnockoutBracket>['rounds'][number]['matches'][number],
