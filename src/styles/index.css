@@ -439,14 +439,6 @@ html.light .offline-banner {
   color: #92400e;
 }
 
-html.light .pwa-update-prompt {
-  color: #007a2f;
-}
-
-html.light .pwa-update-prompt button {
-  color: #005c24;
-}
-
 html.light
   :is(
     .bg-red-700,
