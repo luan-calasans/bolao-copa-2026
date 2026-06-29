@@ -4,6 +4,7 @@ import type { KnockoutMatch, KnockoutParticipant, KnockoutRound } from '../../mo
 import { matchBetsPath } from '../../routes/routePaths'
 import { getTeamDisplayName } from '../../utils/teamDisplay'
 import { TeamCrest } from '../ui/TeamCrest'
+import { Button } from '../ui/Button'
 import {
   type BracketDimensions,
   type BracketSide,
@@ -18,6 +19,7 @@ import {
   getMatchWinner,
   getNodeCenterY,
   getRoundColumnX,
+  resolvePickSideForParticipant,
   getSemiFinalMatches,
   getSideMatches,
   getSeedSlotY,
@@ -28,10 +30,19 @@ import {
   getTreeBracketRounds,
   isKnockoutMatchPlayable,
 } from './knockoutBracketLayout'
+import type { KnockoutSimulatorProps } from '../../utils/knockoutSimulator'
 
 interface KnockoutBracketDesktopProps {
   rounds: KnockoutRound[]
   linkTeams?: boolean
+  simulator?: KnockoutSimulatorProps
+}
+
+function resolveBracketWinner(
+  match: KnockoutMatch,
+  simulator?: KnockoutSimulatorProps,
+): KnockoutParticipant | null {
+  return simulator ? simulator.getWinner(match) : getMatchWinner(match)
 }
 
 function centerStyle(x: number, y: number): CSSProperties {
@@ -180,22 +191,62 @@ function BracketTeamSlot({
   y,
   dimensions,
   linkTeams = true,
+  match,
+  slot,
+  simulator,
 }: {
   participant: KnockoutParticipant
   x: number
   y: number
   dimensions: BracketDimensions
   linkTeams?: boolean
+  match?: KnockoutMatch
+  slot?: 'home' | 'away'
+  simulator?: KnockoutSimulatorProps
 }) {
   const name = participant.team
     ? getTeamDisplayName(participant.team.shortName, participant.team.name)
     : participant.label
   const size = dimensions.teamCrestSize
+  const winner = match ? resolveBracketWinner(match, simulator) : null
+  const isDecided = winner != null
+  const isWinner = winner === participant
+  const isLoser = isDecided && !isWinner
+  const isPickable = match && simulator ? simulator.isMatchPickable(match) : false
 
   const crest = (
     <div
-      className="flex items-center justify-center rounded-full border border-slate-700/50 bg-pitch-900/40"
+      className={`flex items-center justify-center rounded-full border bg-pitch-900/40 transition ${
+        isWinner
+          ? isPickable
+            ? 'cursor-pointer border-brazil-green bg-pitch-800/70 shadow-md shadow-brazil-green/25 ring-2 ring-brazil-green/45 hover:ring-brazil-green/70'
+            : 'border-brazil-green bg-pitch-800/70 shadow-md shadow-brazil-green/25 ring-2 ring-brazil-green/45'
+          : isLoser && isPickable
+            ? 'cursor-pointer border-slate-700/40 opacity-70 hover:border-brazil-green/60 hover:bg-pitch-800/60 hover:opacity-90'
+            : isLoser
+              ? 'border-slate-700/40 opacity-70'
+              : isPickable
+                ? 'cursor-pointer border-slate-600/70 hover:border-brazil-green/60 hover:bg-pitch-800/60'
+                : 'border-slate-700/50'
+      }`}
       style={{ width: size, height: size }}
+      onClick={
+        isPickable && match && slot
+          ? () => simulator!.onPickWinner(match.key, slot)
+          : undefined
+      }
+      onKeyDown={
+        isPickable && match && slot
+          ? (event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault()
+                simulator!.onPickWinner(match.key, slot)
+              }
+            }
+          : undefined
+      }
+      role={isPickable ? 'button' : undefined}
+      tabIndex={isPickable ? 0 : undefined}
     >
       <TeamCrest
         crest={participant.team?.crest ?? null}
@@ -209,7 +260,7 @@ function BracketTeamSlot({
 
   const style = centerStyle(x, y)
 
-  if (linkTeams && participant.team?.id) {
+  if (linkTeams && !simulator && !isPickable && participant.team?.id) {
     return (
       <Link
         to={`/times/${participant.team.id}`}
@@ -237,6 +288,8 @@ function BracketParticipantCrest({
   isLoser = false,
   isDefined = true,
   linkTeams = true,
+  onPick,
+  isPickable = false,
 }: {
   participant: KnockoutParticipant
   size: number
@@ -244,6 +297,8 @@ function BracketParticipantCrest({
   isLoser?: boolean
   isDefined?: boolean
   linkTeams?: boolean
+  onPick?: () => void
+  isPickable?: boolean
 }) {
   const name = participant.team
     ? getTeamDisplayName(participant.team.shortName, participant.team.name)
@@ -253,15 +308,34 @@ function BracketParticipantCrest({
     <div
       className={`relative flex items-center justify-center rounded-full border bg-pitch-900/40 transition ${
         isWinner
-          ? 'border-brazil-green bg-pitch-800/70 shadow-md shadow-brazil-green/25 ring-2 ring-brazil-green/45'
-          : isLoser
-            ? 'border-slate-700/40 opacity-70'
-            : isDefined
-              ? 'border-slate-700/50 opacity-80'
-              : 'border-dashed border-slate-600/70 opacity-60'
+          ? isPickable
+            ? 'cursor-pointer border-brazil-green bg-pitch-800/70 shadow-md shadow-brazil-green/25 ring-2 ring-brazil-green/45 hover:ring-brazil-green/70'
+            : 'border-brazil-green bg-pitch-800/70 shadow-md shadow-brazil-green/25 ring-2 ring-brazil-green/45'
+          : isLoser && isPickable
+            ? 'cursor-pointer border-slate-700/40 opacity-70 hover:border-brazil-green/60 hover:bg-pitch-800/60 hover:opacity-90'
+            : isLoser
+              ? 'border-slate-700/40 opacity-70'
+              : isPickable
+                ? 'cursor-pointer border-slate-600/70 hover:border-brazil-green/60 hover:bg-pitch-800/60'
+                : isDefined
+                  ? 'border-slate-700/50 opacity-80'
+                  : 'border-dashed border-slate-600/70 opacity-60'
       }`}
       style={{ width: size, height: size }}
       title={name}
+      onClick={isPickable ? onPick : undefined}
+      onKeyDown={
+        isPickable
+          ? (event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault()
+                onPick?.()
+              }
+            }
+          : undefined
+      }
+      role={isPickable ? 'button' : undefined}
+      tabIndex={isPickable ? 0 : undefined}
     >
       <TeamCrest
         crest={participant.team?.crest ?? null}
@@ -273,7 +347,7 @@ function BracketParticipantCrest({
     </div>
   )
 
-  if (linkTeams && participant.team?.id) {
+  if (linkTeams && !isPickable && participant.team?.id) {
     return (
       <Link
         to={`/times/${participant.team.id}`}
@@ -294,14 +368,17 @@ function BracketMatchupRow({
   crestSize,
   linkTeams = true,
   connectorAnchor,
+  simulator,
 }: {
   match: KnockoutMatch
   crestSize: number
   linkTeams?: boolean
   connectorAnchor?: 'semi' | 'final' | 'third'
+  simulator?: KnockoutSimulatorProps
 }) {
-  const winner = getMatchWinner(match)
+  const winner = resolveBracketWinner(match, simulator)
   const isPlayable = isKnockoutMatchPlayable(match)
+  const isSimPickable = simulator ? simulator.isMatchPickable(match) : false
   const matchLabel = `${match.home.label} x ${match.away.label}`
   const isDecided = winner != null
   const anchorProps =
@@ -320,7 +397,9 @@ function BracketMatchupRow({
         size={crestSize}
         isWinner={winner === match.home}
         isLoser={isDecided && winner !== match.home}
-        linkTeams={linkTeams}
+        linkTeams={linkTeams && !simulator}
+        isPickable={isSimPickable && Boolean(match.home.team)}
+        onPick={() => simulator?.onPickWinner(match.key, 'home')}
       />
       <span className={`text-[11px] font-medium ${isDecided ? 'text-slate-600' : 'text-slate-500'}`}>×</span>
       <BracketParticipantCrest
@@ -328,12 +407,14 @@ function BracketMatchupRow({
         size={crestSize}
         isWinner={winner === match.away}
         isLoser={isDecided && winner !== match.away}
-        linkTeams={linkTeams}
+        linkTeams={linkTeams && !simulator}
+        isPickable={isSimPickable && Boolean(match.away.team)}
+        onPick={() => simulator?.onPickWinner(match.key, 'away')}
       />
     </div>
   )
 
-  if (isPlayable && match.id != null) {
+  if (isPlayable && match.id != null && !simulator) {
     return (
       <Link
         to={matchBetsPath(match.id)}
@@ -357,10 +438,12 @@ function BracketCenterFinale({
   rounds,
   dimensions,
   linkTeams = true,
+  simulator,
 }: {
   rounds: KnockoutRound[]
   dimensions: BracketDimensions
   linkTeams?: boolean
+  simulator?: KnockoutSimulatorProps
 }) {
   const semiMatches = getSemiFinalMatches(rounds)
   const finalMatch = getFinalMatch(rounds)
@@ -391,8 +474,9 @@ function BracketCenterFinale({
                 key={match.key}
                 match={match}
                 crestSize={crestSize}
-                linkTeams={linkTeams}
+                linkTeams={linkTeams && !simulator}
                 connectorAnchor="semi"
+                simulator={simulator}
               />
             ))}
           </div>
@@ -406,8 +490,9 @@ function BracketCenterFinale({
             <BracketMatchupRow
               match={finalMatch}
               crestSize={crestSize}
-              linkTeams={linkTeams}
+              linkTeams={linkTeams && !simulator}
               connectorAnchor="final"
+              simulator={simulator}
             />
           ) : (
             <span className="text-xs text-slate-500">A definir</span>
@@ -422,8 +507,9 @@ function BracketCenterFinale({
             <BracketMatchupRow
               match={thirdPlaceMatch}
               crestSize={crestSize}
-              linkTeams={linkTeams}
+              linkTeams={linkTeams && !simulator}
               connectorAnchor="third"
+              simulator={simulator}
             />
           </div>
         )}
@@ -437,43 +523,88 @@ function BracketNode({
   x,
   y,
   dimensions,
+  simulator,
+  parentMatch,
 }: {
   match: KnockoutMatch
   x: number
   y: number
   dimensions: BracketDimensions
+  simulator?: KnockoutSimulatorProps
+  parentMatch?: KnockoutMatch
 }) {
-  const winner = getMatchWinner(match)
+  const winner = resolveBracketWinner(match, simulator)
   const isPlayable = isKnockoutMatchPlayable(match)
   const size = dimensions.nodeSize
+  const parentPickSide =
+    parentMatch && winner ? resolvePickSideForParticipant(parentMatch, winner) : null
+  const canAdvance =
+    simulator &&
+    parentMatch &&
+    parentPickSide &&
+    winner?.team &&
+    simulator.isMatchPickable(parentMatch)
 
-  const node = (
+  const parentWinner = parentMatch ? resolveBracketWinner(parentMatch, simulator) : null
+  const isChangingParent =
+    parentWinner?.team?.id != null &&
+    winner?.team?.id != null &&
+    parentWinner.team.id !== winner.team.id
+
+  const advanceWinner = () => {
+    if (!simulator || !parentMatch || !parentPickSide) return
+    if (simulator.picks[parentMatch.key] === parentPickSide) return
+    simulator.onPickWinner(parentMatch.key, parentPickSide)
+  }
+
+  const node = winner?.team ? (
     <div
       className={`flex items-center justify-center rounded-full border border-dashed border-slate-600/70 bg-pitch-900/30 ${
         match.status === 'live' ? 'border-brazil-green/70 shadow-sm shadow-brazil-green/20' : ''
-      } ${isPlayable ? 'cursor-pointer transition hover:border-brazil-green/60 hover:bg-pitch-800/60' : 'cursor-default'}`}
+      } ${canAdvance ? 'cursor-pointer transition hover:border-brazil-green/60 hover:bg-pitch-800/60 hover:ring-2 hover:ring-brazil-green/30' : ''}`}
       style={{ width: size, height: size }}
       title={
-        winner?.team
-          ? getTeamDisplayName(winner.team.shortName, winner.team.name)
-          : `${match.home.label} x ${match.away.label}`
+        canAdvance
+          ? isChangingParent
+            ? `Trocar vencedor para ${getTeamDisplayName(winner.team.shortName, winner.team.name)}`
+            : `Avançar ${getTeamDisplayName(winner.team.shortName, winner.team.name)}`
+          : getTeamDisplayName(winner.team.shortName, winner.team.name)
       }
+      onClick={canAdvance ? advanceWinner : undefined}
+      onKeyDown={
+        canAdvance
+          ? (event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault()
+                advanceWinner()
+              }
+            }
+          : undefined
+      }
+      role={canAdvance ? 'button' : undefined}
+      tabIndex={canAdvance ? 0 : undefined}
     >
-      {winner?.team ? (
-        <TeamCrest
-          crest={winner.team.crest}
-          name={winner.team.name}
-          isDefined
-          size="sm"
-          className="!h-[78%] !w-[78%] rounded-full object-contain p-0"
-        />
-      ) : null}
+      <TeamCrest
+        crest={winner.team.crest}
+        name={winner.team.name}
+        isDefined
+        size="sm"
+        className="!h-[78%] !w-[78%] rounded-full object-contain p-0"
+      />
     </div>
+  ) : (
+    <div
+      className={`flex items-center justify-center rounded-full border border-dashed border-slate-600/70 bg-pitch-900/30 ${
+        match.status === 'live' ? 'border-brazil-green/70 shadow-sm shadow-brazil-green/20' : ''
+      } ${isPlayable && !simulator ? 'cursor-pointer transition hover:border-brazil-green/60 hover:bg-pitch-800/60' : 'cursor-default'}`}
+      style={{ width: size, height: size }}
+      title={`${match.home.label} x ${match.away.label}`}
+    />
   )
 
   const style = centerStyle(x, y)
 
-  if (!isPlayable) {
+  if (!isPlayable || simulator) {
     return (
       <div className="absolute" style={style}>
         {node}
@@ -493,11 +624,13 @@ function BracketSideLayout({
   rounds,
   dimensions,
   linkTeams = true,
+  simulator,
 }: {
   side: BracketSide
   rounds: KnockoutRound[]
   dimensions: BracketDimensions
   linkTeams?: boolean
+  simulator?: KnockoutSimulatorProps
 }) {
   const profile = dimensions.profile
   const outermostNodes = profile.teamRows / 2
@@ -538,32 +671,47 @@ function BracketSideLayout({
           y={getTeamRowY(index, rowHeight, pairGap, intraPairGap)}
           dimensions={dimensions}
           linkTeams={linkTeams}
+          match={slot.match}
+          slot={slot.slot}
+          simulator={simulator}
         />
       ))}
 
       {roundColumns.map((matches, roundIndex) =>
-        matches.map((match, nodeIndex) => (
-          <BracketNode
-            key={`${side}-${match.key}`}
-            match={match}
-            x={getRoundColumnX(side, roundIndex, dimensions)}
-            y={getNodeCenterY(
-              nodeIndex,
-              matches.length,
-              rowHeight,
-              pairGap,
-              intraPairGap,
-              outermostNodes,
-            )}
-            dimensions={dimensions}
-          />
-        )),
+        matches.map((match, nodeIndex) => {
+          const parentMatches = roundColumns[roundIndex + 1]
+          const parentMatch = parentMatches?.[Math.floor(nodeIndex / 2)]
+          const canPickParent = parentMatch && simulator?.isMatchPickable(parentMatch)
+
+          return (
+            <BracketNode
+              key={`${side}-${match.key}`}
+              match={match}
+              x={getRoundColumnX(side, roundIndex, dimensions)}
+              y={getNodeCenterY(
+                nodeIndex,
+                matches.length,
+                rowHeight,
+                pairGap,
+                intraPairGap,
+                outermostNodes,
+              )}
+              dimensions={dimensions}
+              simulator={simulator}
+              parentMatch={canPickParent ? parentMatch : undefined}
+            />
+          )
+        }),
       )}
     </>
   )
 }
 
-export function KnockoutBracketDesktop({ rounds, linkTeams = true }: KnockoutBracketDesktopProps) {
+export function KnockoutBracketDesktop({
+  rounds,
+  linkTeams = true,
+  simulator,
+}: KnockoutBracketDesktopProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [dimensions, setDimensions] = useState<BracketDimensions | null>(null)
   const [connectorLayout, setConnectorLayout] = useState<CenterPodConnectorLayout | null>(null)
@@ -619,9 +767,26 @@ export function KnockoutBracketDesktop({ rounds, linkTeams = true }: KnockoutBra
 
   return (
     <section className="hidden w-full lg:block">
-      <p className="mb-5 text-center text-base italic text-brazil-green">
-        Acompanhe o avanço das seleções na chave eliminatória.
-      </p>
+      {!simulator && (
+        <p className="mb-5 text-center text-base italic text-brazil-green">
+          Acompanhe o avanço das seleções na chave eliminatória.
+        </p>
+      )}
+
+      {simulator?.onResetSimulation && (
+        <div className="mb-5 flex justify-center">
+          <Button
+            type="button"
+            variant="danger"
+            onClick={simulator.onResetSimulation}
+            disabled={!simulator.hasPicks}
+            className="cursor-pointer gap-2 border-red-500/35 bg-red-500/10 px-5 py-2.5 text-sm shadow-md shadow-red-950/25 transition-all hover:border-red-400/50 hover:bg-red-500/15 hover:shadow-red-950/40 disabled:cursor-not-allowed disabled:opacity-40 disabled:shadow-none"
+          >
+            <ResetIcon />
+            Redefinir simulação
+          </Button>
+        </div>
+      )}
 
       <div ref={containerRef} className="w-full">
         {dimensions && (
@@ -653,18 +818,46 @@ export function KnockoutBracketDesktop({ rounds, linkTeams = true }: KnockoutBra
               rounds={rounds}
               dimensions={dimensions}
               linkTeams={linkTeams}
+              simulator={simulator}
             />
             <BracketSideLayout
               side="right"
               rounds={rounds}
               dimensions={dimensions}
               linkTeams={linkTeams}
+              simulator={simulator}
             />
 
-            <BracketCenterFinale rounds={rounds} dimensions={dimensions} linkTeams={linkTeams} />
+            <BracketCenterFinale
+              rounds={rounds}
+              dimensions={dimensions}
+              linkTeams={linkTeams}
+              simulator={simulator}
+            />
           </div>
         )}
       </div>
     </section>
+  )
+}
+
+function ResetIcon() {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className="h-4 w-4 shrink-0"
+      aria-hidden="true"
+    >
+      <path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8" />
+      <path d="M21 3v5h-5" />
+      <path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16" />
+      <path d="M3 21v-5h5" />
+    </svg>
   )
 }

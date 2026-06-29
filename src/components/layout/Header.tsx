@@ -171,7 +171,9 @@ function MainNavMobile({
               {item.label}
             </p>
             <ul className="flex flex-col gap-0.5 pl-2">
-              {item.items.map((link) => (
+              {item.items
+                .filter((link) => !link.desktopOnly)
+                .map((link) => (
                 <li key={link.path}>
                   <NavLink
                     to={link.path}

@@ -1,10 +1,14 @@
+import { Link } from 'react-router-dom'
 import { AppLayout } from '../components/layout/AppLayout'
 import { PageHeader } from '../components/layout/PageHeader'
 import { KnockoutBracket } from '../components/knockout/KnockoutBracket'
 import { KnockoutInfoPanel } from '../components/knockout/KnockoutInfoPanel'
+import { KnockoutSimulatorFab } from '../components/knockout/KnockoutSimulatorFab'
 import { EmptyState } from '../components/ui/EmptyState'
 import { ErrorState } from '../components/ui/ErrorState'
 import { Skeleton } from '../components/ui/Skeleton'
+import { Button } from '../components/ui/Button'
+import { APP_ROUTES } from '../routes/routePaths'
 import { useKnockoutViewModel } from '../viewmodels/useKnockoutViewModel'
 
 function KnockoutSkeleton() {
@@ -29,6 +33,11 @@ export function KnockoutView() {
       <PageHeader
         title="Mata-mata"
         description="Chaveamento eliminatório da Copa do Mundo 2026, atualizado com a classificação dos grupos."
+        titleAction={
+          <Link to={APP_ROUTES.knockoutSimulator} className="hidden shrink-0 lg:inline-flex">
+            <Button variant="gold">Simulador</Button>
+          </Link>
+        }
       />
 
       <KnockoutInfoPanel />
@@ -47,6 +56,8 @@ export function KnockoutView() {
       {!isLoading && !error && bracket && !isEmpty && (
         <KnockoutBracket rounds={bracket.rounds} />
       )}
+
+      <KnockoutSimulatorFab />
     </AppLayout>
   )
 }

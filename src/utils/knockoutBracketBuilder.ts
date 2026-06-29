@@ -255,6 +255,49 @@ function buildWinnerSlot(
   return createParticipant(null, fallbackLabel, true)
 }
 
+function buildLoserSlot(
+  sourceMatch: KnockoutMatch | undefined,
+  fallbackLabel: string,
+): KnockoutParticipant {
+  const loser = sourceMatch ? getMatchLoserTeam(sourceMatch) : null
+
+  if (loser) {
+    return createParticipant(loser, loser.shortName || loser.name, false)
+  }
+
+  return createParticipant(null, fallbackLabel, true)
+}
+
+function getMatchLoserTeam(match: KnockoutMatch): Team | null {
+  if (match.status !== 'finished') return null
+
+  const { home, away } = match.score
+  if (home == null || away == null || home === away) return null
+
+  return home > away ? match.away.team : match.home.team
+}
+
+function buildProjectedThirdPlaceRound(
+  semiMatches: KnockoutMatch[],
+  stageKey: string,
+): KnockoutMatch[] {
+  const homeSource = semiMatches[0]
+  const awaySource = semiMatches[1]
+
+  return [
+    {
+      key: `${stageKey}-01`,
+      stage: 'THIRD_PLACE',
+      home: buildLoserSlot(homeSource, 'Perdedor semifinal 1'),
+      away: buildLoserSlot(awaySource, 'Perdedor semifinal 2'),
+      score: { home: null, away: null },
+      status: 'scheduled' as MatchStatus,
+      utcDate: null,
+      isProjected: true,
+    },
+  ]
+}
+
 function buildProjectedLaterRound(
   stage: KnockoutStage,
   previousMatches: KnockoutMatch[],
@@ -329,7 +372,9 @@ export function buildKnockoutBracket(
     } else if (apiMatches.length > 0) {
       roundMatches = apiMatches
       previousMatches = roundMatches
-    } else if (stage === 'THIRD_PLACE' || stage === 'FINAL') {
+    } else if (stage === 'THIRD_PLACE') {
+      roundMatches = buildProjectedThirdPlaceRound(previousMatches.slice(-2), stage.toLowerCase())
+    } else if (stage === 'FINAL') {
       roundMatches = buildProjectedLaterRound(stage, previousMatches.slice(-2), 1, stage.toLowerCase())
     } else {
       const matchCount = stage === 'LAST_16' ? 8 : stage === 'QUARTER_FINALS' ? 4 : 2

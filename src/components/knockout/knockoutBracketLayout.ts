@@ -337,15 +337,44 @@ export function getMatchWinner(match: KnockoutMatch): KnockoutParticipant | null
   return null
 }
 
-export function isKnockoutMatchPlayable(match: KnockoutMatch): boolean {
-  if (match.id == null) return false
+export function getMatchLoser(match: KnockoutMatch): KnockoutParticipant | null {
+  const winner = getMatchWinner(match)
+  if (!winner) return null
+  return winner === match.home ? match.away : match.home
+}
 
+export function resolvePickSideForParticipant(
+  match: KnockoutMatch,
+  participant: KnockoutParticipant,
+): 'home' | 'away' | null {
+  const participantId = participant.team?.id
+  if (participantId != null) {
+    if (match.home.team?.id === participantId) return 'home'
+    if (match.away.team?.id === participantId) return 'away'
+  }
+
+  const participantName = participant.team?.name ?? participant.label
+  const homeName = match.home.team?.name ?? match.home.label
+  const awayName = match.away.team?.name ?? match.away.label
+
+  if (participantName === homeName) return 'home'
+  if (participantName === awayName) return 'away'
+  return null
+}
+
+export function isKnockoutMatchDefined(match: KnockoutMatch): boolean {
   return (
     match.home.team != null &&
     match.away.team != null &&
     isTeamDefined(match.home.team) &&
     isTeamDefined(match.away.team)
   )
+}
+
+export function isKnockoutMatchPlayable(match: KnockoutMatch): boolean {
+  if (match.id == null) return false
+
+  return isKnockoutMatchDefined(match)
 }
 
 export function getMainBracketRounds(rounds: KnockoutRound[], profile: BracketProfile) {
@@ -436,9 +465,7 @@ export function getCenterPodTargetY(
 
   if (anchors.semiRowYs.length > 0) {
     if (nodesInRound <= anchors.semiRowYs.length) {
-      return (
-        anchors.semiRowYs[targetIndex] ?? anchors.semiRowYs[anchors.semiRowYs.length - 1]!
-      )
+      return anchors.semiRowYs[targetIndex] ?? anchors.semiRowYs[anchors.semiRowYs.length - 1]!
     }
 
     const step = (anchors.semiRowYs.length - 1) / Math.max(nodesInRound - 1, 1)

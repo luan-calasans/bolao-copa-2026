@@ -1,5 +1,6 @@
 import { lazy, Suspense, useEffect, useState, type ReactNode } from 'react'
 import { Navigate, Route, Routes, useParams } from 'react-router-dom'
+import { useDesktop } from '../hooks/useDesktop'
 import { AdminRoute } from '../components/auth/AdminRoute'
 import { ParticipantRoute as ParticipantAuthRoute } from '../components/auth/ParticipantRoute'
 import { LoadingState } from '../components/ui/LoadingState'
@@ -19,6 +20,11 @@ const ScorersView = lazy(() =>
 )
 const KnockoutView = lazy(() =>
   import('../views/KnockoutView').then((module) => ({ default: module.KnockoutView })),
+)
+const KnockoutSimulatorView = lazy(() =>
+  import('../views/KnockoutSimulatorView').then((module) => ({
+    default: module.KnockoutSimulatorView,
+  })),
 )
 const RankingView = lazy(() =>
   import('../views/RankingView').then((module) => ({ default: module.RankingView })),
@@ -200,6 +206,20 @@ function LazyRoute({ children }: { children: ReactNode }) {
   return <Suspense fallback={<RouteFallback />}>{children}</Suspense>
 }
 
+function KnockoutSimulatorRoute() {
+  const isDesktop = useDesktop()
+
+  if (!isDesktop) {
+    return <Navigate to={APP_ROUTES.home} replace />
+  }
+
+  return (
+    <LazyRoute>
+      <KnockoutSimulatorView />
+    </LazyRoute>
+  )
+}
+
 export function AppRoutes() {
   return (
     <Routes>
@@ -228,6 +248,7 @@ export function AppRoutes() {
           </LazyRoute>
         }
       />
+      <Route path={APP_ROUTES.knockoutSimulator} element={<KnockoutSimulatorRoute />} />
       <Route
         path={APP_ROUTES.historico}
         element={

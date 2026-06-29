@@ -3,6 +3,7 @@ export const APP_ROUTES = {
   standings: '/classificacao',
   scorers: '/artilharia',
   knockout: '/mata-a-mata',
+  knockoutSimulator: '/simulador-mata-a-mata',
   ranking: '/ranking',
   participant: '/participante/:personNameKey',
   teams: '/times',
@@ -27,6 +28,7 @@ export type MainNavLink = {
   path: string
   label: string
   end?: boolean
+  desktopOnly?: boolean
 }
 
 export type MainNavItem =
@@ -44,6 +46,7 @@ export const MAIN_NAV: ReadonlyArray<MainNavItem> = [
       { path: APP_ROUTES.standings, label: 'Classificação' },
       { path: APP_ROUTES.scorers, label: 'Artilharia' },
       { path: APP_ROUTES.knockout, label: 'Mata-mata' },
+      { path: APP_ROUTES.knockoutSimulator, label: 'Simulador', desktopOnly: true },
       { path: APP_ROUTES.championBet, label: 'Campeão' },
     ],
   },

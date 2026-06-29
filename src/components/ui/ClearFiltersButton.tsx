@@ -2,12 +2,14 @@ interface ClearFiltersButtonProps {
   onClick: () => void
   className?: string
   variant?: 'card' | 'mobile' | 'sidebar'
+  label?: string
 }
 
 export function ClearFiltersButton({
   onClick,
   className = '',
   variant = 'card',
+  label = 'Limpar filtros',
 }: ClearFiltersButtonProps) {
   if (variant === 'sidebar') {
     return (
@@ -16,7 +18,7 @@ export function ClearFiltersButton({
         onClick={onClick}
         className={`clear-filters-btn mt-3 inline-flex cursor-pointer items-center gap-1.5 text-xs text-red-400 transition hover:text-red-300 ${className}`}
       >
-        <span>Limpar filtros</span>
+        <span>{label}</span>
         <TrashIcon />
       </button>
     )
@@ -30,7 +32,7 @@ export function ClearFiltersButton({
       onClick={onClick}
       className={`clear-filters-btn ${marginClass} flex w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-red-500/30 bg-red-500/5 px-4 py-2.5 text-sm font-semibold text-red-400 transition hover:border-red-500/50 hover:bg-red-500/10 hover:text-red-300 ${className}`}
     >
-      <span>Limpar filtros</span>
+      <span>{label}</span>
       <TrashIcon />
     </button>
   )
