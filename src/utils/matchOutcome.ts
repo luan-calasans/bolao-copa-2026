@@ -1,4 +1,5 @@
 import type { Match } from '../models/match'
+import { resolveMatchWinner, type MatchSide } from '../../shared/matchResult.js'
 
 export type TeamOutcome = 'win' | 'loss' | 'draw'
 
@@ -21,36 +22,6 @@ export function getTeamOutcome(home: number, away: number, side: 'home' | 'away'
   return away > home ? 'win' : 'loss'
 }
 
-function resolveWinnerFromPenalties(match: Match): 'home' | 'away' | null {
-  const penHome = match.penalties?.home
-  const penAway = match.penalties?.away
-
-  if (penHome == null || penAway == null || penHome === penAway) {
-    return null
-  }
-
-  return penHome > penAway ? 'home' : 'away'
-}
-
-function resolveWinnerFromExtraTime(match: Match): 'home' | 'away' | null {
-  const { home, away } = match.score
-  const etHome = match.extraTime?.home
-  const etAway = match.extraTime?.away
-
-  if (home == null || away == null || etHome == null || etAway == null) {
-    return null
-  }
-
-  const totalHome = home + etHome
-  const totalAway = away + etAway
-
-  if (totalHome === totalAway) {
-    return null
-  }
-
-  return totalHome > totalAway ? 'home' : 'away'
-}
-
 export function getTeamMatchOutcome(match: Match, side: 'home' | 'away'): TeamOutcome {
   const { home, away } = match.score
 
@@ -62,21 +33,12 @@ export function getTeamMatchOutcome(match: Match, side: 'home' | 'away'): TeamOu
     return getTeamOutcome(home, away, side)
   }
 
-  if (match.winner && match.winner !== 'draw') {
-    return match.winner === side ? 'win' : 'loss'
+  const winner: MatchSide | null = resolveMatchWinner(match)
+  if (winner === 'draw') {
+    return 'draw'
   }
 
-  const penaltyWinner = resolveWinnerFromPenalties(match)
-  if (penaltyWinner) {
-    return penaltyWinner === side ? 'win' : 'loss'
-  }
-
-  const extraTimeWinner = resolveWinnerFromExtraTime(match)
-  if (extraTimeWinner) {
-    return extraTimeWinner === side ? 'win' : 'loss'
-  }
-
-  return 'draw'
+  return winner === side ? 'win' : 'loss'
 }
 
 export function getTeamOutcomeClasses(outcome: TeamOutcome): string {

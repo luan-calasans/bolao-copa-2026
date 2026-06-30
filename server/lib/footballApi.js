@@ -1,5 +1,10 @@
 import { getFootballToken } from './footballToken.js'
-import { resolveRegulationScoreFromApi } from '../../shared/footballApiScore.js'
+import {
+  resolveExtraTimeScoreFromApi,
+  resolvePenaltyScoreFromApi,
+  resolveRegulationScoreFromApi,
+} from '../../shared/footballApiScore.js'
+import { normalizeMatchWinner } from '../../shared/matchResult.js'
 import { normalizeMatchStatus } from '../../shared/matchStatus.js'
 
 function mapApiMatch(apiMatch) {
@@ -10,6 +15,9 @@ function mapApiMatch(apiMatch) {
     id: apiMatch.id,
     status: normalizeMatchStatus(rawStatus),
     score,
+    penalties: resolvePenaltyScoreFromApi(apiMatch.score),
+    extraTime: resolveExtraTimeScoreFromApi(apiMatch.score),
+    winner: normalizeMatchWinner(apiMatch.score?.winner ?? null),
   }
 }
 

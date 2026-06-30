@@ -249,4 +249,57 @@ describe('knockoutBracketBuilder', () => {
       true,
     )
   })
+
+  it('advances extra-time winners into the next round', () => {
+    const team = (id: number, name: string): Team => ({
+      id,
+      name,
+      shortName: name,
+      tla: name.slice(0, 3).toUpperCase(),
+      crest: '',
+      isDefined: true,
+    })
+
+    const standings = ['A', 'B'].flatMap((letter, groupIndex) => {
+      const base = groupIndex * 4
+      return [
+        createGroupStanding(`GROUP_${letter}`, [
+          createRow(1, { id: base + 1, name: `Líder ${letter}` }, { points: 9, gd: 3, gf: 4 }),
+          createRow(2, { id: base + 2, name: `Vice ${letter}` }, { points: 6, gd: 1, gf: 3 }),
+          createRow(3, { id: base + 3, name: `Terceiro ${letter}` }, { points: 3, gd: 0, gf: 2 }),
+          createRow(4, { id: base + 4, name: `Último ${letter}` }, { points: 0, gd: -4, gf: 0 }),
+        ]),
+      ]
+    })
+
+    const winner = team(200, 'Vencedor Prorrogação')
+    const loser = team(201, 'Perdedor Prorrogação')
+
+    const apiMatches = [
+      {
+        id: 7001,
+        utcDate: '2026-07-02T20:00:00Z',
+        status: 'finished' as const,
+        rawStatus: 'FINISHED',
+        minute: null,
+        venue: null,
+        matchday: 75,
+        stage: 'LAST_32',
+        group: null,
+        homeTeam: winner,
+        awayTeam: loser,
+        score: { home: 1, away: 1 },
+        halfTimeScore: { home: 1, away: 0 },
+        extraTime: { home: 1, away: 0 },
+        isLive: false,
+      },
+    ]
+
+    const bracket = buildKnockoutBracket(standings, apiMatches)
+    const r16 = bracket.rounds.find((round) => round.stage === 'LAST_16')?.matches ?? []
+
+    expect(r16.some((match) => match.home.team?.id === winner.id || match.away.team?.id === winner.id)).toBe(
+      true,
+    )
+  })
 })

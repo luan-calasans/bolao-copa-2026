@@ -48,3 +48,25 @@ export function resolvePenaltyScoreFromApi(apiScore) {
 
   return penalties
 }
+
+/**
+ * @param {ApiScoreLike | null | undefined} apiScore
+ * @returns {{ home: number, away: number } | null}
+ */
+export function resolveExtraTimeScoreFromApi(apiScore) {
+  if (apiScore?.penalties?.home != null && apiScore?.penalties?.away != null) {
+    return null
+  }
+
+  const extraTime = mapScoreDetail(apiScore?.extraTime)
+  if (!extraTime || (extraTime.home === 0 && extraTime.away === 0)) {
+    return null
+  }
+
+  const regulation = resolveRegulationScoreFromApi(apiScore)
+  if (regulation.home == null || regulation.away == null || regulation.home !== regulation.away) {
+    return null
+  }
+
+  return extraTime
+}

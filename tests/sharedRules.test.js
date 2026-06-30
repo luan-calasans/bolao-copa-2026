@@ -134,6 +134,74 @@ describe('shared betScoring', () => {
     assert.equal(score.points, 12)
   })
 
+  it('scores exact when the pick matches the total after extra time', () => {
+    const match = {
+      status: 'finished',
+      score: { home: 1, away: 1 },
+      extraTime: { home: 1, away: 0 },
+    }
+
+    const score = getBetScore(match, 2, 1)
+
+    assert.equal(score.scoreType, 'exact')
+    assert.equal(score.points, 10)
+  })
+
+  it('scores partial when the pick matches the extra-time total within tolerance', () => {
+    const match = {
+      status: 'finished',
+      score: { home: 1, away: 1 },
+      extraTime: { home: 2, away: 1 },
+    }
+
+    const score = getBetScore(match, 3, 1)
+
+    assert.equal(score.scoreType, 'partial')
+    assert.equal(score.points, 3)
+  })
+
+  it('awards winner points for the team that wins after penalties', () => {
+    const match = {
+      status: 'finished',
+      score: { home: 1, away: 1 },
+      penalties: { home: 2, away: 3 },
+      winner: 'away',
+    }
+
+    const score = getBetScore(match, null, null, 'away')
+
+    assert.equal(score.winnerPoints, 2)
+    assert.equal(score.points, 2)
+  })
+
+  it('still awards winner points for a regulation draw pick', () => {
+    const match = {
+      status: 'finished',
+      score: { home: 1, away: 1 },
+      penalties: { home: 2, away: 3 },
+      winner: 'away',
+    }
+
+    const score = getBetScore(match, null, null, 'draw')
+
+    assert.equal(score.winnerPoints, 2)
+    assert.equal(score.points, 2)
+  })
+
+  it('does not award winner points for the wrong team after penalties', () => {
+    const match = {
+      status: 'finished',
+      score: { home: 1, away: 1 },
+      penalties: { home: 2, away: 3 },
+      winner: 'away',
+    }
+
+    const score = getBetScore(match, null, null, 'home')
+
+    assert.equal(score.winnerPoints, 0)
+    assert.equal(score.points, 0)
+  })
+
   it('exposes scoring rules for api and ui', () => {
     assert.equal(SCORING_RULES.length, 4)
     assert.match(SCORING_RULES[0].title, /Placar exato/)

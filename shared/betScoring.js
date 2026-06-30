@@ -1,3 +1,5 @@
+import { getExtraTimeFullScore, resolveMatchWinner } from './matchResult.js'
+
 export const PARTIAL_MAX_GOAL_DIFFERENCE = 3
 
 function getMatchOutcome(home, away) {
@@ -18,6 +20,18 @@ function isPartialScore(homeScore, awayScore, actualHome, actualAway) {
     PARTIAL_MAX_GOAL_DIFFERENCE
 
   return sameOutcome && withinGoalDifference
+}
+
+function classifyScorePick(homeScore, awayScore, actualHome, actualAway) {
+  if (homeScore === actualHome && awayScore === actualAway) {
+    return 'exact'
+  }
+
+  if (isPartialScore(homeScore, awayScore, actualHome, actualAway)) {
+    return 'partial'
+  }
+
+  return null
 }
 
 function getScorePoints(match, homeScore, awayScore) {
@@ -42,7 +56,15 @@ function getScorePoints(match, homeScore, awayScore) {
     }
   }
 
-  if (homeScore === actualHome && awayScore === actualAway) {
+  let scoreType =
+    classifyScorePick(homeScore, awayScore, actualHome, actualAway) ??
+    (() => {
+      const extraTimeTotal = getExtraTimeFullScore(match)
+      if (!extraTimeTotal) return null
+      return classifyScorePick(homeScore, awayScore, extraTimeTotal.home, extraTimeTotal.away)
+    })()
+
+  if (scoreType === 'exact') {
     return {
       points: 10,
       scoreType: 'exact',
@@ -51,7 +73,7 @@ function getScorePoints(match, homeScore, awayScore) {
     }
   }
 
-  if (isPartialScore(homeScore, awayScore, actualHome, actualAway)) {
+  if (scoreType === 'partial') {
     return {
       points: 3,
       scoreType: 'partial',
@@ -80,7 +102,11 @@ function getWinnerPickPoints(match, winnerPick) {
     return 0
   }
 
-  return getMatchOutcome(actualHome, actualAway) === winnerPick ? 2 : 0
+  if (winnerPick === 'draw') {
+    return getMatchOutcome(actualHome, actualAway) === 'draw' ? 2 : 0
+  }
+
+  return resolveMatchWinner(match) === winnerPick ? 2 : 0
 }
 
 export function getBetScore(match, homeScore, awayScore, winnerPick = null) {

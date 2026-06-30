@@ -96,6 +96,24 @@ describe('mapApiMatchToMatch', () => {
     expect(match.score).toEqual({ home: 2, away: 0 })
     expect(match.penalties).toBeNull()
   })
+
+  it('maps extra-time goals after a regulation draw', () => {
+    const match = mapApiMatchToMatch(
+      buildApiMatch({
+        winner: 'HOME_TEAM',
+        duration: 'EXTRA_TIME',
+        regularTime: { home: 1, away: 1 },
+        fullTime: { home: 2, away: 1 },
+        halfTime: { home: 1, away: 0 },
+        extraTime: { home: 1, away: 0 },
+      }),
+    )
+
+    expect(match.score).toEqual({ home: 1, away: 1 })
+    expect(match.extraTime).toEqual({ home: 1, away: 0 })
+    expect(match.penalties).toBeNull()
+    expect(match.winner).toBe('home')
+  })
 })
 
 describe('formatScoreDisplay', () => {
@@ -110,6 +128,19 @@ describe('formatScoreDisplay', () => {
     })
 
     expect(formatScoreDisplay(match)).toBe('1 × 1 · Pênaltis 2 × 3')
+  })
+
+  it('shows regulation and extra-time total separately', () => {
+    const match = buildMatch({
+      id: 2,
+      utcDate: '2030-06-11T20:00:00.000Z',
+      status: 'finished',
+      rawStatus: 'FINISHED',
+      score: { home: 1, away: 1 },
+      extraTime: { home: 1, away: 0 },
+    })
+
+    expect(formatScoreDisplay(match)).toBe('1 × 1 · Prorrogação 2 × 1')
   })
 })
 

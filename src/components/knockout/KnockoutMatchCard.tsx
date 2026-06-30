@@ -108,18 +108,26 @@ function resolveKnockoutWinner(
     return { homeWins: home > away, awayWins: away > home }
   }
 
+  const etHome = match.extraTime?.home
+  const etAway = match.extraTime?.away
+
+  if (etHome != null && etAway != null) {
+    const totalHome = home + etHome
+    const totalAway = away + etAway
+
+    if (totalHome !== totalAway) {
+      return {
+        homeWins: totalHome > totalAway,
+        awayWins: totalAway > totalHome,
+      }
+    }
+  }
+
   const penHome = match.penalties?.home
   const penAway = match.penalties?.away
 
   if (penHome != null && penAway != null && penHome !== penAway) {
     return { homeWins: penHome > penAway, awayWins: penAway > penHome }
-  }
-
-  const etHome = match.extraTime?.home
-  const etAway = match.extraTime?.away
-
-  if (etHome != null && etAway != null && etHome !== etAway) {
-    return { homeWins: etHome > etAway, awayWins: etAway > etHome }
   }
 
   return { homeWins: false, awayWins: false }

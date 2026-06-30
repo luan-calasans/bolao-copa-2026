@@ -12,3 +12,7 @@ export function resolveRegulationScoreFromApi(
 export function resolvePenaltyScoreFromApi(
   apiScore: ApiScoreLike | null | undefined,
 ): { home: number; away: number } | null
+
+export function resolveExtraTimeScoreFromApi(
+  apiScore: ApiScoreLike | null | undefined,
+): { home: number; away: number } | null

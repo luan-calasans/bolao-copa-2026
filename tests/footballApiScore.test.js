@@ -3,6 +3,7 @@ import { describe, it } from 'node:test'
 import {
   resolvePenaltyScoreFromApi,
   resolveRegulationScoreFromApi,
+  resolveExtraTimeScoreFromApi,
 } from '../shared/footballApiScore.js'
 
 describe('shared footballApiScore', () => {
@@ -38,6 +39,25 @@ describe('shared footballApiScore', () => {
       resolvePenaltyScoreFromApi({
         fullTime: { home: 2, away: 0 },
         penalties: { home: 2, away: 0 },
+      }),
+      null,
+    )
+  })
+
+  it('returns extra-time goals only after a regulation draw without penalties', () => {
+    assert.deepEqual(
+      resolveExtraTimeScoreFromApi({
+        regularTime: { home: 1, away: 1 },
+        extraTime: { home: 1, away: 0 },
+      }),
+      { home: 1, away: 0 },
+    )
+
+    assert.equal(
+      resolveExtraTimeScoreFromApi({
+        regularTime: { home: 1, away: 1 },
+        penalties: { home: 2, away: 3 },
+        extraTime: { home: 1, away: 0 },
       }),
       null,
     )

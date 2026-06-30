@@ -8,6 +8,15 @@ export interface BetScoreMatch {
     home: number | null
     away: number | null
   }
+  penalties?: {
+    home: number | null
+    away: number | null
+  } | null
+  extraTime?: {
+    home: number | null
+    away: number | null
+  } | null
+  winner?: 'home' | 'away' | 'draw' | 'HOME_TEAM' | 'AWAY_TEAM' | 'DRAW' | null
 }
 
 export interface BetScoreResult {

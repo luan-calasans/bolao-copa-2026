@@ -320,18 +320,23 @@ export function getMatchWinner(match: KnockoutMatch): KnockoutParticipant | null
     return home > away ? match.home : match.away
   }
 
+  const etHome = match.extraTime?.home
+  const etAway = match.extraTime?.away
+
+  if (etHome != null && etAway != null) {
+    const totalHome = home + etHome
+    const totalAway = away + etAway
+
+    if (totalHome !== totalAway) {
+      return totalHome > totalAway ? match.home : match.away
+    }
+  }
+
   const penHome = match.penalties?.home
   const penAway = match.penalties?.away
 
   if (penHome != null && penAway != null && penHome !== penAway) {
     return penHome > penAway ? match.home : match.away
-  }
-
-  const etHome = match.extraTime?.home
-  const etAway = match.extraTime?.away
-
-  if (etHome != null && etAway != null && etHome !== etAway) {
-    return etHome > etAway ? match.home : match.away
   }
 
   return null

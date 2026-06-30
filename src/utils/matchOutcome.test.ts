@@ -56,4 +56,14 @@ describe('getTeamMatchOutcome', () => {
     expect(getTeamMatchOutcome(match, 'home')).toBe('win')
     expect(getTeamMatchOutcome(match, 'away')).toBe('loss')
   })
+
+  it('uses extra-time winner when regulation ends in a draw', () => {
+    const match = buildMatch({
+      extraTime: { home: 1, away: 0 },
+      winner: 'home',
+    })
+
+    expect(getTeamMatchOutcome(match, 'home')).toBe('win')
+    expect(getTeamMatchOutcome(match, 'away')).toBe('loss')
+  })
 })
