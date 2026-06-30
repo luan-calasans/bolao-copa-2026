@@ -7,6 +7,8 @@ export interface MatchScore {
   away: number | null
 }
 
+export type MatchWinner = 'home' | 'away' | 'draw'
+
 export interface Match {
   id: number
   utcDate: string
@@ -21,6 +23,9 @@ export interface Match {
   awayTeam: Team
   score: MatchScore
   halfTimeScore: MatchScore
+  penalties?: MatchScore | null
+  extraTime?: MatchScore | null
+  winner?: MatchWinner | null
   isLive: boolean
   lastUpdated?: string | null
 }

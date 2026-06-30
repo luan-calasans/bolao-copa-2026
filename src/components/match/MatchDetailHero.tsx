@@ -7,9 +7,10 @@ import {
   formatRelativeTime,
   formatStage,
 } from '../../utils/dateFormatter'
-import { formatScoreDisplay } from '../../utils/matchMapper'
 import { areMatchTeamsDefined, getTeamDisplayName } from '../../utils/teamDisplay'
+import { buildMatchScoreMetaLine } from '../../utils/matchScoreMeta'
 import { TeamIdentity } from '../ui/TeamIdentity'
+import { MatchScoreDisplay } from './MatchScoreDisplay'
 import { MatchStatusBadge } from './MatchStatusBadge'
 
 interface MatchDetailHeroProps {
@@ -44,10 +45,7 @@ export function MatchDetailHero({
   const { home, away } = match.score
   const hasScore = home !== null && away !== null
   const showScore = hasScore && (match.isLive || match.status === 'finished')
-  const showHalfTime =
-    match.halfTimeScore.home !== null &&
-    match.halfTimeScore.away !== null &&
-    (match.isLive || match.status === 'finished')
+  const scoreMetaLine = showScore ? buildMatchScoreMetaLine(match, true) : null
   const relativeKickoff = formatRelativeTime(match.utcDate)
   const groupLabel = formatGroup(match.group)
   const teamsDefined = areMatchTeamsDefined(match)
@@ -94,12 +92,16 @@ export function MatchDetailHero({
                   Placar atual
                 </p>
               )}
-              <p className="text-3xl font-black tabular-nums text-white sm:text-4xl">
-                {formatScoreDisplay(match)}
-              </p>
-              {showHalfTime && (
-                <p className="mt-1 text-xs text-slate-400">
-                  Intervalo {match.halfTimeScore.home} × {match.halfTimeScore.away}
+              <div className="text-3xl font-black text-white sm:text-4xl">
+                <MatchScoreDisplay
+                  match={match}
+                  className="text-3xl font-black text-white sm:text-4xl"
+                  showSecondary={false}
+                />
+              </div>
+              {scoreMetaLine && (
+                <p className="mt-1 text-xs font-medium tabular-nums text-slate-400 sm:text-sm">
+                  {scoreMetaLine}
                 </p>
               )}
             </>

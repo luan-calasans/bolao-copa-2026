@@ -1,16 +1,15 @@
 import { getFootballToken } from './footballToken.js'
+import { resolveRegulationScoreFromApi } from '../../shared/footballApiScore.js'
 import { normalizeMatchStatus } from '../../shared/matchStatus.js'
 
 function mapApiMatch(apiMatch) {
   const rawStatus = apiMatch.status
+  const score = resolveRegulationScoreFromApi(apiMatch.score)
 
   return {
     id: apiMatch.id,
     status: normalizeMatchStatus(rawStatus),
-    score: {
-      home: apiMatch.score?.fullTime?.home ?? null,
-      away: apiMatch.score?.fullTime?.away ?? null,
-    },
+    score,
   }
 }
 

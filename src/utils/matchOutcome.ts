@@ -1,3 +1,5 @@
+import type { Match } from '../models/match'
+
 export type TeamOutcome = 'win' | 'loss' | 'draw'
 
 export function shouldShowMatchOutcome(
@@ -17,6 +19,64 @@ export function getTeamOutcome(home: number, away: number, side: 'home' | 'away'
   }
 
   return away > home ? 'win' : 'loss'
+}
+
+function resolveWinnerFromPenalties(match: Match): 'home' | 'away' | null {
+  const penHome = match.penalties?.home
+  const penAway = match.penalties?.away
+
+  if (penHome == null || penAway == null || penHome === penAway) {
+    return null
+  }
+
+  return penHome > penAway ? 'home' : 'away'
+}
+
+function resolveWinnerFromExtraTime(match: Match): 'home' | 'away' | null {
+  const { home, away } = match.score
+  const etHome = match.extraTime?.home
+  const etAway = match.extraTime?.away
+
+  if (home == null || away == null || etHome == null || etAway == null) {
+    return null
+  }
+
+  const totalHome = home + etHome
+  const totalAway = away + etAway
+
+  if (totalHome === totalAway) {
+    return null
+  }
+
+  return totalHome > totalAway ? 'home' : 'away'
+}
+
+export function getTeamMatchOutcome(match: Match, side: 'home' | 'away'): TeamOutcome {
+  const { home, away } = match.score
+
+  if (home == null || away == null) {
+    return 'draw'
+  }
+
+  if (home !== away) {
+    return getTeamOutcome(home, away, side)
+  }
+
+  if (match.winner && match.winner !== 'draw') {
+    return match.winner === side ? 'win' : 'loss'
+  }
+
+  const penaltyWinner = resolveWinnerFromPenalties(match)
+  if (penaltyWinner) {
+    return penaltyWinner === side ? 'win' : 'loss'
+  }
+
+  const extraTimeWinner = resolveWinnerFromExtraTime(match)
+  if (extraTimeWinner) {
+    return extraTimeWinner === side ? 'win' : 'loss'
+  }
+
+  return 'draw'
 }
 
 export function getTeamOutcomeClasses(outcome: TeamOutcome): string {

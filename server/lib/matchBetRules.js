@@ -1,4 +1,5 @@
 import { getBetAcceptanceBlockReason } from '../../shared/matchBetAcceptance.js'
+import { resolveRegulationScoreFromApi } from '../../shared/footballApiScore.js'
 import { normalizeMatchStatus } from '../../shared/matchStatus.js'
 import { getLiveMinScores, validateBetScores as getBetScoresValidationError, hasBetScorePick } from '../../shared/betValidation.js'
 import { ValidationError } from './validateInput.js'
@@ -35,10 +36,11 @@ export function assertBetScoresAllowed(apiMatch, homeScore, awayScore) {
   }
 
   const status = normalizeMatchStatus(apiMatch.status)
+  const regulationScore = resolveRegulationScoreFromApi(apiMatch.score)
   const min = getLiveMinScores(
     status === 'live',
-    apiMatch.score?.fullTime?.home,
-    apiMatch.score?.fullTime?.away,
+    regulationScore.home,
+    regulationScore.away,
   )
   const validationError = getBetScoresValidationError(min.home, min.away, homeScore, awayScore)
 

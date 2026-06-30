@@ -1,4 +1,5 @@
 import { isLiveStatus, normalizeMatchStatus } from '../../shared/matchStatus.js'
+import { resolveRegulationScoreFromApi } from '../../shared/footballApiScore.js'
 
 const CRESTS_HOST = 'crests.football-data.org'
 
@@ -54,10 +55,7 @@ export function buildMatchSnapshot(apiMatch) {
     group: apiMatch.group ?? null,
     homeTeam: mapTeam(apiMatch.homeTeam),
     awayTeam: mapTeam(apiMatch.awayTeam),
-    score: {
-      home: apiMatch.score?.fullTime?.home ?? null,
-      away: apiMatch.score?.fullTime?.away ?? null,
-    },
+    score: resolveRegulationScoreFromApi(apiMatch.score),
     isLive: isLiveStatus(rawStatus),
   }
 }

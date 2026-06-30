@@ -16,6 +16,9 @@ export interface ApiScore {
   duration: string
   fullTime: ApiScoreDetail
   halfTime: ApiScoreDetail
+  regularTime?: ApiScoreDetail
+  extraTime?: ApiScoreDetail
+  penalties?: ApiScoreDetail
 }
 
 export type ApiMatchStatus =

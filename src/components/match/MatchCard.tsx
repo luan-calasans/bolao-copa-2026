@@ -4,13 +4,15 @@ import type { Match } from '../../models/match'
 import { formatMatchCardDate, formatMatchCardMeta, formatStage } from '../../utils/dateFormatter'
 import { canPlaceBet } from '../../utils/matchStatus'
 import {
-  getTeamOutcome,
+  getTeamMatchOutcome,
   getTeamOutcomeClasses,
   shouldShowMatchOutcome,
+  type TeamOutcome,
 } from '../../utils/matchOutcome'
 import { getTeamDisplayName, hasValidVenue, areMatchTeamsDefined } from '../../utils/teamDisplay'
 import { Button } from '../ui/Button'
 import { TeamIdentity } from '../ui/TeamIdentity'
+import { MatchScoreDisplay } from './MatchScoreDisplay'
 import { MatchStatusBadge } from './MatchStatusBadge'
 import { MatchYouTubeHighlightsButton } from './MatchYouTubeHighlightsButton'
 
@@ -37,8 +39,8 @@ export function MatchCard({
   const { home, away } = match.score
   const hasScore = home !== null && away !== null
   const showOutcome = shouldShowMatchOutcome(match.status, home, away)
-  const homeOutcome = showOutcome && hasScore ? getTeamOutcome(home, away, 'home') : null
-  const awayOutcome = showOutcome && hasScore ? getTeamOutcome(home, away, 'away') : null
+  const homeOutcome = showOutcome && hasScore ? getTeamMatchOutcome(match, 'home') : null
+  const awayOutcome = showOutcome && hasScore ? getTeamMatchOutcome(match, 'away') : null
   const showStatusBadge =
     !match.isLive &&
     (match.status === 'finished' ||
@@ -99,10 +101,21 @@ export function MatchCard({
               crestFetchPriority={crestFetchPriority}
             />
           </TeamOutcomeFrame>
-          <div className="mt-5 flex shrink-0 items-center gap-1 sm:mt-6 sm:gap-2">
-            <ScoreBox value={hasScore ? home : null} />
-            <span className="text-base font-bold text-slate-500 sm:text-lg">X</span>
-            <ScoreBox value={hasScore ? away : null} />
+          <div className="mt-5 flex shrink-0 flex-col items-center justify-center sm:mt-6">
+            {hasScore ? (
+              <MatchScoreDisplay
+                match={match}
+                className="text-base font-bold text-white sm:text-lg"
+                secondaryClassName="text-[10px] font-medium tabular-nums text-slate-400 sm:text-xs"
+                showSecondaryLabel={false}
+              />
+            ) : (
+              <div className="flex items-center gap-1 sm:gap-2">
+                <ScoreBox value={null} />
+                <span className="text-base font-bold text-slate-500 sm:text-lg">X</span>
+                <ScoreBox value={null} />
+              </div>
+            )}
           </div>
           <TeamOutcomeFrame outcome={awayOutcome} className="min-w-0 flex-1">
             <TeamIdentity
@@ -178,7 +191,7 @@ function TeamOutcomeFrame({
   className = '',
   children,
 }: {
-  outcome: ReturnType<typeof getTeamOutcome> | null
+  outcome: TeamOutcome | null
   className?: string
   children: ReactNode
 }) {
