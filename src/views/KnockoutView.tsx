@@ -3,7 +3,6 @@ import { AppLayout } from '../components/layout/AppLayout'
 import { PageHeader } from '../components/layout/PageHeader'
 import { KnockoutBracket } from '../components/knockout/KnockoutBracket'
 import { KnockoutInfoPanel } from '../components/knockout/KnockoutInfoPanel'
-import { KnockoutSimulatorFab } from '../components/knockout/KnockoutSimulatorFab'
 import { EmptyState } from '../components/ui/EmptyState'
 import { ErrorState } from '../components/ui/ErrorState'
 import { Skeleton } from '../components/ui/Skeleton'
@@ -56,8 +55,6 @@ export function KnockoutView() {
       {!isLoading && !error && bracket && !isEmpty && (
         <KnockoutBracket rounds={bracket.rounds} />
       )}
-
-      <KnockoutSimulatorFab />
     </AppLayout>
   )
 }

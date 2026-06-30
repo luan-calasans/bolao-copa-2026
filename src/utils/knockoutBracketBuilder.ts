@@ -8,25 +8,10 @@ import type {
 } from '../models/knockout'
 import type { Match, MatchStatus } from '../models/match'
 import type { Team } from '../models/team'
-import {
-  buildGroupSnapshots,
-  formatGroupPositionLabel,
-  formatThirdSlotLabel,
-  getQualifiedThirdGroups,
-  getStandingRowByGroupPosition,
-  isGroupStageComplete,
-  rankThirdPlaceTeams,
-} from './knockoutQualifiers'
-import {
-  KNOCKOUT_ROUND_LABELS,
-  KNOCKOUT_STAGE_ORDER,
-  R32_TEMPLATE,
-  groupCodeFromKey,
-  type BracketSlot,
-  type GroupCode,
-  type R32TemplateMatch,
-} from './knockoutBracketTemplate'
+import { isGroupStageComplete } from './knockoutQualifiers'
+import { KNOCKOUT_ROUND_LABELS, KNOCKOUT_STAGE_ORDER } from './knockoutBracketTemplate'
 import { orderKnockoutRounds } from './knockoutBracketOrdering'
+import { generateRoundOf32 } from './roundOf32Generator'
 
 const KNOCKOUT_STAGES = new Set<string>(KNOCKOUT_STAGE_ORDER)
 
@@ -46,123 +31,29 @@ function createParticipant(
   return { team, label, isProjected }
 }
 
-function mapStandingRowToTeam(row: { team: ApiStandingTable['table'][number]['team'] }): Team | null {
-  const name = row.team.name?.trim() || ''
-  const id = row.team.id
+function buildProjectedR32Matches(standings: ApiStandingTable[]): KnockoutMatch[] {
+  const groupStageComplete = isGroupStageComplete(standings)
+  const roundOf32 = generateRoundOf32(standings)
 
-  if (id == null || !name) return null
-
-  return {
-    id,
-    name,
-    shortName: row.team.shortName?.trim() || name,
-    tla: row.team.tla?.trim() || '',
-    crest: row.team.crest?.trim() || '',
-    isDefined: true,
-  }
-}
-
-function resolveGroupPositionSlot(
-  slot: Extract<BracketSlot, { kind: 'groupPos' }>,
-  snapshots: ReturnType<typeof buildGroupSnapshots>,
-  groupStageComplete: boolean,
-): KnockoutParticipant {
-  const row = getStandingRowByGroupPosition(snapshots, slot.group, slot.position)
-  const label = formatGroupPositionLabel(slot.group, slot.position)
-  const team = row ? mapStandingRowToTeam(row) : null
-
-  return createParticipant(team, team ? label : label, !groupStageComplete || !team)
-}
-
-function resolveThirdSlots(
-  templates: R32TemplateMatch[],
-  snapshots: ReturnType<typeof buildGroupSnapshots>,
-  groupStageComplete: boolean,
-): Map<string, KnockoutParticipant> {
-  const rankedThirds = rankThirdPlaceTeams(snapshots)
-  const qualifiedGroups = getQualifiedThirdGroups(snapshots)
-  const assignedGroups = new Set<GroupCode>()
-  const resolved = new Map<string, KnockoutParticipant>()
-
-  const thirdSlots = templates.flatMap((template) => {
-    const slots: Array<{ key: string; side: 'home' | 'away'; eligible: GroupCode[] }> = []
-
-    if (template.home.kind === 'third') {
-      slots.push({ key: template.key, side: 'home', eligible: template.home.eligible })
-    }
-
-    if (template.away.kind === 'third') {
-      slots.push({ key: template.key, side: 'away', eligible: template.away.eligible })
-    }
-
-    return slots
-  })
-
-  for (const slot of thirdSlots) {
-    const label = formatThirdSlotLabel(slot.eligible)
-    const candidate = rankedThirds.find((row) => {
-      const group = snapshots.find((snapshot) => snapshot.third?.team.id === row.team.id)?.group
-      if (!group || !qualifiedGroups.has(group)) return false
-      if (!slot.eligible.includes(group)) return false
-      if (assignedGroups.has(group)) return false
-      return true
-    })
-
-    if (!candidate) {
-      resolved.set(`${slot.key}:${slot.side}`, createParticipant(null, label, true))
-      continue
-    }
-
-    const group = snapshots.find((snapshot) => snapshot.third?.team.id === candidate.team.id)?.group
-    if (!group) {
-      resolved.set(`${slot.key}:${slot.side}`, createParticipant(null, label, true))
-      continue
-    }
-
-    assignedGroups.add(group)
-    const team = mapStandingRowToTeam(candidate)
-    resolved.set(
-      `${slot.key}:${slot.side}`,
-      createParticipant(team, formatGroupPositionLabel(group, 3), !groupStageComplete),
-    )
-  }
-
-  return resolved
-}
-
-function buildProjectedR32Matches(
-  standings: ApiStandingTable[],
-  groupStageComplete: boolean,
-): KnockoutMatch[] {
-  const snapshots = buildGroupSnapshots(standings)
-  const thirdParticipants = resolveThirdSlots(R32_TEMPLATE, snapshots, groupStageComplete)
-
-  return R32_TEMPLATE.map((template) => {
-    const resolveSlot = (slot: BracketSlot, side: 'home' | 'away'): KnockoutParticipant => {
-      if (slot.kind === 'third') {
-        return (
-          thirdParticipants.get(`${template.key}:${side}`) ??
-          createParticipant(null, formatThirdSlotLabel(slot.eligible), true)
-        )
-      }
-
-      return resolveGroupPositionSlot(slot, snapshots, groupStageComplete)
-    }
-
-    const home = resolveSlot(template.home, 'home')
-    const away = resolveSlot(template.away, 'away')
-
-    return {
-      key: template.key,
-      stage: 'LAST_32',
-      home,
-      away,
-      score: { home: null, away: null },
-      status: 'scheduled',
-      utcDate: null,
-      isProjected: home.isProjected || away.isProjected,
-    }
-  })
+  return roundOf32.map((fixture) => ({
+    key: fixture.key,
+    matchId: fixture.matchId,
+    stage: 'LAST_32' as const,
+    home: createParticipant(
+      fixture.homeTeam,
+      fixture.homeLabel,
+      !groupStageComplete || !fixture.homeTeam,
+    ),
+    away: createParticipant(
+      fixture.awayTeam,
+      fixture.awayLabel,
+      !groupStageComplete || !fixture.awayTeam,
+    ),
+    score: { home: null, away: null },
+    status: 'scheduled' as MatchStatus,
+    utcDate: null,
+    isProjected: !fixture.isResolved,
+  }))
 }
 
 function matchFromApi(apiMatch: Match): KnockoutMatch {
@@ -172,6 +63,7 @@ function matchFromApi(apiMatch: Match): KnockoutMatch {
   return {
     key: `api-${apiMatch.id}`,
     id: apiMatch.id,
+    matchday: apiMatch.matchday,
     stage: apiMatch.stage as KnockoutStage,
     home: createParticipant(
       homeDefined ? mapApiTeamToTeam(apiMatch.homeTeam) : null,
@@ -194,6 +86,63 @@ function matchFromApi(apiMatch: Match): KnockoutMatch {
   }
 }
 
+function participantKey(participant: KnockoutParticipant): string {
+  const team = participant.team
+  if (team?.id != null) return `id:${team.id}`
+  return `label:${participant.label}`
+}
+
+function parseFifaMatchNumber(matchId: string | undefined): number | null {
+  if (!matchId) return null
+  const value = Number(matchId.replace(/^M/i, ''))
+  return Number.isFinite(value) ? value : null
+}
+
+function findApiMatchForProjected(
+  projected: KnockoutMatch,
+  apiMatches: KnockoutMatch[],
+): KnockoutMatch | undefined {
+  const fifaNumber = parseFifaMatchNumber(projected.matchId)
+  if (fifaNumber != null) {
+    const byMatchday = apiMatches.find((match) => match.matchday === fifaNumber)
+    if (byMatchday) return byMatchday
+  }
+
+  const projectedHome = participantKey(projected.home)
+  const projectedAway = participantKey(projected.away)
+
+  if (!projected.home.team || !projected.away.team) {
+    return undefined
+  }
+
+  return apiMatches.find((match) => {
+    const apiHome = participantKey(match.home)
+    const apiAway = participantKey(match.away)
+    return (
+      (apiHome === projectedHome && apiAway === projectedAway) ||
+      (apiHome === projectedAway && apiAway === projectedHome)
+    )
+  })
+}
+
+function mergeApiScore(
+  projected: KnockoutMatch,
+  apiMatch: KnockoutMatch,
+): { home: number | null; away: number | null } {
+  const { score } = apiMatch
+  if (score.home == null && score.away == null) {
+    return projected.score
+  }
+
+  const projectedHome = participantKey(projected.home)
+  const apiHome = participantKey(apiMatch.home)
+  const swapped = projectedHome !== apiHome
+
+  return swapped
+    ? { home: score.away, away: score.home }
+    : { home: score.home, away: score.away }
+}
+
 function mergeR32Matches(
   apiMatches: KnockoutMatch[],
   projectedMatches: KnockoutMatch[],
@@ -202,32 +151,20 @@ function mergeR32Matches(
     return projectedMatches
   }
 
-  if (apiMatches.length >= 16) {
-    return apiMatches
-      .sort((a, b) => {
-        const dateA = a.utcDate ? new Date(a.utcDate).getTime() : Number.MAX_SAFE_INTEGER
-        const dateB = b.utcDate ? new Date(b.utcDate).getTime() : Number.MAX_SAFE_INTEGER
-        return dateA - dateB
-      })
-      .map((match, index) => ({
-        ...match,
-        key: projectedMatches[index]?.key ?? match.key,
-      }))
-  }
-
-  return projectedMatches.map((projected, index) => {
-    const apiMatch = apiMatches[index]
+  return projectedMatches.map((projected) => {
+    const apiMatch = findApiMatchForProjected(projected, apiMatches)
     if (!apiMatch) return projected
+
+    const score = mergeApiScore(projected, apiMatch)
 
     return {
       ...projected,
       id: apiMatch.id,
-      home: apiMatch.home.team ? apiMatch.home : projected.home,
-      away: apiMatch.away.team ? apiMatch.away : projected.away,
-      score: apiMatch.score.home != null || apiMatch.score.away != null ? apiMatch.score : projected.score,
+      matchday: apiMatch.matchday ?? projected.matchday,
+      score,
       status: apiMatch.status,
       utcDate: apiMatch.utcDate ?? projected.utcDate,
-      isProjected: projected.isProjected && !apiMatch.home.team && !apiMatch.away.team,
+      isProjected: projected.isProjected && apiMatch.status !== 'finished',
     }
   })
 }
@@ -354,10 +291,8 @@ export function buildKnockoutBracket(
   standings: ApiStandingTable[],
   matches: Match[],
 ): KnockoutBracket {
-  const groupStageComplete = isGroupStageComplete(standings)
   const apiByStage = groupApiKnockoutMatches(matches)
-
-  const projectedR32 = buildProjectedR32Matches(standings, groupStageComplete)
+  const projectedR32 = buildProjectedR32Matches(standings)
   const r32Matches = mergeR32Matches(apiByStage.get('LAST_32') ?? [], projectedR32)
 
   const rounds: KnockoutRound[] = []
@@ -397,5 +332,3 @@ export function buildKnockoutBracket(
 export function getKnockoutMatches(matches: Match[]): Match[] {
   return matches.filter((match) => isKnockoutStage(match.stage))
 }
-
-export { groupCodeFromKey }

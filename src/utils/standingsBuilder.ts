@@ -1,8 +1,7 @@
 import type { ApiStandingRow, ApiStandingTable, ApiTeam } from '../models/api.types'
 import type { Match } from '../models/match'
 import type { Team } from '../models/team'
-
-const GROUP_STAGE_GROUP_PATTERN = /^GROUP_[A-L]$/i
+import { groupCodeFromKey, toGroupKey } from './knockoutBracketTemplate'
 
 interface TeamStats {
   team: Team
@@ -116,9 +115,17 @@ function buildTeamToGroupMap(matches: Match[]): Map<number, string> {
 }
 
 export function isGroupStanding(standing: ApiStandingTable): boolean {
-  return (
-    standing.type === 'TOTAL' && !!standing.group && GROUP_STAGE_GROUP_PATTERN.test(standing.group)
-  )
+  return standing.type === 'TOTAL' && groupCodeFromKey(standing.group) != null
+}
+
+function normalizeGroupStanding(standing: ApiStandingTable): ApiStandingTable {
+  const code = groupCodeFromKey(standing.group)
+  if (!code) return standing
+
+  return {
+    ...standing,
+    group: toGroupKey(code),
+  }
 }
 
 function splitOverallStandingsByGroup(
@@ -142,7 +149,7 @@ function splitOverallStandingsByGroup(
       if (teamId == null) continue
 
       const group = teamToGroup.get(teamId)
-      if (!group || !GROUP_STAGE_GROUP_PATTERN.test(group)) continue
+      if (!group || groupCodeFromKey(group) == null) continue
 
       const groupRows = rowsByGroup.get(group) ?? []
       groupRows.push(row)
@@ -203,7 +210,7 @@ export function buildStandingsFromMatches(matches: Match[]): ApiStandingTable[] 
   }
 
   return [...groups.entries()]
-    .filter(([group]) => GROUP_STAGE_GROUP_PATTERN.test(group))
+    .filter(([group]) => groupCodeFromKey(group) != null)
     .sort(([groupA], [groupB]) => groupA.localeCompare(groupB))
     .map(([group, statsByTeamId]) => ({
       stage: 'GROUP_STAGE',
@@ -224,10 +231,10 @@ export function resolveGroupStandings(
   apiStandings: ApiStandingTable[],
   matches: Match[],
 ): ApiStandingTable[] {
-  const groupStandings = getVisibleStandings(apiStandings)
+  const groupStandings = getVisibleStandings(apiStandings).map(normalizeGroupStanding)
   if (groupStandings.length > 0) return groupStandings
 
-  const splitStandings = splitOverallStandingsByGroup(apiStandings, matches)
+  const splitStandings = splitOverallStandingsByGroup(apiStandings, matches).map(normalizeGroupStanding)
   if (splitStandings.length > 0) return splitStandings
 
   return buildStandingsFromMatches(matches)

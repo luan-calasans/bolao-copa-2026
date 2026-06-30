@@ -1,10 +1,6 @@
 import type { ApiStandingRow, ApiStandingTable } from '../models/api.types'
 import type { GroupCode } from './knockoutBracketTemplate'
-import {
-  buildGroupSnapshots,
-  getQualifiedThirdGroups,
-  rankThirdPlaceTeams,
-} from './knockoutQualifiers'
+import { getBestThirdPlacedTeams } from './roundOf32Generator'
 
 export interface ThirdPlaceRankingEntry {
   rank: number
@@ -14,19 +10,10 @@ export interface ThirdPlaceRankingEntry {
 }
 
 export function buildThirdPlaceRanking(standings: ApiStandingTable[]): ThirdPlaceRankingEntry[] {
-  const snapshots = buildGroupSnapshots(standings)
-  const ranked = rankThirdPlaceTeams(snapshots)
-  const qualifiedGroups = getQualifiedThirdGroups(snapshots)
-
-  return ranked.map((row, index) => {
-    const snapshot = snapshots.find((entry) => entry.third?.team.id === row.team.id)
-    const group = snapshot?.group ?? 'A'
-
-    return {
-      rank: index + 1,
-      group,
-      row,
-      isQualified: qualifiedGroups.has(group),
-    }
-  })
+  return getBestThirdPlacedTeams(standings).map(({ rank, group, row, isQualified }) => ({
+    rank,
+    group,
+    row,
+    isQualified,
+  }))
 }

@@ -18,6 +18,10 @@ export interface KnockoutParticipant {
 export interface KnockoutMatch {
   key: string
   id?: number
+  /** Número oficial FIFA do jogo (ex.: M73). */
+  matchId?: string
+  /** Matchday da API — costuma coincidir com o número FIFA (73–88 nos 16 avos). */
+  matchday?: number | null
   stage: KnockoutStage
   home: KnockoutParticipant
   away: KnockoutParticipant

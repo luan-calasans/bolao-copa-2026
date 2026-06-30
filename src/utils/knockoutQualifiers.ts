@@ -1,5 +1,10 @@
 import type { ApiStandingRow, ApiStandingTable } from '../models/api.types'
-import { GROUP_CODES, groupCodeFromKey, toGroupKey, type GroupCode } from './knockoutBracketTemplate'
+import {
+  GROUP_CODES,
+  groupCodeFromKey,
+  type GroupCode,
+} from './knockoutBracketTemplate'
+import { compareStandingRows } from './standingsTiebreaker'
 
 export interface GroupStandingSnapshot {
   group: GroupCode
@@ -8,12 +13,18 @@ export interface GroupStandingSnapshot {
   third: ApiStandingRow | null
 }
 
+function findGroupStandingTable(
+  standings: ApiStandingTable[],
+  code: GroupCode,
+): ApiStandingRow[] {
+  return standings.find((standing) => groupCodeFromKey(standing.group) === code)?.table ?? []
+}
+
 export function buildGroupSnapshots(standings: ApiStandingTable[]): GroupStandingSnapshot[] {
   const snapshots: GroupStandingSnapshot[] = []
 
   for (const code of GROUP_CODES) {
-    const groupKey = toGroupKey(code)
-    const table = standings.find((standing) => standing.group === groupKey)?.table ?? []
+    const table = findGroupStandingTable(standings, code)
 
     snapshots.push({
       group: code,
@@ -26,19 +37,12 @@ export function buildGroupSnapshots(standings: ApiStandingTable[]): GroupStandin
   return snapshots
 }
 
-function compareThirdPlaceRows(a: ApiStandingRow, b: ApiStandingRow): number {
-  if (b.points !== a.points) return b.points - a.points
-  if (b.goalDifference !== a.goalDifference) return b.goalDifference - a.goalDifference
-  if (b.goalsFor !== a.goalsFor) return b.goalsFor - a.goalsFor
-  return (a.team.name ?? '').localeCompare(b.team.name ?? '', 'pt-BR')
-}
-
 export function rankThirdPlaceTeams(snapshots: GroupStandingSnapshot[]): ApiStandingRow[] {
   const thirds = snapshots
     .map((snapshot) => snapshot.third)
     .filter((row): row is ApiStandingRow => row != null)
 
-  return [...thirds].sort(compareThirdPlaceRows)
+  return [...thirds].sort(compareStandingRows)
 }
 
 export function getQualifiedThirdGroups(snapshots: GroupStandingSnapshot[]): Set<GroupCode> {
@@ -56,35 +60,12 @@ export function getQualifiedThirdGroups(snapshots: GroupStandingSnapshot[]): Set
 }
 
 export function isGroupStageComplete(standings: ApiStandingTable[]): boolean {
-  if (standings.length === 0) return false
+  if (standings.length < GROUP_CODES.length) return false
 
-  return standings.every((standing) => {
-    const group = groupCodeFromKey(standing.group)
-    if (!group) return false
+  const groupStandings = standings.filter((standing) => groupCodeFromKey(standing.group) != null)
+  if (groupStandings.length < GROUP_CODES.length) return false
 
-    return standing.table.every((row) => row.playedGames >= 3)
-  })
-}
-
-export function getStandingRowByGroupPosition(
-  snapshots: GroupStandingSnapshot[],
-  group: GroupCode,
-  position: 1 | 2 | 3,
-): ApiStandingRow | null {
-  const snapshot = snapshots.find((entry) => entry.group === group)
-  if (!snapshot) return null
-
-  if (position === 1) return snapshot.first
-  if (position === 2) return snapshot.second
-  return snapshot.third
-}
-
-export function formatGroupPositionLabel(group: GroupCode, position: 1 | 2 | 3): string {
-  const ordinals = { 1: '1º', 2: '2º', 3: '3º' } as const
-  return `${ordinals[position]} Grupo ${group}`
-}
-
-export function formatThirdSlotLabel(eligible: GroupCode[]): string {
-  if (eligible.length === 0) return '3º colocado'
-  return `3º (${eligible.join('/')})`
+  return groupStandings.every((standing) =>
+    standing.table.every((row) => row.playedGames >= 3),
+  )
 }
