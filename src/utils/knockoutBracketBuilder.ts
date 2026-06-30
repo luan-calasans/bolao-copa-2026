@@ -1,3 +1,4 @@
+import { getMatchLoser, getMatchWinner } from '../components/knockout/knockoutBracketLayout'
 import type { ApiStandingTable } from '../models/api.types'
 import type {
   KnockoutBracket,
@@ -12,6 +13,7 @@ import { isGroupStageComplete } from './knockoutQualifiers'
 import { KNOCKOUT_ROUND_LABELS, KNOCKOUT_STAGE_ORDER } from './knockoutBracketTemplate'
 import { orderKnockoutRounds } from './knockoutBracketOrdering'
 import { generateRoundOf32 } from './roundOf32Generator'
+import { isTeamDefined } from './teamDisplay'
 
 const KNOCKOUT_STAGES = new Set<string>(KNOCKOUT_STAGE_ORDER)
 
@@ -80,6 +82,8 @@ function matchFromApi(apiMatch: Match): KnockoutMatch {
       !awayDefined,
     ),
     score: { ...apiMatch.score },
+    penalties: apiMatch.penalties ?? null,
+    extraTime: apiMatch.extraTime ?? null,
     status: apiMatch.status,
     utcDate: apiMatch.utcDate,
     isProjected: false,
@@ -125,6 +129,16 @@ function findApiMatchForProjected(
   })
 }
 
+function shouldSwapScores(projected: KnockoutMatch, apiMatch: KnockoutMatch): boolean {
+  if (!projected.home.team || !projected.away.team) return false
+  if (!apiMatch.home.team || !apiMatch.away.team) return false
+  return participantKey(projected.home) !== participantKey(apiMatch.home)
+}
+
+function areTeamsSwapped(projected: KnockoutMatch, apiMatch: KnockoutMatch): boolean {
+  return shouldSwapScores(projected, apiMatch)
+}
+
 function mergeApiScore(
   projected: KnockoutMatch,
   apiMatch: KnockoutMatch,
@@ -134,49 +148,82 @@ function mergeApiScore(
     return projected.score
   }
 
-  const projectedHome = participantKey(projected.home)
-  const apiHome = participantKey(apiMatch.home)
-  const swapped = projectedHome !== apiHome
+  const swapped = areTeamsSwapped(projected, apiMatch)
 
   return swapped
     ? { home: score.away, away: score.home }
     : { home: score.home, away: score.away }
 }
 
-function mergeR32Matches(
-  apiMatches: KnockoutMatch[],
+function mergeApiSideScore(
+  projected: KnockoutMatch,
+  apiMatch: KnockoutMatch,
+  detail: { home: number | null; away: number | null } | null | undefined,
+): { home: number | null; away: number | null } | null | undefined {
+  if (!detail || (detail.home == null && detail.away == null)) {
+    return undefined
+  }
+
+  const swapped = areTeamsSwapped(projected, apiMatch)
+
+  return swapped
+    ? { home: detail.away, away: detail.home }
+    : { home: detail.home, away: detail.away }
+}
+
+function mergeParticipant(
+  projected: KnockoutParticipant,
+  api: KnockoutParticipant,
+): KnockoutParticipant {
+  if (api.team && isTeamDefined(api.team)) {
+    return { ...api, isProjected: false }
+  }
+
+  if (projected.team && isTeamDefined(projected.team) && !projected.isProjected) {
+    return projected
+  }
+
+  return api.team && isTeamDefined(api.team) ? api : projected
+}
+
+function mergeKnockoutMatch(projected: KnockoutMatch, apiMatch: KnockoutMatch): KnockoutMatch {
+  return {
+    ...projected,
+    id: apiMatch.id ?? projected.id,
+    matchday: apiMatch.matchday ?? projected.matchday,
+    home: mergeParticipant(projected.home, apiMatch.home),
+    away: mergeParticipant(projected.away, apiMatch.away),
+    score: mergeApiScore(projected, apiMatch),
+    penalties: mergeApiSideScore(projected, apiMatch, apiMatch.penalties) ?? projected.penalties,
+    extraTime: mergeApiSideScore(projected, apiMatch, apiMatch.extraTime) ?? projected.extraTime,
+    status: apiMatch.status,
+    utcDate: apiMatch.utcDate ?? projected.utcDate,
+    isProjected: projected.isProjected && apiMatch.status !== 'finished',
+  }
+}
+
+function mergeProjectedRound(
   projectedMatches: KnockoutMatch[],
+  apiMatches: KnockoutMatch[],
 ): KnockoutMatch[] {
   if (apiMatches.length === 0) {
     return projectedMatches
   }
 
-  return projectedMatches.map((projected) => {
-    const apiMatch = findApiMatchForProjected(projected, apiMatches)
+  return projectedMatches.map((projected, index) => {
+    const apiMatch =
+      findApiMatchForProjected(projected, apiMatches) ??
+      (projectedMatches.length === apiMatches.length ? apiMatches[index] : undefined)
     if (!apiMatch) return projected
-
-    const score = mergeApiScore(projected, apiMatch)
-
-    return {
-      ...projected,
-      id: apiMatch.id,
-      matchday: apiMatch.matchday ?? projected.matchday,
-      score,
-      status: apiMatch.status,
-      utcDate: apiMatch.utcDate ?? projected.utcDate,
-      isProjected: projected.isProjected && apiMatch.status !== 'finished',
-    }
+    return mergeKnockoutMatch(projected, apiMatch)
   })
 }
 
-function getMatchWinner(match: KnockoutMatch): Team | null {
-  if (match.status !== 'finished') return null
-
-  const { home, away } = match.score
-  if (home == null || away == null) return null
-  if (home === away) return null
-
-  return home > away ? match.home.team : match.away.team
+function mergeR32Matches(
+  apiMatches: KnockoutMatch[],
+  projectedMatches: KnockoutMatch[],
+): KnockoutMatch[] {
+  return mergeProjectedRound(projectedMatches, apiMatches)
 }
 
 function buildWinnerSlot(
@@ -185,8 +232,8 @@ function buildWinnerSlot(
 ): KnockoutParticipant {
   const winner = sourceMatch ? getMatchWinner(sourceMatch) : null
 
-  if (winner) {
-    return createParticipant(winner, winner.shortName || winner.name, false)
+  if (winner?.team) {
+    return createParticipant(winner.team, winner.team.shortName || winner.team.name, false)
   }
 
   return createParticipant(null, fallbackLabel, true)
@@ -196,22 +243,13 @@ function buildLoserSlot(
   sourceMatch: KnockoutMatch | undefined,
   fallbackLabel: string,
 ): KnockoutParticipant {
-  const loser = sourceMatch ? getMatchLoserTeam(sourceMatch) : null
+  const loser = sourceMatch ? getMatchLoser(sourceMatch) : null
 
-  if (loser) {
-    return createParticipant(loser, loser.shortName || loser.name, false)
+  if (loser?.team) {
+    return createParticipant(loser.team, loser.team.shortName || loser.team.name, false)
   }
 
   return createParticipant(null, fallbackLabel, true)
-}
-
-function getMatchLoserTeam(match: KnockoutMatch): Team | null {
-  if (match.status !== 'finished') return null
-
-  const { home, away } = match.score
-  if (home == null || away == null || home === away) return null
-
-  return home > away ? match.away.team : match.home.team
 }
 
 function buildProjectedThirdPlaceRound(
@@ -304,17 +342,23 @@ export function buildKnockoutBracket(
 
     if (stage === 'LAST_32') {
       roundMatches = r32Matches
-    } else if (apiMatches.length > 0) {
-      roundMatches = apiMatches
-      previousMatches = roundMatches
-    } else if (stage === 'THIRD_PLACE') {
-      roundMatches = buildProjectedThirdPlaceRound(previousMatches.slice(-2), stage.toLowerCase())
-    } else if (stage === 'FINAL') {
-      roundMatches = buildProjectedLaterRound(stage, previousMatches.slice(-2), 1, stage.toLowerCase())
     } else {
-      const matchCount = stage === 'LAST_16' ? 8 : stage === 'QUARTER_FINALS' ? 4 : 2
-      roundMatches = buildProjectedLaterRound(stage, previousMatches, matchCount, stage.toLowerCase())
-      previousMatches = roundMatches
+      let projected: KnockoutMatch[]
+
+      if (stage === 'THIRD_PLACE') {
+        projected = buildProjectedThirdPlaceRound(previousMatches.slice(-2), stage.toLowerCase())
+      } else if (stage === 'FINAL') {
+        projected = buildProjectedLaterRound(stage, previousMatches.slice(-2), 1, stage.toLowerCase())
+      } else {
+        const matchCount = stage === 'LAST_16' ? 8 : stage === 'QUARTER_FINALS' ? 4 : 2
+        projected = buildProjectedLaterRound(stage, previousMatches, matchCount, stage.toLowerCase())
+      }
+
+      roundMatches = mergeProjectedRound(projected, apiMatches)
+
+      if (stage !== 'THIRD_PLACE') {
+        previousMatches = roundMatches
+      }
     }
 
     if (roundMatches.length === 0) continue
