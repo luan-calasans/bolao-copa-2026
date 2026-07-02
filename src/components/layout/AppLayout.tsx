@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { TopRankingFab } from '../ranking/TopRankingFab'
 import { Footer } from './Footer'
 import { Header } from './Header'
 import { ScrollToTopButton } from './ScrollToTopButton'
@@ -16,7 +17,7 @@ export function AppLayout({ children, betHref }: AppLayoutProps) {
         {children}
       </main>
       <Footer />
-      <ScrollToTopButton betHref={betHref} />
+      <ScrollToTopButton betHref={betHref} leadingActions={<TopRankingFab />} />
     </div>
   )
 }

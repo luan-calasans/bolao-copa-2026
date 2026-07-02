@@ -1,3 +1,4 @@
+import { Trophy } from 'lucide-react'
 import type { PodiumRank } from '../../utils/podiumPlacement'
 
 const TROPHY_COLOR: Record<PodiumRank, string> = {
@@ -19,14 +20,10 @@ const SIZE_CLASS = {
 
 export function PodiumTrophyIcon({ rank, className = '', size = 'md' }: PodiumTrophyIconProps) {
   return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 24 24"
-      fill="currentColor"
+    <Trophy
       aria-hidden="true"
+      strokeWidth={2}
       className={`shrink-0 ${SIZE_CLASS[size]} ${TROPHY_COLOR[rank]} ${className}`.trim()}
-    >
-      <path d="M6 9a6 6 0 0 0 12 0V4H6v5zM4 9a8 8 0 0 0 6.2 7.79L9 20H7v2h10v-2h-2l-1.2-3.21A8 8 0 0 0 20 9h-2a6 6 0 0 1-11.6 0H4z" />
-    </svg>
+    />
   )
 }

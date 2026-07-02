@@ -1,9 +1,8 @@
 import { useLottie } from 'lottie-react'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { GiSoccerBall } from 'react-icons/gi'
 import { useNavigate } from 'react-router-dom'
 
-const SCROLL_THRESHOLD = 300
 const BET_TRANSITION_MS = 1500
 
 const FLOATING_BUTTON_SIZE =
@@ -25,24 +24,14 @@ function BetTransitionLottie({ animationData, className }: BetTransitionLottiePr
 
 interface ScrollToTopButtonProps {
   betHref?: string
+  leadingActions?: ReactNode
 }
 
-export function ScrollToTopButton({ betHref }: ScrollToTopButtonProps) {
+export function ScrollToTopButton({ betHref, leadingActions }: ScrollToTopButtonProps) {
   const navigate = useNavigate()
-  const [isVisible, setIsVisible] = useState(false)
   const [isBetTransitioning, setIsBetTransitioning] = useState(false)
   const [lottieData, setLottieData] = useState<object | null>(null)
   const transitionTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-
-  useEffect(() => {
-    function handleScroll() {
-      setIsVisible(window.scrollY > SCROLL_THRESHOLD)
-    }
-
-    handleScroll()
-    window.addEventListener('scroll', handleScroll, { passive: true })
-    return () => window.removeEventListener('scroll', handleScroll)
-  }, [])
 
   useEffect(() => {
     if (!betHref || lottieData) return
@@ -78,29 +67,28 @@ export function ScrollToTopButton({ betHref }: ScrollToTopButtonProps) {
   return (
     <>
       <div className="pointer-events-none fixed right-4 bottom-6 z-40 flex flex-col items-center gap-2 sm:right-6 sm:bottom-8">
-        {isVisible && (
-          <button
-            type="button"
-            onClick={scrollToTop}
-            aria-label="Voltar ao topo"
-            className={`pointer-events-auto cursor-pointer border-gold-500/40 bg-pitch-900/95 text-gold-400 shadow-black/30 hover:border-gold-500/70 hover:bg-pitch-800 hover:text-gold-300 ${floatingButtonClass}`}
+        {leadingActions}
+        <button
+          type="button"
+          onClick={scrollToTop}
+          aria-label="Voltar ao topo"
+          className={`pointer-events-auto cursor-pointer border-gold-500/40 bg-pitch-900/95 text-gold-400 shadow-black/30 hover:border-gold-500/70 hover:bg-pitch-800 hover:text-gold-300 ${floatingButtonClass}`}
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className="h-[1.375rem] w-[1.375rem] sm:h-7 sm:w-7"
+            aria-hidden="true"
           >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="h-[1.375rem] w-[1.375rem] sm:h-7 sm:w-7"
-              aria-hidden="true"
-            >
-              <path d="M12 19V5" />
-              <path d="m5 12 7-7 7 7" />
-            </svg>
-          </button>
-        )}
+            <path d="M12 19V5" />
+            <path d="m5 12 7-7 7 7" />
+          </svg>
+        </button>
 
         {betHref && !isBetTransitioning && (
           <button
