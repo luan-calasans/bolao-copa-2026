@@ -14,19 +14,8 @@ function formatAverage(value: number): string {
 }
 
 export function HistoricoTeamStatsTable({ teamStats }: HistoricoTeamStatsTableProps) {
-  const topTeams = teamStats.slice(0, 15)
-
   return (
     <section className="overflow-hidden rounded-2xl border border-slate-700/50 bg-pitch-800/40">
-      <div className="border-b border-slate-700/40 bg-pitch-900/60 px-4 py-4 sm:px-5">
-        <h2 className="text-sm font-bold uppercase tracking-wider text-white">
-          Ranking histórico por seleção
-        </h2>
-        <p className="mt-1 text-xs text-slate-400">
-          Top 15 em títulos, finais disputadas e aproveitamento nas Copas.
-        </p>
-      </div>
-
       <div className="overflow-x-auto">
         <table className="w-full min-w-[56rem] text-left text-sm">
           <thead>
@@ -44,7 +33,7 @@ export function HistoricoTeamStatsTable({ teamStats }: HistoricoTeamStatsTablePr
             </tr>
           </thead>
           <tbody>
-            {topTeams.map((team, index) => (
+            {teamStats.map((team, index) => (
               <tr
                 key={team.canonicalName}
                 className="border-b border-slate-700/20 last:border-b-0"

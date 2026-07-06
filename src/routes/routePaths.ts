@@ -18,6 +18,7 @@ export const APP_ROUTES = {
   adminLogin: '/admin/login',
   adminBets: '/admin/palpites',
   historico: '/historico',
+  teamRanking: '/ranking-selecoes',
   historicoYear: '/historico/:year',
   notFound: '/404',
 } as const
@@ -55,6 +56,7 @@ export const MAIN_NAV: ReadonlyArray<MainNavItem> = [
     label: 'Mais',
     items: [
       { path: APP_ROUTES.historico, label: 'Histórico' },
+      { path: APP_ROUTES.teamRanking, label: 'Ranking seleções' },
       { path: APP_ROUTES.teams, label: 'Seleções' },
     ],
   },

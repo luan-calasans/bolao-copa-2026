@@ -3,7 +3,6 @@ import { PageHeader } from '../components/layout/PageHeader'
 import { HistoricoChampionsSection } from '../components/historico/HistoricoChampionsSection'
 import { HistoricoOverviewStats } from '../components/historico/HistoricoOverviewStats'
 import { HistoricoRecentChampions } from '../components/historico/HistoricoRecentChampions'
-import { HistoricoTeamStatsTable } from '../components/historico/HistoricoTeamStatsTable'
 import { EmptyState } from '../components/ui/EmptyState'
 import { ErrorState } from '../components/ui/ErrorState'
 import { Skeleton } from '../components/ui/Skeleton'
@@ -23,7 +22,6 @@ function HistoricoSkeleton() {
         ))}
       </div>
       <Skeleton className="h-80 w-full rounded-2xl" />
-      <Skeleton className="h-96 w-full rounded-2xl" />
     </div>
   )
 }
@@ -35,7 +33,7 @@ export function HistoricoView() {
     <AppLayout>
       <PageHeader
         title="Histórico da Copa"
-        description="Campeões, estatísticas por seleção e detalhe de cada edição entre 1930 e 2022."
+        description="Campeões e detalhe de cada edição entre 1930 e 2022."
       />
 
       {isLoading && <HistoricoSkeleton />}
@@ -59,7 +57,6 @@ export function HistoricoView() {
           <HistoricoOverviewStats summaries={summaries} teamStats={teamStats} />
           <HistoricoRecentChampions summaries={summaries} />
           <HistoricoChampionsSection summaries={summaries} />
-          <HistoricoTeamStatsTable teamStats={teamStats} />
         </div>
       )}
     </AppLayout>

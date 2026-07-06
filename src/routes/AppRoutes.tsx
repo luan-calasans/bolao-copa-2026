@@ -78,6 +78,11 @@ const HistoricoView = lazy(() =>
 const HistoricoYearView = lazy(() =>
   import('../views/HistoricoYearView').then((module) => ({ default: module.HistoricoYearView })),
 )
+const HistoricoTeamRankingView = lazy(() =>
+  import('../views/HistoricoTeamRankingView').then((module) => ({
+    default: module.HistoricoTeamRankingView,
+  })),
+)
 
 function RouteFallback() {
   return <LoadingState lines={4} />
@@ -254,6 +259,14 @@ export function AppRoutes() {
         element={
           <LazyRoute>
             <HistoricoView />
+          </LazyRoute>
+        }
+      />
+      <Route
+        path={APP_ROUTES.teamRanking}
+        element={
+          <LazyRoute>
+            <HistoricoTeamRankingView />
           </LazyRoute>
         }
       />
