@@ -171,11 +171,35 @@ function mergeApiSideScore(
     : { home: detail.home, away: detail.away }
 }
 
+function findApiParticipantForProjected(
+  projected: KnockoutParticipant,
+  apiMatch: KnockoutMatch,
+): KnockoutParticipant | undefined {
+  if (!projected.team) return undefined
+
+  const projectedKey = participantKey(projected)
+
+  if (apiMatch.home.team && participantKey(apiMatch.home) === projectedKey) {
+    return apiMatch.home
+  }
+
+  if (apiMatch.away.team && participantKey(apiMatch.away) === projectedKey) {
+    return apiMatch.away
+  }
+
+  return undefined
+}
+
 function mergeParticipant(
   projected: KnockoutParticipant,
-  api: KnockoutParticipant,
+  apiMatch: KnockoutMatch,
+  slot: 'home' | 'away',
 ): KnockoutParticipant {
-  if (api.team && isTeamDefined(api.team)) {
+  const api =
+    findApiParticipantForProjected(projected, apiMatch) ??
+    (projected.team ? undefined : apiMatch[slot])
+
+  if (api?.team && isTeamDefined(api.team)) {
     return { ...api, isProjected: false }
   }
 
@@ -183,7 +207,7 @@ function mergeParticipant(
     return projected
   }
 
-  return api.team && isTeamDefined(api.team) ? api : projected
+  return api?.team && isTeamDefined(api.team) ? api : projected
 }
 
 function mergeKnockoutMatch(projected: KnockoutMatch, apiMatch: KnockoutMatch): KnockoutMatch {
@@ -191,8 +215,8 @@ function mergeKnockoutMatch(projected: KnockoutMatch, apiMatch: KnockoutMatch): 
     ...projected,
     id: apiMatch.id ?? projected.id,
     matchday: apiMatch.matchday ?? projected.matchday,
-    home: mergeParticipant(projected.home, apiMatch.home),
-    away: mergeParticipant(projected.away, apiMatch.away),
+    home: mergeParticipant(projected.home, apiMatch, 'home'),
+    away: mergeParticipant(projected.away, apiMatch, 'away'),
     score: mergeApiScore(projected, apiMatch),
     penalties: mergeApiSideScore(projected, apiMatch, apiMatch.penalties) ?? projected.penalties,
     extraTime: mergeApiSideScore(projected, apiMatch, apiMatch.extraTime) ?? projected.extraTime,
@@ -210,10 +234,8 @@ function mergeProjectedRound(
     return projectedMatches
   }
 
-  return projectedMatches.map((projected, index) => {
-    const apiMatch =
-      findApiMatchForProjected(projected, apiMatches) ??
-      (projectedMatches.length === apiMatches.length ? apiMatches[index] : undefined)
+  return projectedMatches.map((projected) => {
+    const apiMatch = findApiMatchForProjected(projected, apiMatches)
     if (!apiMatch) return projected
     return mergeKnockoutMatch(projected, apiMatch)
   })
