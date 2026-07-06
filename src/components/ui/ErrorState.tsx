@@ -1,7 +1,7 @@
 import { Button } from './Button'
 
 const API_LOAD_ERROR_HINT =
-  'Este bolão usa uma API gratuita com limite de requisições por minuto. Aguarde alguns segundos e tente novamente.'
+  'Este bolão usa uma API com restrições de uso. Aguarde alguns segundos e tente novamente.'
 
 interface ErrorStateProps {
   message: string
@@ -12,8 +12,7 @@ interface ErrorStateProps {
 
 export function ErrorState({ message, statusCode, onRetry, retryHint }: ErrorStateProps) {
   const title = statusCode != null ? `Erro ao carregar ${statusCode}` : 'Erro ao carregar'
-  const hint =
-    retryHint === undefined ? API_LOAD_ERROR_HINT : retryHint
+  const hint = retryHint === undefined ? API_LOAD_ERROR_HINT : retryHint
 
   return (
     <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-8 text-center">
